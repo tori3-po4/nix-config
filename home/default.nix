@@ -67,5 +67,26 @@
 
     # ===== LaTeX周辺 =====
     tex-fmt
+
+    # ===== LSP servers (Nvim/Emacs共通) =====
+    lua-language-server
+    nil
+    pyright
+    rust-analyzer
+    nodePackages.typescript-language-server
+    texlab
+    clang-tools                              # clangd, clang-format
+    marksman
+    yaml-language-server
+    nodePackages.bash-language-server
+
+    # ===== Formatters / Linters =====
+    stylua
+    nixfmt-rfc-style
+    ruff
+    rustfmt
+    nodePackages.prettier
+    shellcheck
+    shfmt
   ];
 }
