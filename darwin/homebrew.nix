@@ -34,7 +34,7 @@
       "google-chrome"
       "google-japanese-ime"
       "jetbrains-toolbox"
-      "logi-options-plus"
+      "logi-options+"
       "mactex-no-gui"
       "minecraft"
       "obsidian"
