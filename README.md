@@ -163,6 +163,7 @@ sudo darwin-rebuild switch --flake ~/nix-config  # cleanup の強度に応じて
 - `dot_gitconfig`, `dot_tmux.conf`, `dot_latexmkrc`
 - `dot_config/{cagent,ghostty,gtk-3.0}/`
 - `dot_vscode/argv.json`
+- `dot_ssh/encrypted_*.age`: SSH config + 鍵一式 (age 暗号化)
 - `.chezmoiexternal.toml`: `.config/nvim` と `.emacs.d` を別リポジトリから clone
 - `.chezmoiignore`: `.DS_Store` 除外
 - 暗号化: age (`encryption = "age"`)
@@ -192,15 +193,48 @@ sudo darwin-rebuild switch --flake ~/nix-config  # cleanup の強度に応じて
 
 - 鍵ファイル: `~/.config/chezmoi/key.txt` (chmod 600)
 - 公開鍵 (recipient): `age1a7rzqkdaedfqhzktkdyvpfkxx3mkw6nkccuj7na9v45pu3hqse8s0dvj32`
-- **バックアップ**: macOS Keychain
-  ```bash
-  # 確認
-  security find-generic-password -s "chezmoi-age-key" -a "$USER" -w | xxd -r -p
 
-  # 復元 (鍵紛失時)
-  security find-generic-password -s "chezmoi-age-key" -a "$USER" -w | xxd -r -p > ~/.config/chezmoi/key.txt
-  chmod 600 ~/.config/chezmoi/key.txt
-  ```
+#### バックアップ戦略
+
+age 鍵は chezmoi で管理している暗号化ファイル全部 (SSH 秘密鍵を含む) を復号する**マスターキー**なので、**マシン移行 / 災害復旧で確実に復元できる**場所に置く必要がある。
+
+| 手法 | 用途 | 同一マシン復旧 | 別マシン復旧 |
+|---|---|---|---|
+| age tarball + iCloud Drive | **メイン**。SSH 鍵と age 鍵を passphrase 付き age で固めて iCloud に置く | ✅ | ✅ |
+| macOS Keychain | 同一マシンでファイル消失した時の予備 | ✅ | ❌ (generic password は iCloud 同期されない) |
+
+**メイン: age tarball**
+
+```bash
+# 作成 (パスフレーズを 2 回入力)
+tar czf - -C "$HOME" \
+  .config/chezmoi/key.txt \
+  .ssh/id_ed25519 \
+  .ssh/id_ed25519.pub \
+  | age -p > "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age"
+
+# 内容確認
+age -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age" | tar -tz
+
+# 復元 (新マシン or 鍵紛失時)
+age -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age" | tar xz -C "$HOME"
+chmod 600 ~/.config/chezmoi/key.txt ~/.ssh/id_ed25519
+```
+
+tarball のパスフレーズを忘れると復旧不能なので、強いパスフレーズを別途記録しておく (1Password / 紙メモ + 金庫 等)。
+
+**予備: macOS Keychain (同一マシン復旧専用)**
+
+```bash
+# 確認
+security find-generic-password -s "chezmoi-age-key" -a "$USER" -w | xxd -r -p
+
+# 復元 (同じマシンで key.txt を消してしまった等)
+security find-generic-password -s "chezmoi-age-key" -a "$USER" -w | xxd -r -p > ~/.config/chezmoi/key.txt
+chmod 600 ~/.config/chezmoi/key.txt
+```
+
+> Keychain の generic password は iCloud Keychain で同期されないため、**別マシンには復元不能**。あくまで同じマシン内のファイル消失対策。
 
 ### 既存ファイルを取り込む
 
@@ -295,8 +329,28 @@ exit
 
 ## 7. 新マシンセットアップ手順
 
+### Phase -1: 旧マシンでの事前準備 (移行前にやっておくこと)
+
+新マシンには **SSH 鍵が無いと private リポジトリの clone もできない**ので、鍵束を旧マシンで暗号化バックアップしておく必要がある。
+
 ```bash
-# 0. macOS 初期セットアップ (Apple ID等は手動)
+# 旧マシンで実行: keys.tar.age を iCloud Drive に作成
+mkdir -p "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup"
+tar czf - -C "$HOME" \
+  .config/chezmoi/key.txt \
+  .ssh/id_ed25519 \
+  .ssh/id_ed25519.pub \
+  | age -p > "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age"
+```
+
+- パスフレーズは強いものを設定し、別途記録しておく (忘れると復旧不能)
+- iCloud Drive に置いた tarball は新マシンの Apple ID サインイン後に自動で同期される
+- 詳細は「5. chezmoi の使い方 → 暗号化 (age) → バックアップ戦略」参照
+
+### Phase 0〜8: 新マシンでの作業
+
+```bash
+# 0. macOS 初期セットアップ (Apple ID 手動 → iCloud Drive で keys.tar.age が同期される)
 
 # 1. Xcode CLT
 xcode-select --install
@@ -305,31 +359,44 @@ xcode-select --install
 curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install --enable-flakes
 # → 新しいターミナルを開く
 
-# 3. nix-config を取得して適用
-git clone <nix-config-repo> ~/nix-config
+# 3. age を最低限 nix-shell で取り出して鍵束を復元
+nix-shell -p age --run '
+  age -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age" \
+    | tar xz -C "$HOME"
+'
+chmod 600 ~/.config/chezmoi/key.txt ~/.ssh/id_ed25519
+# → ここで Phase -1 で設定した tarball のパスフレーズを 1 回入力
+# → ~/.config/chezmoi/key.txt と ~/.ssh/id_ed25519{,.pub} が復元される
+
+# 4. SSH 鍵を ssh-agent + Keychain に登録
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519
+# → ここで SSH 鍵自体のパスフレーズを 1 回入力 (以降 Keychain から自動取得)
+
+# 5. nix-config を取得して適用
+git clone git@github.com:<your-account>/nix-config.git ~/nix-config
 cd ~/nix-config
 sudo nix run nix-darwin -- switch --flake ".#your-host"
 # → 失敗時は flake.nix の hostname / username を新マシンに合わせる
 
-# 4. age 鍵を Keychain から復元
-mkdir -p ~/.config/chezmoi
-security find-generic-password -s "chezmoi-age-key" -a "$USER" -w | xxd -r -p > ~/.config/chezmoi/key.txt
-chmod 600 ~/.config/chezmoi/key.txt
-# → 別マシンの Keychain は同期されないので、移行時は事前にエクスポート/転送が必要
-
-# 5. chezmoi 初期化 (dotfile 一式 + nvim/emacs を一発展開)
+# 6. chezmoi 初期化 (dotfile 一式 + nvim/emacs を一発展開)
 chezmoi init --apply git@github.com:tori3-po4/chezmoi-dotfiles.git
+# → SSH 鍵で clone → age 鍵で encrypted_*.age を復号 → ホームに展開
 
-# 6. シェル再読込
+# 7. シェル再読込
 exec zsh
 
-# 7. Neovim 初回起動 (lazy.nvim 自動セットアップ)
+# 8. Neovim 初回起動 (lazy.nvim 自動セットアップ)
 nvim
 :Lazy restore   # lazy-lock.json から復元
 :q
 
-# 8. App Store サインイン、プライバシー権限許可など (手動)
+# 9. App Store サインイン、プライバシー権限許可など (手動)
 ```
+
+### 鍵を忘れた / iCloud が使えない場合のフォールバック
+
+- **age tarball のパスフレーズを忘れた**: 復旧不能。新規 SSH 鍵生成 → GitHub 公開鍵差し替え → 新規 age 鍵生成 → 旧 chezmoi リポジトリの暗号化ファイルは捨てて再構築。
+- **iCloud Drive にアクセスできない**: 旧マシンが生きていれば AirDrop / scp で `keys.tar.age` を転送、または `~/.config/chezmoi/key.txt` と `~/.ssh/id_ed25519` を直接転送。
 
 ---
 
