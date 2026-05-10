@@ -8,12 +8,13 @@
     profiles.default = {
       userSettings = builtins.fromJSON (builtins.readFile ./vscode-settings.json);
 
-      extensions = with pkgs.vscode-marketplace; [
+      extensions = (with pkgs.vscode-marketplace; [
         anthropic.claude-code
         bradlc.vscode-tailwindcss
         docker.docker
         github.github-vscode-theme
         james-yu.latex-workshop
+        jnoortheen.nix-ide
         ms-azuretools.vscode-containers
         ms-ceintl.vscode-language-pack-ja
         ms-python.debugpy
@@ -28,13 +29,16 @@
         ms-vscode-remote.remote-ssh
         ms-vscode-remote.remote-ssh-edit
         ms-vscode.cmake-tools
-        # ms-vscode.cpptools (proprietary, removed on darwin) — VSCode GUIから手動インストール
-        # ms-vscode.cpptools-extension-pack — cpptoolsに依存するため除外
-        # ms-vscode.cpptools-themes — cpptoolsに依存するため除外
+        ms-vscode.cpptools-extension-pack
+        ms-vscode.cpptools-themes
         ms-vscode.remote-explorer
         ocamllabs.ocaml-platform
         pkief.material-icon-theme
         rust-lang.rust-analyzer
+      ]) ++ [
+        # cpptools 本体は nix-vscode-extensions 側で darwin から削除されているため、
+        # nixpkgs 同梱版 (allowUnfree) を使う
+        pkgs.vscode-extensions.ms-vscode.cpptools
       ];
     };
   };
