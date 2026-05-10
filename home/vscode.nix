@@ -3,7 +3,7 @@
   programs.vscode = {
     enable = true;
     package = null;  # 本体は手動インストール (/Applications/Visual Studio Code.app) を使う
-    mutableExtensionsDir = false;
+    mutableExtensionsDir = true;  # cpptoolsなど marketplaceでしか入手できない拡張を手動追加可能に
 
     profiles.default = {
       userSettings = builtins.fromJSON (builtins.readFile ./vscode-settings.json);
@@ -28,9 +28,9 @@
         ms-vscode-remote.remote-ssh
         ms-vscode-remote.remote-ssh-edit
         ms-vscode.cmake-tools
-        ms-vscode.cpptools
-        ms-vscode.cpptools-extension-pack
-        ms-vscode.cpptools-themes
+        # ms-vscode.cpptools (proprietary, removed on darwin) — VSCode GUIから手動インストール
+        # ms-vscode.cpptools-extension-pack — cpptoolsに依存するため除外
+        # ms-vscode.cpptools-themes — cpptoolsに依存するため除外
         ms-vscode.remote-explorer
         ocamllabs.ocaml-platform
         pkief.material-icon-theme
