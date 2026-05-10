@@ -9,7 +9,6 @@
       show-recents = false;
       tilesize = 60;
       wvous-br-corner = 1;
-      wvous-br-modifier = 0;
     };
 
     finder = {
@@ -55,6 +54,10 @@
     CustomUserPreferences = {
       NSGlobalDomain = {
         AppleMiniaturizeOnDoubleClick = 0;
+      };
+
+      "com.apple.dock" = {
+        wvous-br-modifier = 0;
       };
 
       "com.apple.AppleMultitouchTrackpad" = {
