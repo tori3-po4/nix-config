@@ -19,7 +19,6 @@
 
     NSGlobalDomain = {
       AppleEnableSwipeNavigateWithScrolls = false;
-      AppleMiniaturizeOnDoubleClick = false;
       AppleShowAllExtensions = true;
       AppleSpacesSwitchOnActivate = true;
       NSAutomaticCapitalizationEnabled = true;
@@ -54,6 +53,10 @@
     };
 
     CustomUserPreferences = {
+      NSGlobalDomain = {
+        AppleMiniaturizeOnDoubleClick = 0;
+      };
+
       "com.apple.AppleMultitouchTrackpad" = {
         ActuateDetents = 1;
         ForceSuppressed = 0;
