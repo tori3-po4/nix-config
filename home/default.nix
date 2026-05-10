@@ -10,6 +10,7 @@
     jq
     bat
     eza
+    coreutils
 
     # ===== Git周辺 =====
     git
@@ -60,5 +61,9 @@
     tree-sitter
     iverilog
     llama-cpp
+    arduino-cli
+
+    # ===== LaTeX周辺 =====
+    tex-fmt
   ];
 }
