@@ -33,6 +33,7 @@
         ./darwin
         {
           nixpkgs.overlays = [ nix-vscode-extensions.overlays.default ];
+          nixpkgs.config.allowUnfree = true;
         }
         home-manager.darwinModules.home-manager
         {
