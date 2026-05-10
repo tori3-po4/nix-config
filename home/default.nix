@@ -1,5 +1,7 @@
 { pkgs, username, ... }:
 {
+  imports = [ ./vscode.nix ];
+
   home.stateVersion = "24.11";
 
   home.packages = with pkgs; [

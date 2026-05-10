@@ -1,0 +1,141 @@
+{
+    "editor.fontFamily": "HackGen Console NF",
+    "workbench.iconTheme": "material-icon-theme",
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "platex -> dvipdfmx",
+            "tools": ["latexmk-platex"]
+        },
+        {
+            "name": "lualatex",
+            "tools": ["latexmk-lualatex"]
+        }
+    ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk-lualatex",
+            "command": "latexmk",
+            "args": [
+                "-lualatex",
+                "-verbose",
+                "-file-line-error",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-aux-directory=.aux",
+                "-output-directory=.out",
+                "%DOC%"
+            ],
+            "env": {}
+        },
+        {
+            "name": "latexmk-pdflatex",
+            "command": "latexmk",
+            "args": [
+                "-pdf",
+                "-verbose",
+                "-file-line-error",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-aux-directory=.aux",
+                "-output-directory=.out",
+                "%DOC%"
+            ]
+        },
+        {
+            "name": "latexmk-xelatex",
+            "command": "latexmk",
+            "args": [
+                "-xelatex",
+                "-verbose",
+                "-file-line-error",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-aux-directory=.aux",
+                "-output-directory=.out",
+                "%DOC%"
+            ]
+        },
+        {
+            "name": "latexmk-platex",
+            "command": "latexmk",
+            "args": [
+                "-latex=platex",
+                "-pdfdvi",
+                "-verbose",
+                "-file-line-error",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-aux-directory=.aux",
+                "-output-directory=.out",
+                "%DOC%"
+            ]
+        },
+        {
+            "name": "latexmk-uplatex",
+            "command": "latexmk",
+            "args": [
+                "-latex=uplatex",
+                "-pdfdvi",
+                "-verbose",
+                "-file-line-error",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-aux-directory=.aux",
+                "-output-directory=.out",
+                "%DOC%"
+            ]
+        }
+    ],
+    "latex-workshop.latex.recipe.default": "lastUsed",
+    "latex-workshop.intellisense.package.enabled": true,
+    "[latex]": {
+        "editor.defaultFormatter": "James-Yu.latex-workshop",
+        "editor.formatOnSave": true
+    },
+    "latex-workshop.formatting.latex": "tex-fmt",
+    "latex-workshop.formatting.tex-fmt.path": "tex-fmt",
+    "latex-workshop.formatting.tex-fmt.args": [],
+    "workbench.startupEditor": "none",
+    "terminal.integrated.shellIntegration.history": 0,
+    "terminal.integrated.enablePersistentSessions": false,
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "C_Cpp.default.cppStandard": "c++23",
+    "editor.minimap.enabled": false,
+    "editor.stickyScroll.enabled": false,
+    "C_Cpp.autocompleteAddParentheses": true,
+    "C_Cpp.default.cStandard": "c23",
+    "C_Cpp.intelliSenseUpdateDelay": 500,
+    "C_Cpp.default.intelliSenseMode": "macos-gcc-arm64",
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "github.copilot.chat.fixTestFailure.enabled": false,
+    "editor.formatOnSave": true,
+    "C_Cpp.default.compilerPath": "",
+    "workbench.editor.empty.hint": "hidden",
+    "terminal.integrated.fontFamily": "HackGen Console NF",
+    "terminal.integrated.customGlyphs": false,
+    "terminal.integrated.fontSize": 16,
+    "scm.inputFontSize": 12,
+    "debug.console.fontSize": 16,
+    "containers.containerClient": "com.microsoft.visualstudio.containers.docker",
+    "python.defaultInterpreterPath": "/Users/yourname/.local/bin/python3.14",
+    "python-envs.defaultEnvManager": "ms-python.python:pyenv",
+    "telemetry.editStats.enabled": false,
+    "window.zoomPerWindow": false,
+    "git.confirmSync": false,
+    "git.openRepositoryInParentFolders": "never",
+    "editor.fontSize": 16,
+    "diffEditor.maxComputationTime": 0,
+    "claudeCode.preferredLocation": "panel",
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.defaultColorDecorators": "never",
+        "editor.formatOnType": true,
+        "editor.wordBasedSuggestions": "off"
+    },
+    "workbench.colorTheme": "Tomorrow Night Blue",
+    "workbench.browser.showInTitleBar": false,
+    "window.zoomLevel": 1,
+    "chat.disableAIFeatures": true,
+    "editor.wordWrap": "on",
+    "telemetry.telemetryLevel": "off"
+}

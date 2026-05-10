@@ -13,9 +13,14 @@
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-vscode-extensions = {
+      url = "github:nix-community/nix-vscode-extensions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager }:
+  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-vscode-extensions }:
   let
     username = "yourname";
     hostname = "your-host";
@@ -26,6 +31,9 @@
       specialArgs = { inherit inputs username; };
       modules = [
         ./darwin
+        {
+          nixpkgs.overlays = [ nix-vscode-extensions.overlays.default ];
+        }
         home-manager.darwinModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
