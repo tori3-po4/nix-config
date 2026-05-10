@@ -364,9 +364,11 @@ nix-shell -p age --run '
   age -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age" \
     | tar xz -C "$HOME"
 '
+chmod 700 ~/.ssh ~/.config/chezmoi
 chmod 600 ~/.config/chezmoi/key.txt ~/.ssh/id_ed25519
 # → ここで Phase -1 で設定した tarball のパスフレーズを 1 回入力
 # → ~/.config/chezmoi/key.txt と ~/.ssh/id_ed25519{,.pub} が復元される
+# → tar が自動生成する中間ディレクトリは 755 になるため、~/.ssh を 700 に直さないと SSH が鍵を拒否する
 
 # 4. SSH 鍵を ssh-agent + Keychain に登録
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
