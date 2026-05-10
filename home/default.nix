@@ -52,6 +52,10 @@
     yt-dlp
     gnupg
 
+    # ===== dotfile管理 =====
+    chezmoi
+    age
+
     # ===== 専門ツール =====
     tree-sitter
     iverilog
