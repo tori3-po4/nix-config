@@ -101,7 +101,7 @@
       "com.apple.screencapture" = {
         style = "window";
         video = 0;
-        location = "~/Picture/Screenshots"
+        location = "~/Picture/Screenshots";
       };
     };
   };
