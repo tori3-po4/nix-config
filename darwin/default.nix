@@ -1,6 +1,6 @@
 { pkgs, username, ... }:
 {
-  imports = [ ./homebrew.nix ];
+  imports = [ ./homebrew.nix ./defaults.nix ];
 
   system.stateVersion = 5;
   nixpkgs.hostPlatform = "aarch64-darwin";
