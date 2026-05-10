@@ -5,7 +5,7 @@
     onActivation = {
       autoUpdate = false;
       upgrade = false;
-      cleanup = "none";  # 最初は必ず "none"。安定後に "uninstall" → "zap"
+      cleanup = "uninstall";  # homebrew.nix にない brew/cask は自動アンインストール
     };
 
     taps = [

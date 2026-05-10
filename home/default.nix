@@ -83,7 +83,7 @@
 
     # ===== Formatters / Linters =====
     stylua
-    nixfmt-rfc-style
+    nixfmt
     ruff
     rustfmt
     prettier
