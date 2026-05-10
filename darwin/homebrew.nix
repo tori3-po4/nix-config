@@ -26,22 +26,30 @@
       "blender"
       "claude-code"
       "cmake-app"
+      "discord"
       "docker-desktop"
       "emacs-app"
       "font-hackgen-nerd"
       "ghostty"
+      "google-chrome"
       "google-japanese-ime"
+      "jetbrains-toolbox"
+      "logi-options-plus"
       "mactex-no-gui"
+      "minecraft"
       "obsidian"
       "pearcleaner"
       "raspberry-pi-imager"
       "rstudio"
       "skim"
+      "slack"
+      "tailscale-app"
       "utm"
+      "visual-studio-code"
     ];
 
     masApps = {
-      # 現状利用なし
+      # masApps は使用しない (Slack/Tailscale は cask に統一)
     };
   };
 }
