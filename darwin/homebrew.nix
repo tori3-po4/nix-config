@@ -5,7 +5,7 @@
     onActivation = {
       autoUpdate = false;
       upgrade = false;
-      cleanup = "uninstall";  # homebrew.nix にない brew/cask は自動アンインストール
+      cleanup = "uninstall"; # homebrew.nix にない brew/cask は自動アンインストール
     };
 
     taps = [
@@ -46,6 +46,7 @@
       "tailscale-app"
       "utm"
       "visual-studio-code"
+      "zotero"
     ];
 
     masApps = {
