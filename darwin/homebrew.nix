@@ -28,7 +28,6 @@
       "cmake-app"
       "discord"
       "docker-desktop"
-      "emacs-app"
       "font-hackgen-nerd"
       "ghostty"
       "google-chrome"
@@ -45,7 +44,6 @@
       "slack"
       "tailscale-app"
       "utm"
-      "visual-studio-code"
       "zotero"
     ];
 

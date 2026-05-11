@@ -22,6 +22,7 @@
 
     # ===== エディタ/シェル支援 =====
     neovim
+    emacs
     tmux
     zoxide
     starship
