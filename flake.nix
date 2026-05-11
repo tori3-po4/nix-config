@@ -18,9 +18,11 @@
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
   };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-vscode-extensions }:
+  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-vscode-extensions, nix-homebrew }:
   let
     username = "yourname";
     hostname = "your-host";
@@ -34,6 +36,15 @@
         {
           nixpkgs.overlays = [ nix-vscode-extensions.overlays.default ];
           nixpkgs.config.allowUnfree = true;
+        }
+        nix-homebrew.darwinModules.nix-homebrew
+        {
+          nix-homebrew = {
+            enable = true;
+            enableRosetta = true;
+            user = username;
+            autoMigrate = true;  # 既存の手動インストールHomebrewを引き継ぐ
+          };
         }
         home-manager.darwinModules.home-manager
         {
