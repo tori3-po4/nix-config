@@ -16,9 +16,6 @@
     brews = [
       "sqlite"
       "flyctl"
-      "gcc"
-      "libomp"
-      "llvm"
       "randomplum/gtkwave/gtkwave"
     ];
 
