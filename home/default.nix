@@ -92,6 +92,7 @@
     yaml-language-server
     bash-language-server
     vscode-langservers-extracted # html, css, json, eslint LSPs
+    nixd
 
     # ===== Formatters / Linters =====
     stylua
