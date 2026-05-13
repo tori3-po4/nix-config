@@ -3,8 +3,8 @@
     enable = true;
 
     onActivation = {
-      autoUpdate = false;
-      upgrade = false;
+      autoUpdate = true;
+      upgrade = true;
       cleanup = "uninstall"; # homebrew.nix にない brew/cask は自動アンインストール
     };
 
