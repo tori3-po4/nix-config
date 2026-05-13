@@ -12,17 +12,13 @@
       "randomplum/gtkwave"
     ];
 
-    # Nix化が難しいmacOS toolchain系のみbrew残し
+    # gtkwave GUI は randomplum tap でのみ macOS 対応されているため brew 残し
     brews = [
-      "sqlite"
-      "flyctl"
       "randomplum/gtkwave/gtkwave"
     ];
 
     casks = [
       "blender"
-      "claude-code"
-      "cmake-app"
       "discord"
       "docker-desktop"
       "font-hackgen-nerd"

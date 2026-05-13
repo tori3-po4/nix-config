@@ -29,6 +29,9 @@
     direnv
     stow
 
+    # ===== AIコーディング支援 =====
+    claude-code
+
     # ===== ドキュメント =====
     pandoc
 
@@ -70,6 +73,8 @@
     iverilog
     llama-cpp
     arduino-cli
+    sqlite
+    flyctl
 
     # ===== LaTeX周辺 =====
     texlive.combined.scheme-full # MacTeX-no-gui 相当(全部入り)
