@@ -150,12 +150,12 @@ sudo darwin-rebuild switch --flake ~/nix-config  # cleanup の強度に応じて
 - ビルド: automake, cmake, meson, pkgconf, gnumake
 - 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler
 - 特殊: tree-sitter, iverilog, llama-cpp, arduino-cli
-- LaTeX: tex-fmt
+- LaTeX: texlive (scheme-full), tex-fmt
 - LSP: lua-language-server, nil, pyright, rust-analyzer, typescript-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt-rfc-style, ruff, rustfmt, prettier, shellcheck, shfmt
 
 ### Homebrew (`darwin/homebrew.nix`)
-- **Casks**: blender, claude-code, cmake-app, docker-desktop, emacs-app, font-hackgen-nerd, ghostty, google-japanese-ime, mactex-no-gui, obsidian, pearcleaner, raspberry-pi-imager, rstudio, skim, utm
+- **Casks**: blender, claude-code, cmake-app, docker-desktop, emacs-app, font-hackgen-nerd, ghostty, google-japanese-ime, obsidian, pearcleaner, raspberry-pi-imager, rstudio, skim, utm
 - **Brews (macOS toolchain系のみ)**: sqlite, flyctl, gcc, libomp, llvm, gtkwave (with `randomplum/gtkwave` tap)
 
 ### chezmoi (`~/.local/share/chezmoi/`)

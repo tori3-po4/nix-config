@@ -31,7 +31,6 @@
       "google-japanese-ime"
       "jetbrains-toolbox"
       "logi-options+"
-      "mactex-no-gui"
       "minecraft"
       "obsidian"
       "pearcleaner"
