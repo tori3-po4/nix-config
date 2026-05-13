@@ -10,8 +10,8 @@
     fd
     fzf
     jq
-    bat
-    eza
+    #bat
+    #eza
     coreutils
 
     # ===== Git周辺 =====
@@ -24,8 +24,8 @@
     neovim
     emacs
     tmux
-    zoxide
-    starship
+    #zoxide
+    #starship
     direnv
     stow
 
@@ -45,11 +45,11 @@
     meson
     pkgconf
     gnumake
-    gcc                                      # 競プロ <bits/stdc++.h>、クロスコンパイル
-    lld                                      # 高速リンカ
-    lldb                                     # デバッガ
-    llvm                                     # opt, llc, llvm-objdump 等
-    llvmPackages.openmp                      # Apple clang で -fopenmp を使うためのランタイム
+    gcc # 競プロ <bits/stdc++.h>、クロスコンパイル
+    lld # 高速リンカ
+    lldb # デバッガ
+    llvm # opt, llc, llvm-objdump 等
+    llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
 
     # ===== 画像/動画/PDF =====
     ffmpeg
@@ -72,7 +72,7 @@
     arduino-cli
 
     # ===== LaTeX周辺 =====
-    texlive.combined.scheme-full             # MacTeX-no-gui 相当(全部入り)
+    texlive.combined.scheme-full # MacTeX-no-gui 相当(全部入り)
     tex-fmt
 
     # ===== LSP servers (Nvim/Emacs共通) =====
@@ -82,11 +82,11 @@
     rust-analyzer
     typescript-language-server
     texlab
-    clang-tools                              # clangd, clang-format
+    clang-tools # clangd, clang-format
     marksman
     yaml-language-server
     bash-language-server
-    vscode-langservers-extracted             # html, css, json, eslint LSPs
+    vscode-langservers-extracted # html, css, json, eslint LSPs
 
     # ===== Formatters / Linters =====
     stylua
