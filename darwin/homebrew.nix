@@ -27,7 +27,6 @@
       "font-hackgen-nerd"
       "ghostty"
       "google-chrome"
-      "google-japanese-ime"
       "jetbrains-toolbox"
       "logi-options+"
       "minecraft"

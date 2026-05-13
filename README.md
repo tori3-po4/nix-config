@@ -155,7 +155,7 @@ sudo darwin-rebuild switch --flake ~/nix-config  # cleanup の強度に応じて
 - Formatter/Linter: stylua, nixfmt-rfc-style, ruff, rustfmt, prettier, shellcheck, shfmt
 
 ### Homebrew (`darwin/homebrew.nix`)
-- **Casks**: blender, claude-code, cmake-app, docker-desktop, emacs-app, font-hackgen-nerd, ghostty, google-japanese-ime, obsidian, pearcleaner, raspberry-pi-imager, rstudio, skim, utm
+- **Casks**: blender, claude-code, cmake-app, docker-desktop, emacs-app, font-hackgen-nerd, ghostty, obsidian, pearcleaner, raspberry-pi-imager, rstudio, skim, utm
 - **Brews (macOS toolchain系のみ)**: sqlite, flyctl, gcc, libomp, llvm, gtkwave (with `randomplum/gtkwave` tap)
 
 ### chezmoi (`~/.local/share/chezmoi/`)
