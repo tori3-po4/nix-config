@@ -39,6 +39,7 @@
       "tailscale-app"
       "utm"
       "zotero"
+      "xquartz"
     ];
 
     masApps = {
