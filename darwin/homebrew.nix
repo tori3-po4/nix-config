@@ -42,8 +42,5 @@
       "xquartz"
     ];
 
-    masApps = {
-      # masApps は使用しない (Slack/Tailscale は cask に統一)
-    };
   };
 }
