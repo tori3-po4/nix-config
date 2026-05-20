@@ -61,6 +61,9 @@
 ├── flake.nix            # 入力定義 (nixpkgs, nix-darwin, home-manager, nix-vscode-extensions)
 ├── flake.lock           # ロックファイル (Nixが管理 / sudoで触ると root 所有になる)
 ├── .gitignore
+├── private/             # ホスト/ユーザ固有情報 (公開リポジトリで隠蔽するための隔離先)
+│   ├── user.nix.example # 公開テンプレート (これだけ git 追跡)
+│   └── user.nix         # 実情報 (各自で作成。intent-to-add + skip-worktree でコミットされない)
 ├── darwin/              # macOSシステム/ユーザレベル設定
 │   ├── default.nix      # darwin/* を import するエントリポイント
 │   ├── homebrew.nix     # cask + brew + tap 宣言
@@ -73,7 +76,9 @@
 
 ### 各ファイルの役割
 
-- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.your-host` を定義。`nix-vscode-extensions` overlay と `nixpkgs.config.allowUnfree = true` もここで設定。
+- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。`nix-vscode-extensions` overlay と `nixpkgs.config.allowUnfree = true` もここで設定。
+- **`private/user.nix`**: ホスト名・ユーザ名・アーキを保持する個人情報ファイル。`.gitignore` 対象だが `git add -N -f` で intent-to-add し、Nix flake から見えるようにする。`git update-index --skip-worktree` で誤コミットも防止。
+- **`private/user.nix.example`**: 公開可能なテンプレート。新マシンでは `cp private/user.nix.example private/user.nix` から始める。
 - **`darwin/default.nix`**: `system.stateVersion` / `system.primaryUser` / Nixpkgs設定。`./homebrew.nix` と `./defaults.nix` を import。
 - **`darwin/homebrew.nix`**: Brewfile相当の宣言。`onActivation.cleanup = "none"` で安全運用 (将来 `"uninstall"` → `"zap"` に強化)。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
@@ -374,11 +379,23 @@ chmod 600 ~/.config/chezmoi/key.txt ~/.ssh/id_ed25519
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 # → ここで SSH 鍵自体のパスフレーズを 1 回入力 (以降 Keychain から自動取得)
 
-# 5. nix-config を取得して適用
+# 5. nix-config を取得
 git clone git@github.com:<your-account>/nix-config.git ~/nix-config
 cd ~/nix-config
-sudo nix run nix-darwin -- switch --flake ".#your-host"
-# → 失敗時は flake.nix の hostname / username を新マシンに合わせる
+
+# 5a. 個人情報ファイルを作成 (テンプレートをコピーして編集)
+cp private/user.nix.example private/user.nix
+$EDITOR private/user.nix
+# → username (whoami の出力) / hostname (scutil --get LocalHostName) /
+#    system (Apple Silicon は "aarch64-darwin") を自分の環境に合わせる
+
+# 5b. Nix から見えるように intent-to-add し、誤コミット防止に skip-worktree も設定
+git add -N -f private/user.nix
+git update-index --skip-worktree private/user.nix
+# → これで Nix flake からは見えるが、git status / VSCode の git client には表示されない
+
+# 5c. 適用 (default ホストを使うと hostname を意識しなくて済む)
+sudo nix run nix-darwin -- switch --flake ".#default"
 
 # 6. chezmoi 初期化 (dotfile 一式 + nvim/emacs を一発展開)
 chezmoi init --apply git@github.com:tori3-po4/chezmoi-dotfiles.git
@@ -430,6 +447,33 @@ sudo chown $(id -u):staff ~/nix-config/flake.lock
 #### `attribute 'foo' missing` / `option does not exist`
 nix-darwin が知らないオプション名を `system.defaults.*` に書いた。
 [MyNixOS](https://mynixos.com/) で正しい名前を検索するか、`CustomUserPreferences` に逃がす。
+
+### `private/user.nix` 関連
+
+#### `Path 'private/user.nix' in the repository ... is not tracked by Git`
+flake は git 追跡内のファイルしか参照できない。intent-to-add すれば内容を漏らさず可視化できる:
+```bash
+git add -N -f private/user.nix
+```
+
+#### `private/user.nix` が VSCode の Source Control に出てくる / 誤コミットしてしまう
+intent-to-add 状態だと VSCode の git client に拾われるので、`skip-worktree` で完全に隠す:
+```bash
+git update-index --skip-worktree private/user.nix
+# 解除したいとき:
+git update-index --no-skip-worktree private/user.nix
+```
+
+#### 誤って `private/user.nix` を内容ごとコミットしてしまった
+直前のコミットなら amend で消す:
+```bash
+git rm --cached private/user.nix
+git commit --amend --no-edit
+git push --force-with-lease origin main   # push 済みなら
+git add -N -f private/user.nix             # intent-to-add 復元
+git update-index --skip-worktree private/user.nix
+```
+過去の複数コミットに含まれている場合は `git filter-repo --replace-text` で全履歴から除去 →`git push --force` する。
 
 ### chezmoi の trouble
 

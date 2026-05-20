@@ -1,0 +1,26 @@
+# private/user.nix のテンプレート。
+#
+# 使い方:
+#   1. このファイルを private/user.nix にコピー
+#        cp private/user.nix.example private/user.nix
+#   2. 自分の環境に合わせて値を書き換える
+#        $EDITOR private/user.nix
+#   3. Nix flake から見えるように intent-to-add する
+#        git add -N -f private/user.nix
+#   4. 誤コミット防止のため skip-worktree を設定する
+#        git update-index --skip-worktree private/user.nix
+#   5. 適用
+#        darwin-rebuild switch --flake .#default
+{
+  # macOS のログインユーザ名 (whoami の出力と一致させる)
+  username = "yourname";
+
+  # macOS のホスト名 (scutil --get LocalHostName の出力と一致させると
+  # `darwin-rebuild switch --flake .` でホスト指定を省略できる)
+  hostname = "your-host";
+
+  # ターゲットアーキテクチャ
+  #   Apple Silicon: "aarch64-darwin"
+  #   Intel Mac:     "x86_64-darwin"
+  system = "aarch64-darwin";
+}
