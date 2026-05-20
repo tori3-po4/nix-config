@@ -1,11 +1,17 @@
-{ pkgs, username, ... }:
+{ username, ... }:
 {
-  imports = [ ./homebrew.nix ./defaults.nix ];
+  imports = [
+    ./homebrew.nix
+    ./defaults.nix
+  ];
 
   system.stateVersion = 5;
   nixpkgs.hostPlatform = "aarch64-darwin";
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   system.primaryUser = username;
 
@@ -14,5 +20,5 @@
     home = "/Users/${username}";
   };
 
-  environment.systemPackages = [];
+  environment.systemPackages = [ ];
 }
