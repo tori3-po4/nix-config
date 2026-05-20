@@ -31,6 +31,7 @@
 
     # ===== ターミナルエミュレーター ====
     (if stdenv.isDarwin then ghostty-bin else ghostty)
+
     # ===== AIコーディング支援 =====
     claude-code
 
