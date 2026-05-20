@@ -25,7 +25,6 @@
       "discord"
       "docker-desktop"
       "font-hackgen-nerd"
-      "ghostty"
       "google-chrome"
       "jetbrains-toolbox"
       "logi-options+"
