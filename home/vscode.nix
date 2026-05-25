@@ -36,6 +36,7 @@
           ocamllabs.ocaml-platform
           pkief.material-icon-theme
           rust-lang.rust-analyzer
+          vscodevim.Vim
         ])
         ++ [
           # cpptools 本体は nix-vscode-extensions 側で darwin から削除されているため、
