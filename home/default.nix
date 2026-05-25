@@ -46,7 +46,6 @@
     nodejs_22
     uv
     opam
-    R
 
     # ===== ビルドツール =====
     automake

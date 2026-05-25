@@ -31,6 +31,7 @@
       "minecraft"
       "obsidian"
       "pearcleaner"
+      "r"
       "raspberry-pi-imager"
       "rstudio"
       "skim"
