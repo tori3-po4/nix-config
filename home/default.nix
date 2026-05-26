@@ -24,6 +24,7 @@
     neovim
     emacs
     tmux
+    helix
     #zoxide
     #starship
     direnv
