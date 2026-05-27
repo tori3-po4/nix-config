@@ -31,7 +31,7 @@
       "minecraft"
       "obsidian"
       "pearcleaner"
-      "r"
+      "r-app"
       "raspberry-pi-imager"
       "rstudio"
       "skim"
@@ -40,7 +40,7 @@
       "utm"
       "zotero"
       "xquartz"
-      "wireshark"
+      "wireshark-app"
     ];
 
   };
