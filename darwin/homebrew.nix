@@ -40,6 +40,7 @@
       "utm"
       "zotero"
       "xquartz"
+      "wireshark"
     ];
 
   };
