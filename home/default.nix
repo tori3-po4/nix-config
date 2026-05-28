@@ -45,7 +45,6 @@
     deno
     nodejs_22
     uv
-    opam
 
     # ===== ビルドツール =====
     automake

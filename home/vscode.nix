@@ -11,7 +11,6 @@
       extensions =
         (with pkgs.vscode-marketplace; [
           anthropic.claude-code
-          bradlc.vscode-tailwindcss
           docker.docker
           github.github-vscode-theme
           james-yu.latex-workshop
@@ -33,8 +32,6 @@
           ms-vscode.cpptools-extension-pack
           ms-vscode.cpptools-themes
           ms-vscode.remote-explorer
-          ocamllabs.ocaml-platform
-          pkief.material-icon-theme
           rust-lang.rust-analyzer
           vscodevim.vim
         ])
