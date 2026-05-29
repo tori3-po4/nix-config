@@ -4,7 +4,15 @@
     enable = true;
     enableCompletion = true;
     autosuggestion.enable = true;
-    syntaxHighlighting.enable = true;
+    syntaxHighlighting = {
+      enable = true;
+      styles = {
+        path = "fg=magenta";
+        path_pathseparator = "fg=magenta,bold";
+        path_prefix = "fg=magenta";
+        path_prefix_pathseparator = "fg=magenta,bold";
+      };
+    };
 
     history = {
       append = true;
