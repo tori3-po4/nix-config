@@ -3,6 +3,7 @@
   imports = [
     ./homebrew.nix
     ./defaults.nix
+    ./jetbrains-wrapper-fix.nix
   ];
 
   system.stateVersion = 5;
