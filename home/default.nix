@@ -1,6 +1,11 @@
 { pkgs, ... }:
 {
-  imports = [ ./vscode.nix ];
+  imports = [
+    ./vscode.nix
+    ./zsh.nix
+    ./bash.nix
+    ./starship.nix
+  ];
 
   home.stateVersion = "24.11";
 
@@ -28,7 +33,6 @@
     jetbrains.clion
     jetbrains.idea
     #zoxide
-    #starship
     tmux
     direnv
     stow

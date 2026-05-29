@@ -1,5 +1,7 @@
+.idea/
 result
 result-*
 .direnv/
 private/*
 !private/*.example
+
