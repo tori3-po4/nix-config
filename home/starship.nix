@@ -7,7 +7,25 @@
 
     settings = {
       add_newline = false;
-      format = "$directory$git_branch$git_status$character";
+      format = "$shell$nix_shell$directory$git_branch$git_status$character";
+
+      shell = {
+        disabled = false;
+        bash_indicator = "bash";
+        zsh_indicator = "zsh";
+        fish_indicator = "fish";
+        unknown_indicator = "?";
+        style = "bold yellow";
+        format = "[$indicator]($style) ";
+      };
+
+      nix_shell = {
+        impure_msg = "impure";
+        pure_msg = "pure";
+        unknown_msg = "unknown";
+        style = "bold blue";
+        format = "[nix:$state]($style) ";
+      };
 
       directory = {
         truncation_length = 3;
