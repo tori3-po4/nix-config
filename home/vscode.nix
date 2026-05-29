@@ -2,7 +2,7 @@
 {
   programs.vscode = {
     enable = true;
-    package = pkgs.vscode;
+    package = null;
     mutableExtensionsDir = false;
 
     profiles.default = {

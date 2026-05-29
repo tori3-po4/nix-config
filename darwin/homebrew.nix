@@ -26,7 +26,6 @@
       "docker-desktop"
       "font-hackgen-nerd"
       "google-chrome"
-      "jetbrains-toolbox"
       "logi-options+"
       "minecraft"
       "obsidian"

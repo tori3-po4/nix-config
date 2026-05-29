@@ -22,10 +22,14 @@
 
     # ===== エディタ/シェル支援 =====
     neovim
-    tmux
     helix
+    vscode
+    jetbrains.pycharm
+    jetbrains.clion
+    jetbrains.idea
     #zoxide
     #starship
+    tmux
     direnv
     stow
 
