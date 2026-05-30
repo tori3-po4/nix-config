@@ -1,6 +1,5 @@
 {
     "editor.fontFamily": "HackGen Console NF",
-    "workbench.iconTheme": "material-icon-theme",
     "latex-workshop.latex.recipes": [
         {
             "name": "platex -> dvipdfmx",
@@ -134,7 +133,7 @@
         "editor.formatOnType": true,
         "editor.wordBasedSuggestions": "off"
     },
-    "workbench.colorTheme": "Github Light",
+    "workbench.colorTheme": "GitHub Dark",
     "workbench.browser.showInTitleBar": false,
     "window.zoomLevel": 1,
     "chat.disableAIFeatures": true,
