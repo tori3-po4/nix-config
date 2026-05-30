@@ -34,7 +34,19 @@
     }:
     let
       # ホスト/ユーザ固有情報は private/user.nix に隔離 (.gitignore 対象)
-      user = import ./private/user.nix;
+      # gitignore されたファイルは flake のストアコピーに含まれないため、
+      # 実ユーザの $HOME を起点にした絶対パスで読み込む。実行時は `--impure` が必要。
+      # sudo 経由だと HOME が /var/root に化けるので SUDO_USER から復元する。
+      realHome =
+        let
+          sudoUser = builtins.getEnv "SUDO_USER";
+          envHome = builtins.getEnv "HOME";
+        in
+        if sudoUser != "" then
+          (if builtins.pathExists "/Users/${sudoUser}" then "/Users/${sudoUser}" else "/home/${sudoUser}")
+        else
+          envHome;
+      user = import "${realHome}/nix-config/private/user.nix";
 
       # 想定対応システム: aarch64-darwin / x86_64-linux / aarch64-linux
       # (実ホストは下の *Configurations で個別に紐づける)

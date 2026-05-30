@@ -134,7 +134,7 @@
         "editor.formatOnType": true,
         "editor.wordBasedSuggestions": "off"
     },
-    "workbench.colorTheme": "Tomorrow Night Blue",
+    "workbench.colorTheme": "Github Light",
     "workbench.browser.showInTitleBar": false,
     "window.zoomLevel": 1,
     "chat.disableAIFeatures": true,
