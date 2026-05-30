@@ -40,6 +40,7 @@
       "zotero"
       "xquartz"
       "wireshark-app"
+      "latexit"
     ];
 
   };
