@@ -90,6 +90,7 @@
 
     # ===== LaTeX周辺 =====
     texlive.combined.scheme-full # MacTeX-no-gui 相当(全部入り)
+    ghostscript
     tex-fmt
 
     # ===== LSP servers (Nvim/Emacs共通) =====

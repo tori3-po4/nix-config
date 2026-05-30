@@ -8,7 +8,7 @@
     profiles.default = {
       userSettings = builtins.fromJSON (builtins.readFile ./vscode-settings.json);
 
-      languageSnipets = {
+      languageSnippets = {
         cpp = {
           "meguru binary search" = {
             prefix = "binsearch";
