@@ -8,6 +8,70 @@
     profiles.default = {
       userSettings = builtins.fromJSON (builtins.readFile ./vscode-settings.json);
 
+      languageSnipets = {
+        cpp = {
+          "meguru binary search" = {
+            prefix = "binsearch";
+            body = [
+              "long long ok = \${1:ok};"
+              "long long ng = \${2:ng};"
+              "while (abs(ok - ng) > 1) {"
+              "    long long mid = (ok + ng) / 2;"
+              "    if (\${3:check(mid)}) ok = mid;"
+              "    else ng = mid;"
+              "}"
+              "\${0}"
+            ];
+            description = "めぐる式二分探索";
+          };
+
+          "shakutori two pointers" = {
+            prefix = "shakutori";
+            body = [
+              "int r = 0;"
+              "for (int l = 0; l < n; l++) {"
+              "    while (r < n && \${1:condition}) {"
+              "        // add a[r]"
+              "        \${2}"
+              "        r++;"
+              "    }"
+              ""
+              "    // use interval [l, r)"
+              "    \${3}"
+              ""
+              "    if (r == l) {"
+              "        r++;"
+              "    } else {"
+              "        // remove a[l]"
+              "        \${4}"
+              "    }"
+              "}"
+              "\${0}"
+            ];
+            description = "尺取り法";
+          };
+
+          "bit exhaustive search" = {
+            prefix = "bitall";
+            body = [
+              "for (int bit = 0; bit < (1 << n); bit++) {"
+              "    for (int i = 0; i < n; i++) {"
+              "        if (bit & (1 << i)) {"
+              "            \${1:// selected}"
+              "        } else {"
+              "            \${2:// not selected}"
+              "        }"
+              "    }"
+              ""
+              "    \${3:// process subset}"
+              "}"
+              "\${0}"
+            ];
+            description = "bit全探索";
+          };
+        };
+      };
+
       extensions =
         (with pkgs.vscode-marketplace; [
           anthropic.claude-code
