@@ -5,6 +5,7 @@
     ./zsh.nix
     ./bash.nix
     ./starship.nix
+    ./firefox.nix
   ];
 
   home.stateVersion = "24.11";
