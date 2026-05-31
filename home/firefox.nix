@@ -27,6 +27,7 @@
         "extensions.activeThemeID" = "firefox-alpenglow@mozilla.org";
         "browser.theme.toolbar-theme" = 0;
         "browser.toolbars.bookmarks.visibility" = "always";
+        "layout.css.devPixelsPerPx" = "2.4";
 
         # ===== サイドバー / 縦タブ =====
         "sidebar.revamp" = true;
@@ -118,12 +119,12 @@
             "widget-overflow-fixed-list" = [ ];
             "unified-extensions-area" = [ ];
             "nav-bar" = [
-              "sidebar-button"
               "back-button"
               "forward-button"
               "stop-reload-button"
               "customizableui-special-spring1"
               "vertical-spacer"
+              "sidebar-button"
               "urlbar-container"
               "customizableui-special-spring2"
               "downloads-button"
@@ -158,12 +159,12 @@
         ];
 
         "browser.uiCustomization.navBarWhenVerticalTabs" = [
-          "sidebar-button"
           "back-button"
           "forward-button"
           "stop-reload-button"
           "customizableui-special-spring1"
           "vertical-spacer"
+          "sidebar-button"
           "urlbar-container"
           "customizableui-special-spring2"
           "downloads-button"
