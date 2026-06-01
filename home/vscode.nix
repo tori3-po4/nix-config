@@ -99,6 +99,7 @@
           rust-lang.rust-analyzer
           vscodevim.vim
           ocamllabs.ocaml-platform
+          pdconsec.vscode-print
         ])
         ++ [
           # cpptools 本体は nix-vscode-extensions 側で darwin から削除されているため、
