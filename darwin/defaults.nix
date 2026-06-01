@@ -48,7 +48,7 @@
     };
 
     WindowManager = {
-      GloballyEnabled = true;
+      GloballyEnabled = false;
       AutoHide = false;
       AppWindowGroupingBehavior = true;
       EnableTiledWindowMargins = false;
