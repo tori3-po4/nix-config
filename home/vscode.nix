@@ -98,6 +98,7 @@
           ms-vscode.remote-explorer
           rust-lang.rust-analyzer
           vscodevim.vim
+          ocamllabs.ocaml-platform
         ])
         ++ [
           # cpptools 本体は nix-vscode-extensions 側で darwin から削除されているため、
