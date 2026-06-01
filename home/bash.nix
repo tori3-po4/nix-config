@@ -19,9 +19,12 @@
     ];
 
     initExtra = ''
+
       # uv 補完
-      eval "$(uv generate-shell-completion bash)"
-      eval "$(uvx --generate-shell-completion bash)"
+      if command -v uv > /dev/null 2>&1; then
+        eval "$(uv generate-shell-completion bash)"
+        eval "$(uvx --generate-shell-completion bash)"
+      fi
 
       # opam (存在すれば読み込み)
       [[ ! -r "$HOME/.opam/opam-init/init.sh" ]] || \

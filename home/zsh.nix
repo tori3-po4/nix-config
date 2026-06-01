@@ -25,9 +25,10 @@
       setopt print_eight_bit
 
       # uv 補完
-      eval "$(uv generate-shell-completion zsh)"
-      eval "$(uvx --generate-shell-completion zsh)"
-
+      if command -v uv > /dev/null 2>&1; then
+        eval "$(uv generate-shell-completion zsh)"
+        eval "$(uvx --generate-shell-completion zsh)"
+      fi
       # opam (存在すれば読み込み)
       [[ ! -r "$HOME/.opam/opam-init/init.zsh" ]] || \
         source "$HOME/.opam/opam-init/init.zsh" > /dev/null 2> /dev/null
