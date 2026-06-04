@@ -98,7 +98,6 @@
           ms-vscode.remote-explorer
           rust-lang.rust-analyzer
           vscodevim.vim
-          ocamllabs.ocaml-platform
           pdconsec.vscode-print
         ])
         ++ [
