@@ -74,7 +74,6 @@
 
       extensions =
         (with pkgs.vscode-marketplace; [
-          anthropic.claude-code
           docker.docker
           github.github-vscode-theme
           james-yu.latex-workshop
