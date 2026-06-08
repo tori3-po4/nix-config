@@ -7,7 +7,7 @@
 
     settings = {
       add_newline = false;
-      format = "$shell$nix_shell$directory$git_branch$git_status$character";
+      format = "$shell$nix_shell$directory$git_branch$git_status\n$character";
 
       shell = {
         disabled = false;
