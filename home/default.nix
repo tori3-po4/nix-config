@@ -90,6 +90,11 @@
     sqlite
     flyctl
 
+    # ===== コンテナ =====
+    # macOS では `podman machine init && podman machine start` で VM を別途用意
+    podman
+    podman-compose
+
     # ===== LaTeX周辺 =====
     texlive.combined.scheme-full # MacTeX-no-gui 相当(全部入り)
     ghostscript

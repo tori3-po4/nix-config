@@ -8,7 +8,7 @@
       cleanup = "uninstall"; # homebrew.nix にない brew/cask は自動アンインストール
     };
 
-    # 自己更新型 cask (discord, slack, docker-desktop 等) も darwin-rebuild で upgrade させる
+    # 自己更新型 cask (discord, slack 等) も darwin-rebuild で upgrade させる
     greedyCasks = true;
 
     taps = [
@@ -23,7 +23,6 @@
     casks = [
       "blender"
       "discord"
-      "docker-desktop"
       "font-hackgen-nerd"
       "google-chrome"
       "logi-options+"

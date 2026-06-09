@@ -119,7 +119,7 @@
     "terminal.integrated.fontSize": 16,
     "scm.inputFontSize": 16,
     "debug.console.fontSize": 16,
-    "containers.containerClient": "com.microsoft.visualstudio.containers.docker",
+    "containers.containerClient": "com.microsoft.visualstudio.containers.podman",
     "telemetry.editStats.enabled": false,
     "window.zoomPerWindow": false,
     "git.confirmSync": false,
