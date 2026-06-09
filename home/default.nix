@@ -37,6 +37,7 @@
     tmux
     direnv
     stow
+    zellij
 
     # ===== ターミナルエミュレーター ====
     (if stdenv.isDarwin then ghostty-bin else ghostty)
