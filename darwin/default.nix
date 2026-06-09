@@ -1,4 +1,4 @@
-{ username, ... }:
+{ username, inputs, ... }:
 {
   imports = [
     ./homebrew.nix
@@ -13,6 +13,12 @@
     "nix-command"
     "flakes"
   ];
+
+  # flake 運用なので旧来のチャネル機構は無効化し、
+  # NIX_PATH の <nixpkgs> もこの flake の nixpkgs に揃える。
+  nix.channel.enable = false;
+  nix.nixPath = [ "nixpkgs=flake:nixpkgs" ];
+  nix.registry.nixpkgs.flake = inputs.nixpkgs;
 
   system.primaryUser = username;
 
