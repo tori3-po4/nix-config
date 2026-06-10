@@ -7,7 +7,7 @@
 
     settings = {
       add_newline = false;
-      format = "$shell$nix_shell$directory\n$git_branch$git_status$character";
+      format = "$shell$directory$git_branch$git_status\n$python$conda$nix_shell$character";
 
       shell = {
         disabled = false;
@@ -25,6 +25,17 @@
         unknown_msg = "unknown";
         style = "bold blue";
         format = "[nix:$state]($style) ";
+      };
+
+      python = {
+        format = "[\\($virtualenv\\)]($style) ";
+        style = "bold yellow";
+      };
+
+      conda = {
+        format = "[conda:$environment]($style) ";
+        style = "bold green";
+        ignore_base = false;
       };
 
       directory = {

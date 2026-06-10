@@ -6,6 +6,7 @@
     ./bash.nix
     ./starship.nix
     ./firefox.nix
+    ./fzf.nix
   ];
 
   home.stateVersion = "24.11";
@@ -16,8 +17,9 @@
     fd
     fzf
     jq
-    #bat
-    #eza
+    bat
+    eza
+    zoxide
     coreutils
 
     # ===== Git周辺 =====
@@ -33,7 +35,6 @@
     jetbrains.pycharm
     jetbrains.clion
     jetbrains.idea
-    #zoxide
     tmux
     direnv
     stow
@@ -84,7 +85,6 @@
 
     # ===== 専門ツール =====
     tree-sitter
-    iverilog
     llama-cpp
     arduino-cli
     sqlite
