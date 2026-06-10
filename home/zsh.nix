@@ -32,6 +32,10 @@
       # opam (存在すれば読み込み)
       [[ ! -r "$HOME/.opam/opam-init/init.zsh" ]] || \
         source "$HOME/.opam/opam-init/init.zsh" > /dev/null 2> /dev/null
+
+      # fzf-cd-widget を Ctrl-G にリバインド(macOS の Option キー干渉回避)
+      bindkey -r '\ec' 2>/dev/null
+      bindkey '^G' fzf-cd-widget
     '';
   };
 }

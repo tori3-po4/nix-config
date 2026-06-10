@@ -7,6 +7,7 @@
     ./starship.nix
     ./firefox.nix
     ./fzf.nix
+    ./zoxide.nix
   ];
 
   home.stateVersion = "24.11";
