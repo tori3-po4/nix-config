@@ -2,7 +2,6 @@
 {
   programs.fzf = {
     enable = true;
-    package = null;
     enableZshIntegration = true;
     enableBashIntegration = true;
 
