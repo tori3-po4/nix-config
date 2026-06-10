@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   programs.zsh = {
     enable = true;
@@ -33,9 +33,14 @@
       [[ ! -r "$HOME/.opam/opam-init/init.zsh" ]] || \
         source "$HOME/.opam/opam-init/init.zsh" > /dev/null 2> /dev/null
 
-      # fzf-cd-widget を Ctrl-G にリバインド(macOS の Option キー干渉回避)
+      # Ctrl-G: fzf-file-widget をディレクトリ候補で呼び出す(パス挿入のみ)
+      # (macOS の Option キー干渉回避もかねる)
       bindkey -r '\ec' 2>/dev/null
-      bindkey '^G' fzf-cd-widget
+      fzf-dir-insert-widget() {
+        FZF_CTRL_T_COMMAND="${pkgs.fd}/bin/fd --type d --hidden --follow --exclude .git . $HOME" fzf-file-widget
+      }
+      zle -N fzf-dir-insert-widget
+      bindkey '^G' fzf-dir-insert-widget
     '';
   };
 }

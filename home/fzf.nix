@@ -20,8 +20,8 @@
       "--preview '${pkgs.bat}/bin/bat --style=numbers --color=always --line-range :200 {}'"
     ];
 
-    # ALT-C(ディレクトリ移動)
-    changeDirWidgetCommand = "${pkgs.fd}/bin/fd --type d --hidden --follow --exclude .git";
+    # ALT-C / Ctrl-G(ディレクトリ移動・ホーム起点)
+    changeDirWidgetCommand = "${pkgs.fd}/bin/fd --type d --hidden --follow --exclude .git . $HOME";
     changeDirWidgetOptions = [
       "--preview '${pkgs.eza}/bin/eza --tree --level=1 --color=always {}'"
     ];

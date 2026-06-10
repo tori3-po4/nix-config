@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   programs.bash = {
     enable = true;
@@ -29,6 +29,15 @@
       # opam (存在すれば読み込み)
       [[ ! -r "$HOME/.opam/opam-init/init.sh" ]] || \
         source "$HOME/.opam/opam-init/init.sh" > /dev/null 2> /dev/null
+
+      # Ctrl-G: fzf-file-widget をディレクトリ候補で呼び出す(パス挿入のみ)
+      # (macOS の Option キー干渉回避もかねる)
+      fzf-dir-insert-widget() {
+        FZF_CTRL_T_COMMAND="${pkgs.fd}/bin/fd --type d --hidden --follow --exclude .git . $HOME" fzf-file-widget
+      }
+      bind -m emacs-standard -x '"\C-g": fzf-dir-insert-widget'
+      bind -m vi-command    -x '"\C-g": fzf-dir-insert-widget'
+      bind -m vi-insert     -x '"\C-g": fzf-dir-insert-widget'
     '';
   };
 }
