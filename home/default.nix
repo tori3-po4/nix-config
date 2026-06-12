@@ -8,6 +8,7 @@
     ./firefox.nix
     ./fzf.nix
     ./zoxide.nix
+    ./git.nix
   ];
 
   home.stateVersion = "24.11";
