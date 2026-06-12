@@ -69,6 +69,7 @@
     lldb # デバッガ
     llvm # opt, llc, llvm-objdump 等
     llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
+    jdk
 
     # ===== 画像/動画/PDF =====
     ffmpeg
