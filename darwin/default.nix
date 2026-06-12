@@ -5,6 +5,7 @@
     ./defaults.nix
     ./jetbrains-wrapper-fix.nix
     ./lfm-server.nix
+    ./gpu-wired-limit.nix
   ];
 
   system.stateVersion = 5;
