@@ -1,4 +1,9 @@
-{ username, inputs, pkgs, ... }:
+{
+  username,
+  inputs,
+  pkgs,
+  ...
+}:
 let
   # LFM2.5 (MLX) の OpenAI 互換サーバを launchd で常駐させる。
   #   upstream: github:tori3-po4/LFM2.5_for_MLX (flake input = inputs.lfm2-agent)
@@ -11,7 +16,7 @@ let
 in
 {
   launchd.user.agents.lfm2-serve = {
-    command = "${lfm}/bin/lfm2-serve --port 8080";
+    command = "${lfm}/bin/lfm2-serve --port 8080 --kv-bits 8";
 
     serviceConfig = {
       RunAtLoad = true;
