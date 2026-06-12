@@ -4,7 +4,7 @@
   # aarch64-darwin パッケージを直接参照する。terminal backend は docker(colima)、
   # モデルは ~/devs/my-LFM2.5-agent の OpenAI 互換サーバ(:8080)を使う。
   home.packages = [
-    inputs.hermes-agent.packages.${pkgs.system}.default
+    inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   # ~/.hermes/config.yaml を home-manager で管理する。

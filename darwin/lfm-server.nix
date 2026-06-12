@@ -7,7 +7,7 @@ let
   # MLX は Metal/GPU を使うため LaunchDaemon(system) ではなく
   # LaunchAgent(user) で GUI ログインセッション内に常駐させる必要がある。
   home = "/Users/${username}";
-  lfm = inputs.lfm2-agent.packages.${pkgs.system}.default;
+  lfm = inputs.lfm2-agent.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   launchd.user.agents.lfm2-serve = {
