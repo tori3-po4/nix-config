@@ -4,6 +4,7 @@
     ./homebrew.nix
     ./defaults.nix
     ./jetbrains-wrapper-fix.nix
+    ./gpu-wired-limit.nix
   ];
 
   system.stateVersion = 5;
