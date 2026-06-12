@@ -70,6 +70,7 @@
     llvm # opt, llc, llvm-objdump 等
     llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
     jdk
+    gradle # Java/Kotlin ビルドツール(同梱 JDK ではなく上記 jdk を使う)
 
     # ===== 画像/動画/PDF =====
     ffmpeg
