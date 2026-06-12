@@ -9,6 +9,7 @@
     ./fzf.nix
     ./zoxide.nix
     ./git.nix
+    ./hermes.nix
   ];
 
   home.stateVersion = "24.11";
@@ -47,6 +48,7 @@
 
     # ===== AIコーディング支援 =====
     claude-code
+    # Hermes Agent 本体と ~/.hermes/config.yaml は home/hermes.nix で管理
 
     # ===== ブラウザ =====
     firefox
@@ -95,9 +97,15 @@
     flyctl
 
     # ===== コンテナ =====
-    # macOS では `podman machine init && podman machine start` で VM を別途用意
+    # podman: macOS では `podman machine init && podman machine start` で VM を用意
     podman
     podman-compose
+    # docker: Hermes Agent の terminal backend は docker 前提(podman は未対応)。
+    # macOS にネイティブ dockerd は無いので colima が lima VM 内で daemon を提供し、
+    # docker-client(CLI)からその socket を叩く。初回のみ `colima start --vm-type vz`。
+    colima
+    docker-client
+    docker-compose
 
     # ===== LaTeX周辺 =====
     texlive.combined.scheme-full # MacTeX-no-gui 相当(全部入り)

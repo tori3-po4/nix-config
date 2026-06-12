@@ -4,6 +4,7 @@
     ./homebrew.nix
     ./defaults.nix
     ./jetbrains-wrapper-fix.nix
+    ./lfm-server.nix
   ];
 
   system.stateVersion = 5;

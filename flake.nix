@@ -20,6 +20,17 @@
     };
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+    # Hermes Agent (Nous Research) は公式 flake を持つので install.sh ではなく
+    # input 化して Nix 管理する。uv2nix + npm ビルドが上流ピン留めの nixpkgs
+    # (nixos-unstable) 前提なので、あえて inputs.nixpkgs.follows は付けず、
+    # 上流のロックで固定ビルドさせる(こちらの nixpkgs-unstable とのズレ事故回避)。
+    hermes-agent.url = "github:NousResearch/hermes-agent";
+
+    # LFM2.5 (MLX) OpenAI互換サーバ。リポジトリ自身の flake が uv.lock を
+    # uv2nix でビルドして lfm2-serve/lfm2-run を提供する。これを launchd 常駐に使う。
+    # hermes 同様、上流のロックで固定ビルドさせたいので nixpkgs.follows は付けない。
+    lfm2-agent.url = "github:tori3-po4/LFM2.5_for_MLX";
   };
 
   outputs =
