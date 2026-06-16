@@ -272,6 +272,7 @@
           vscodevim.vim
           pdconsec.vscode-print
           vscjava.vscode-java-pack
+          redhat.java
         ])
         ++ [
           # cpptools 本体は nix-vscode-extensions 側で darwin から削除されているため、
