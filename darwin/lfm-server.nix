@@ -16,7 +16,7 @@ let
 in
 {
   launchd.user.agents.lfm2-serve = {
-    command = "${lfm}/bin/lfm2-serve --port 8080 --kv-bits 8";
+    command = "${lfm}/bin/lfm2-serve --port 8080 --model mlx-community/gpt-oss-20b-MXFP4-Q4 --kv-bits 4";
 
     serviceConfig = {
       RunAtLoad = true;
