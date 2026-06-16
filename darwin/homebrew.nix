@@ -12,12 +12,12 @@
     greedyCasks = true;
 
     taps = [
-      "randomplum/gtkwave"
+      # "randomplum/gtkwave"
     ];
 
     # gtkwave GUI は randomplum tap でのみ macOS 対応されているため brew 残し
     brews = [
-      "randomplum/gtkwave/gtkwave"
+      # "randomplum/gtkwave/gtkwave"
     ];
 
     casks = [
