@@ -125,7 +125,7 @@
     "git.confirmSync": false,
     "git.openRepositoryInParentFolders": "never",
     "editor.fontSize": 16,
-    "editor.foldings": false,
+    "editor.folding": false,
     "diffEditor.maxComputationTime": 0,
     "claudeCode.preferredLocation": "panel",
     "[python]": {
