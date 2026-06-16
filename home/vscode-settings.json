@@ -136,7 +136,7 @@
     },
     "workbench.colorTheme": "GitHub Dark",
     "workbench.browser.showInTitleBar": false,
-    "window.zoomLevel": 1,
+    "window.zoomLevel": 0,
     "chat.disableAIFeatures": true,
     "editor.wordWrap": "on",
     "telemetry.telemetryLevel": "off",
