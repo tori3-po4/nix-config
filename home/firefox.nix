@@ -27,7 +27,7 @@
         "extensions.activeThemeID" = "firefox-alpenglow@mozilla.org";
         "browser.theme.toolbar-theme" = 0;
         "browser.toolbars.bookmarks.visibility" = "always";
-        "layout.css.devPixelsPerPx" = "2.0";
+        "layout.css.devPixelsPerPx" = "-1.0";
 
         # ===== サイドバー / 縦タブ =====
         "sidebar.revamp" = true;
