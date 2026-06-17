@@ -48,6 +48,7 @@
 
     # ===== AIコーディング支援 =====
     claude-code
+    codex
     # Hermes Agent 本体と ~/.hermes/config.yaml は home/hermes.nix で管理
 
     # ===== ブラウザ =====
