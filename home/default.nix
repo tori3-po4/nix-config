@@ -47,6 +47,7 @@
 
     # ===== AIコーディング支援 =====
     claude-code
+    codex
 
     # ===== ブラウザ =====
     firefox
