@@ -49,6 +49,10 @@
     claude-code
     codex
 
+    # ===== ローカルLLM =====
+    llama-cpp
+    lmstudio
+
     # ===== ブラウザ =====
     firefox
 
@@ -58,7 +62,7 @@
     # ===== 言語処理系 =====
     deno
     nodejs_22
-    #uv
+    uv
 
     # ===== ビルドツール =====
     automake
