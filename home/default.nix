@@ -51,6 +51,10 @@
     # Hermes Agent 本体と ~/.hermes/config.yaml は home/hermes.nix で管理
     codex
 
+    # ===== ローカルLLM =====
+    llama-cpp
+    lmstudio
+
     # ===== ブラウザ =====
     firefox
 
@@ -60,7 +64,7 @@
     # ===== 言語処理系 =====
     deno
     nodejs_22
-    #uv
+    uv
 
     # ===== ビルドツール =====
     automake
