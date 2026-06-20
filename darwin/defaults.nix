@@ -18,7 +18,7 @@
 
     NSGlobalDomain = {
       AppleEnableSwipeNavigateWithScrolls = false;
-      AppleInterfaceStyle = null;
+      AppleInterfaceStyle = "Dark";
       AppleInterfaceStyleSwitchesAutomatically = false;
       AppleShowAllExtensions = true;
       AppleSpacesSwitchOnActivate = true;
