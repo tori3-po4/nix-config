@@ -19,7 +19,7 @@
 
     model:
       # serve.py の DEFAULT_MODEL と一致させること (配信モデル名 = この値)
-      default: LiquidAI/LFM2.5-8B-A1B-MLX-4bit
+      default: LiquidAI/LFM2.5-8B-A1B-GGUF:Q4_K_M
       provider: custom
       # base_url が設定されると Hermes は provider を無視してこの URL を直接叩く。
       # Hermes 本体はホストで動くので localhost で LFM サーバに届く

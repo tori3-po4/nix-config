@@ -4,7 +4,7 @@
     ./homebrew.nix
     ./defaults.nix
     ./jetbrains-wrapper-fix.nix
-    ./lfm-server.nix
+    ./llm.nix
     ./gpu-wired-limit.nix
   ];
 

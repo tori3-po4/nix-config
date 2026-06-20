@@ -26,11 +26,6 @@
     # (nixos-unstable) 前提なので、あえて inputs.nixpkgs.follows は付けず、
     # 上流のロックで固定ビルドさせる(こちらの nixpkgs-unstable とのズレ事故回避)。
     hermes-agent.url = "github:NousResearch/hermes-agent";
-
-    # LFM2.5 (MLX) OpenAI互換サーバ。リポジトリ自身の flake が uv.lock を
-    # uv2nix でビルドして lfm2-serve/lfm2-run を提供する。これを launchd 常駐に使う。
-    # hermes 同様、上流のロックで固定ビルドさせたいので nixpkgs.follows は付けない。
-    lfm2-agent.url = "github:tori3-po4/LFM2.5_for_MLX";
   };
 
   outputs =
