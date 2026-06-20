@@ -20,6 +20,12 @@
     };
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+    # Hermes Agent (Nous Research) は公式 flake を持つので install.sh ではなく
+    # input 化して Nix 管理する。uv2nix + npm ビルドが上流ピン留めの nixpkgs
+    # (nixos-unstable) 前提なので、あえて inputs.nixpkgs.follows は付けず、
+    # 上流のロックで固定ビルドさせる(こちらの nixpkgs-unstable とのズレ事故回避)。
+    hermes-agent.url = "github:NousResearch/hermes-agent";
   };
 
   outputs =
