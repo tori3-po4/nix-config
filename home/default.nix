@@ -10,6 +10,7 @@
     ./zoxide.nix
     ./git.nix
     ./hermes.nix
+    ./colima.nix
   ];
 
   home.stateVersion = "24.11";
@@ -106,9 +107,6 @@
     podman
     podman-compose
     # docker: Hermes Agent の terminal backend は docker 前提(podman は未対応)。
-    # macOS にネイティブ dockerd は無いので colima が lima VM 内で daemon を提供し、
-    # docker-client(CLI)からその socket を叩く。初回のみ `colima start --vm-type vz`。
-    colima
     docker-client
     docker-compose
 
