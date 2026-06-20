@@ -24,8 +24,11 @@
         "browser.translations.mostRecentTargetLanguages" = "en,ja";
 
         # ===== UI / テーマ =====
-        "extensions.activeThemeID" = "firefox-alpenglow@mozilla.org";
-        "browser.theme.toolbar-theme" = 0;
+        "extensions.activeThemeID" = "firefox-compact-light@mozilla.org";
+        "browser.theme.toolbar-theme" = 1;
+        "browser.theme.content-theme" = 1;
+        "ui.systemUsesDarkTheme" = 0;
+        "layout.css.prefers-color-scheme.content-override" = 1;
         "browser.toolbars.bookmarks.visibility" = "always";
         "layout.css.devPixelsPerPx" = "-1.0";
 
