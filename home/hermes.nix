@@ -32,5 +32,9 @@
       backend: docker
       # node + python が入った汎用サンドボックスイメージ (初回 colima 上に pull)
       docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+
+    display:
+      skin: daylight  # Replace with "default", "ares", "mono", or your custom filename
+
   '';
 }
