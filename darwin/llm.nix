@@ -11,6 +11,7 @@ in
 {
   # LFM2.5-8B-A1B Q4_K_M を llama.cpp の OpenAI 互換サーバで常駐させる。
   # -hf は Hugging Face から GGUF を取得し、以後はローカルキャッシュを使う。
+  # KV cache を q8_0 にすると llama.cpp 側の attn rot (Hadamard rotation) が自動判定で有効になる。
   launchd.user.agents.llama-server-lfm25 = {
     command = lib.escapeShellArgs [
       "${pkgs.llama-cpp}/bin/llama-server"
@@ -20,6 +21,10 @@ in
       "8080"
       "--n-gpu-layers"
       "all"
+      "--cache-type-k"
+      "q8_0"
+      "--cache-type-v"
+      "q8_0"
       "-hf"
       model
     ];
