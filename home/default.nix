@@ -103,9 +103,6 @@
     flyctl
 
     # ===== コンテナ =====
-    # podman: macOS では `podman machine init && podman machine start` で VM を用意
-    podman
-    podman-compose
     # docker: Hermes Agent の terminal backend は docker 前提(podman は未対応)。
     docker-client
     docker-compose
