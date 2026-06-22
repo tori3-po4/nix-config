@@ -18,15 +18,23 @@
     # 端末: コマンド実行サンドボックスを colima(docker) 上に隔離する
 
     model:
-      # serve.py の DEFAULT_MODEL と一致させること (配信モデル名 = この値)
+      # llama.cpp router の既定モデル。モデル一覧は下の named provider に明示する。
       default: LiquidAI/LFM2.5-8B-A1B-GGUF:Q4_K_M
-      provider: custom
-      # base_url が設定されると Hermes は provider を無視してこの URL を直接叩く。
-      # Hermes 本体はホストで動くので localhost で LFM サーバに届く
-      # (docker サンドボックスは「コマンド実行」専用で、LLM 接続には使わない)。
-      base_url: http://localhost:8080/v1
-      # ローカルサーバは認証不要だが、空だと弾く実装があるためダミーを入れる
-      api_key: local
+      provider: local-llama
+
+    providers:
+      local-llama:
+        name: Local llama.cpp
+        api: http://localhost:8080/v1
+        transport: chat_completions
+        default_model: LiquidAI/LFM2.5-8B-A1B-GGUF:Q4_K_M
+        discover_models: false
+        models:
+          - LiquidAI/LFM2.5-8B-A1B-GGUF:Q4_K_M
+          - lmstudio-community/gemma-4-E4B-it-GGUF:Q4_K_M
+          - unsloth/granite-4.1-8b-GGUF:Q6_K
+          - lmstudio-community/gemma-4-12B-it-QAT-GGUF:Q4_0
+          - prithivMLmods/VibeThinker-3B-GGUF:Q4_K_M
 
     terminal:
       backend: docker

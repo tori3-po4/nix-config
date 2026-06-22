@@ -40,6 +40,7 @@
       "xquartz"
       "wireshark-app"
       "latexit"
+      "codex-app"
     ];
 
   };
