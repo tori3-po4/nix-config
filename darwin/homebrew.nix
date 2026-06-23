@@ -41,6 +41,7 @@
       "wireshark-app"
       "latexit"
       "codex-app"
+      "bitwarden"
     ];
 
   };
