@@ -112,6 +112,9 @@
     ghostscript
     tex-fmt
 
+    # ===== パスワードマネージャー =====
+    bitwarden-cli
+
     # ===== LSP servers (Nvim/Emacs共通) =====
     lua-language-server
     nil
