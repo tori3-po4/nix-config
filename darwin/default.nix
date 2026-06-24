@@ -4,6 +4,7 @@
     ./homebrew.nix
     ./defaults.nix
     ./jetbrains-wrapper-fix.nix
+    ./bitwarden.nix
     ./llm.nix
     ./gpu-wired-limit.nix
   ];
