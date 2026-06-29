@@ -10,7 +10,6 @@
     ./zoxide.nix
     ./git.nix
     ./hermes.nix
-    ./colima.nix
   ];
 
   home.stateVersion = "24.11";

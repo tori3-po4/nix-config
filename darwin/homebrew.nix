@@ -42,6 +42,7 @@
       "latexit"
       "codex-app"
       "bitwarden"
+      "docker-desktop"
     ];
 
   };
