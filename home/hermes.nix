@@ -42,7 +42,7 @@
       docker_image: nikolaik/python-nodejs:python3.11-nodejs20
 
     display:
-      skin: daylight  # Replace with "default", "ares", "mono", or your custom filename
+      skin: default  # Dark default skin; alternatives: "ares", "mono", or a custom filename
 
   '';
 }
