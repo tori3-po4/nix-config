@@ -66,6 +66,10 @@
         wvous-br-modifier = 0;
       };
 
+      "com.apple.universalaccess" = {
+        increaseContrast = 1;
+      };
+
       "com.apple.AppleMultitouchTrackpad" = {
         ActuateDetents = 1;
         ForceSuppressed = 0;
