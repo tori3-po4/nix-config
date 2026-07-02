@@ -43,6 +43,7 @@
       "codex-app"
       "bitwarden"
       "docker-desktop"
+      "claude-code"
     ];
 
   };
