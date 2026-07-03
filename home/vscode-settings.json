@@ -122,6 +122,7 @@
     "containers.containerClient": "com.microsoft.visualstudio.containers.docker",
     "telemetry.editStats.enabled": false,
     "window.zoomPerWindow": false,
+    "window.autoDetectHighContrast": false,
     "git.confirmSync": false,
     "git.openRepositoryInParentFolders": "never",
     "editor.fontSize": 16,
@@ -134,7 +135,7 @@
         "editor.formatOnType": true,
         "editor.wordBasedSuggestions": "off"
     },
-    "workbench.colorTheme": "GitHub Dark High Contrast",
+    "workbench.colorTheme": "Light Modern",
     "workbench.browser.showInTitleBar": false,
     "window.zoomLevel": 0,
     "chat.disableAIFeatures": true,
