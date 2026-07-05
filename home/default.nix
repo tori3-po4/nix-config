@@ -33,7 +33,6 @@
 
     # ===== エディタ/シェル支援 =====
     neovim
-    helix
     vscode
     jetbrains.pycharm
     jetbrains.clion
@@ -96,7 +95,6 @@
     # ===== 専門ツール =====
     tree-sitter
     llama-cpp
-    arduino-cli
     sqlite
     flyctl
 
