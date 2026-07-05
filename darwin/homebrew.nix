@@ -35,7 +35,6 @@
       "skim"
       "slack"
       "tailscale-app"
-      "utm"
       "zotero"
       "xquartz"
       "wireshark-app"
