@@ -47,6 +47,37 @@ curl -s http://localhost:3002 | head
 hermes config check
 ```
 
+## Search Quality
+
+SearXNG quality depends mostly on enabled upstream engines. This stack keeps the
+default engine set, then explicitly tunes general web search:
+
+- enables and weights `brave`, `google cse`, `bing`, `duckduckgo`, and `qwant`
+- disables `startpage` because it frequently returns parsing errors locally
+- disables `mojeek` because this local setup gets access denied responses
+- lowers `wikipedia` / `wikidata` weight so encyclopedic results do not dominate
+- raises the request timeout from the default 2s to 4s globally, with 5s for
+  main web engines
+
+Check the currently enabled engines:
+
+```bash
+curl -s http://localhost:8888/config \
+  | jq -r '.engines[] | select(.enabled) | [.name, (.categories|join(",")), .timeout] | @tsv'
+```
+
+If Hermes stops after a single query, that is agent behavior rather than a
+SearXNG setting. Add a persistent instruction to `~/.hermes/SOUL.md`, for
+example:
+
+```text
+For research or web-backed factual questions, run multiple targeted web_search
+queries before answering. Use at least 2-4 distinct query phrasings unless the
+answer is already directly known from a primary source. Search both Japanese and
+English when that may improve coverage, then extract/open the most authoritative
+results before concluding.
+```
+
 Firecrawl logs:
 
 ```bash

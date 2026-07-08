@@ -109,6 +109,25 @@ curl -s http://localhost:3002 | head
 hermes config check
 ```
 
+検索品質:
+
+- `services/hermes-web/searxng/settings.yml` で一般 Web 検索向けに
+  `brave` / `google cse` / `bing` / `duckduckgo` / `qwant` を明示的に有効化し、
+  `weight` と `timeout` を調整している。
+- ローカル検証で `startpage` は parsing error、`mojeek` は access denied が出やすいため無効化。
+- `wikipedia` / `wikidata` は一般検索の上位を占有しすぎないよう軽めの weight にする。
+- SearXNG は「1つのクエリを複数検索エンジンに投げる」役割。Hermes が
+  「複数の言い換えクエリを投げる」かどうかは agent 側の判断なので、必要なら
+  `~/.hermes/SOUL.md` に以下のような恒久指示を追加する。
+
+```text
+For research or web-backed factual questions, run multiple targeted web_search
+queries before answering. Use at least 2-4 distinct query phrasings unless the
+answer is already directly known from a primary source. Search both Japanese and
+English when that may improve coverage, then extract/open the most authoritative
+results before concluding.
+```
+
 ## 設定変更
 
 ### モデル / エンドポイント（`~/.hermes/config.yaml`）
