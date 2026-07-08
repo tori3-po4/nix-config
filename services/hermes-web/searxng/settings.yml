@@ -1,0 +1,20 @@
+use_default_settings: true
+
+general:
+  instance_name: "Hermes SearXNG"
+
+search:
+  formats:
+    - html
+    - json
+  safe_search: 0
+
+server:
+  secret_key: "change-this-local-hermes-searxng-secret"
+  limiter: false
+  image_proxy: true
+  bind_address: "0.0.0.0"
+  port: 8080
+
+valkey:
+  url: redis://searxng-valkey:6379/0

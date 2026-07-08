@@ -18,6 +18,8 @@ Hermes (host, nix管理) ──LLM(OpenAI互換)──▶ localhost:8080
 - **docker**: `home/default.nix` の `colima` / `docker-client` / `docker-compose`（podman 併用）。
 - **モデルは必ずホスト常駐**: MLX は Apple GPU(Metal) 依存でコンテナ内では動かせない。
   docker は「コマンド実行の隔離」専用で、LLM 接続には使わない（だから `localhost` で届く）。
+- **web backend**: `services/hermes-web/docker-compose.yml`。SearXNG を検索、
+  Firecrawl を URL 抽出に使うローカル compose stack。
 
 各コンポーネントの依存・バージョンは `uv.lock` / 各 flake の `flake.lock` に固定。
 
@@ -68,6 +70,45 @@ colima stop                  # 停止
 docker ps                    # 動作確認（context は colima に自動切替）
 ```
 
+### web backend (SearXNG + Firecrawl)
+
+```bash
+cd ~/nix-config/services/hermes-web
+cp -n .env.example .env
+docker compose up -d
+```
+
+公開ポートはローカル限定:
+
+- SearXNG: `http://localhost:8888`
+- Firecrawl: `http://localhost:3002`
+
+Hermes から使うには `~/.hermes/config.yaml` の `web` を以下にする。
+
+```yaml
+web:
+  backend: firecrawl
+  search_backend: searxng
+  extract_backend: firecrawl
+  use_gateway: false
+```
+
+`~/.hermes/.env` には以下を置く。Firecrawl は
+`USE_DB_AUTHENTICATION=false` のローカル self-host なので API key は不要。
+
+```dotenv
+SEARXNG_URL=http://localhost:8888
+FIRECRAWL_API_URL=http://localhost:3002
+```
+
+動作確認:
+
+```bash
+curl 'http://localhost:8888/search?q=hermes&format=json' | jq '.results[0]'
+curl -s http://localhost:3002 | head
+hermes config check
+```
+
 ## 設定変更
 
 ### モデル / エンドポイント（`~/.hermes/config.yaml`）
@@ -114,6 +155,7 @@ LFM サーバの依存を変えるとき（`my-LFM2.5-agent` 側）:
 |---|---|
 | Hermes がモデルに繋がらない | `curl localhost:8080/v1/models`、`~/Library/Logs/lfm2-serve.err.log` を確認。落ちていれば `launchctl kickstart -k ...` |
 | docker backend が動かない | `colima status` で起動確認 → `colima start --vm-type vz`。`docker ps` が通るか |
+| web search/extract が動かない | `cd ~/nix-config/services/hermes-web && docker compose ps`、`SEARXNG_URL` / `FIRECRAWL_API_URL`、`web.search_backend` / `web.extract_backend` を確認 |
 | 設定変更が反映されない | `~/.hermes/config.yaml` を確認。YAML 構文や Hermes 側の読み込みタイミングを疑う |
 | `tool_calls` が返らない | LFM サーバ (`serve.py`) が pythonic パーサ用モンキーパッチ込みで起動しているか。`lfm2-serve` 経由なら適用済み |
 | 初回起動が遅い | モデル DL(~4.5GB→`~/.cache/huggingface`) と Hermes の初回ビルドのため。2回目以降は速い |
@@ -125,4 +167,5 @@ LFM サーバの依存を変えるとき（`my-LFM2.5-agent` 側）:
 - `home/hermes.nix` … Hermes 本体 + `~/.hermes/config.yaml` の初期値
 - `darwin/lfm-server.nix` … LFM2.5 サーバの launchd 常駐
 - `home/default.nix` … colima / docker-client / docker-compose
+- `services/hermes-web/` … SearXNG + Firecrawl のローカル web backend
 - 上流: `github:NousResearch/hermes-agent`, `github:tori3-po4/LFM2.5_for_MLX`

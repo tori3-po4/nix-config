@@ -15,6 +15,7 @@ let
       # llama.cpp router の既定モデル。モデル一覧は下の named provider に明示する。
       default: LiquidAI/LFM2.5-8B-A1B-GGUF:Q4_K_M
       provider: local-llama
+      api_mode: chat_completions
 
     providers:
       local-llama:
@@ -30,14 +31,89 @@ let
           - lmstudio-community/gemma-4-12B-it-QAT-GGUF:Q4_0
           - prithivMLmods/VibeThinker-3B-GGUF:Q4_K_M
 
+    agent:
+      max_turns: 150
+
     terminal:
       backend: docker
       # Docker Official Image の Ubuntu LTS。base image なので必要なツールは
       # sandbox 内で apt install する。
       docker_image: ubuntu:24.04
 
+    web:
+      backend: firecrawl
+      use_gateway: false
+      search_backend: searxng
+      extract_backend: firecrawl
+
+    browser:
+      cloud_provider: local
+      use_gateway: false
+
     display:
       skin: default  # Dark default skin; alternatives: "ares", "mono", or a custom filename
+      interface: tui
+      tool_progress: all
+      language: ja
+      tui_auto_resume_recent: false
+      tui_agents_nudge: true
+      tui_status_indicator: kaomoji
+
+    onboarding:
+      seen:
+        busy_input_prompt: true
+
+    _config_version: 31
+
+    session_reset:
+      mode: none
+
+    image_gen:
+      provider: openai-codex
+      use_gateway: false
+      model: gpt-image-2-medium
+
+    platform_toolsets:
+      cli:
+        - browser
+        - clarify
+        - code_execution
+        - computer_use
+        - cronjob
+        - delegation
+        - file
+        - image_gen
+        - memory
+        - session_search
+        - skills
+        - terminal
+        - todo
+        - tts
+        - vision
+        - web
+      discord:
+        - browser
+        - clarify
+        - code_execution
+        - computer_use
+        - cronjob
+        - delegation
+        - file
+        - image_gen
+        - memory
+        - session_search
+        - skills
+        - terminal
+        - todo
+        - tts
+        - vision
+        - web
+
+    known_plugin_toolsets:
+      cli:
+        - spotify
+      discord:
+        - spotify
   '';
 in
 {
