@@ -12,7 +12,8 @@ Hermes (host, nix管理) ──LLM(OpenAI互換)──▶ localhost:8080
 ```
 
 - **Hermes 本体**: `home/hermes.nix`。`inputs.hermes-agent` の package を home-manager で導入。
-  `~/.hermes/config.yaml` は初回だけ通常ファイルとして作成し、以降は Hermes や手動編集から更新する。
+- **Hermes 設定**: `~/.local/share/chezmoi/private_dot_hermes/`。`~/.hermes/config.yaml`、
+  `~/.hermes/SOUL.md`、`~/.hermes/skills/` は chezmoi で管理する。
 - **モデルサーバ**: `darwin/lfm-server.nix`。`inputs.lfm2-agent`（`github:tori3-po4/LFM2.5_for_MLX`）
   を uv2nix でビルドした `lfm2-serve` を launchd で常駐（`:8080`）。
 - **docker**: `home/default.nix` の `colima` / `docker-client` / `docker-compose`（podman 併用）。
@@ -83,7 +84,9 @@ docker compose up -d
 - SearXNG: `http://localhost:8888`
 - Crawl4AI: `http://localhost:11235`
 
-Hermes から使うには `~/.hermes/config.yaml` の `web` を以下にする。
+Hermes から使う設定は chezmoi 側の
+`~/.local/share/chezmoi/private_dot_hermes/private_config.yaml` で管理する。
+実体としては `~/.hermes/config.yaml` に以下が入る。
 
 ```yaml
 web:
@@ -115,9 +118,9 @@ MCP は `crawl4ai` / `http://localhost:11235/mcp/sse` / transport `sse` を使�
 MCP の header は `Authorization: Bearer ${CRAWL4AI_API_TOKEN}`。URL 抽出は
 `crawl4ai-web-extract` skill から Crawl4AI MCP tools を使う。
 
-TUI で反映するには、上の YAML を `~/.hermes/config.yaml` に置き、
+TUI で反映するには、chezmoi source を編集して `chezmoi apply` し、
 `~/.hermes/.env` に `CRAWL4AI_API_TOKEN` を置いてから TUI を再起動する。
-起動中なら `/reload-mcp`、確認は `/tools list`。CLI で設定する場合は:
+起動中なら `/reload-mcp`、確認は `/tools list`。一時的に CLI で直接設定する場合は:
 
 ```bash
 hermes config set mcp_servers.crawl4ai.url http://localhost:11235/mcp/sse
@@ -157,17 +160,27 @@ results before concluding.
 
 ## 設定変更
 
-### モデル / エンドポイント（`~/.hermes/config.yaml`）
+### Hermes 設定（chezmoi）
 
-このファイルは **通常ファイル**。Home Manager は初回作成と旧 read-only symlink からの
-実ファイル移行だけ行い、既存ファイルの内容は上書きしない。`hermes config set` や
-`hermes model` ウィザード、手動編集で直接変更できる。
+`~/.hermes/config.yaml`、`~/.hermes/SOUL.md`、`~/.hermes/skills/` は chezmoi で管理する。
+編集は source dir 側で行い、`chezmoi apply` で反映する。
+
+```bash
+chezmoi edit ~/.hermes/config.yaml
+chezmoi edit ~/.hermes/SOUL.md
+chezmoi edit ~/.hermes/skills/research/crawl4ai-web-extract/SKILL.md
+chezmoi diff
+chezmoi apply
+```
+
+`~/.hermes/.env` は token 類を含むため通常ファイルとしてローカルに置き、必要なら
+chezmoi の encrypted/template 管理に切り替える。
 
 - `model.default` は**配信モデル名と一致必須**（= `serve.py` の `DEFAULT_MODEL`
   `LiquidAI/LFM2.5-8B-A1B-MLX-4bit`）。量子化バリアントを変えるなら両方を揃える。
 - `providers.local-llama.api` は `http://localhost:8080/v1`（末尾スラッシュ無し）。
 - ローカルは認証不要だが `api_key` は空だと弾かれることがあるためダミー値を入れる。
-- API キー等の秘密情報は HM 管理外の `~/.hermes/.env` に手で置く。
+- API キー等の秘密情報は Nix 管理外の `~/.hermes/.env` に置く。
 
 ### ポート番号を変える
 
@@ -210,7 +223,8 @@ LFM サーバの依存を変えるとき（`my-LFM2.5-agent` 側）:
 ## 関連ファイル
 
 - `flake.nix` … `hermes-agent` / `lfm2-agent` input
-- `home/hermes.nix` … Hermes 本体 + `~/.hermes/config.yaml` の初期値
+- `home/hermes.nix` … Hermes 本体のインストールのみ
+- `~/.local/share/chezmoi/private_dot_hermes/` … Hermes config / SOUL / skills
 - `darwin/lfm-server.nix` … LFM2.5 サーバの launchd 常駐
 - `home/default.nix` … colima / docker-client / docker-compose
 - `services/hermes-web/` … SearXNG + Crawl4AI のローカル web backend

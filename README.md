@@ -34,6 +34,7 @@
 │ chezmoi                │ dotfile (試行錯誤するもの)             │
 │  - dot_zshrc 等        │ シェル / git / tmux / latex            │
 │  - dot_config/*        │ ghostty, cagent, gtk-3.0 等            │
+│  - private_dot_hermes  │ Hermes config / SOUL / skills          │
 │  - .chezmoiexternal    │ NvChad, Emacs 設定 (別リポジトリ)      │
 ├────────────────────────┼───────────────────────────────────────┤
 │ Homebrew (Cask中心)    │ Sparkle更新が必要なGUIアプリ           │

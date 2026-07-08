@@ -20,7 +20,8 @@ The first start pulls the SearXNG, Valkey, and Crawl4AI images.
 
 ## Hermes Config
 
-`~/.hermes/config.yaml`:
+`~/.hermes/config.yaml` is managed by chezmoi at
+`~/.local/share/chezmoi/private_dot_hermes/private_config.yaml`:
 
 ```yaml
 web:
@@ -63,9 +64,9 @@ Use these settings for the TUI profile:
 
 Search remains SearXNG. Crawl4AI is only used through MCP tools from the skill.
 
-The reliable way to apply the MCP setting is to put the YAML above in
-`~/.hermes/config.yaml`, keep `CRAWL4AI_API_TOKEN` in `~/.hermes/.env`, then
-restart the TUI or run this slash command inside the TUI:
+The reliable way to apply the MCP setting is to edit the chezmoi source, run
+`chezmoi apply`, keep `CRAWL4AI_API_TOKEN` in `~/.hermes/.env`, then restart the
+TUI or run this slash command inside the TUI:
 
 ```text
 /reload-mcp
