@@ -12,6 +12,7 @@ Hermes (host, nix管理) ──LLM(OpenAI互換)──▶ localhost:8080
 ```
 
 - **Hermes 本体**: `home/hermes.nix`。`inputs.hermes-agent` の package を home-manager で導入。
+  `~/.hermes/config.yaml` は初回だけ通常ファイルとして作成し、以降は Hermes や手動編集から更新する。
 - **モデルサーバ**: `darwin/lfm-server.nix`。`inputs.lfm2-agent`（`github:tori3-po4/LFM2.5_for_MLX`）
   を uv2nix でビルドした `lfm2-serve` を launchd で常駐（`:8080`）。
 - **docker**: `home/default.nix` の `colima` / `docker-client` / `docker-compose`（podman 併用）。
@@ -71,23 +72,23 @@ docker ps                    # 動作確認（context は colima に自動切替
 
 ### モデル / エンドポイント（`~/.hermes/config.yaml`）
 
-このファイルは **home-manager 管理（nix store への read-only symlink）**。
-`hermes config set` やウィザードからの書き込みは効かない。変更は必ず
-`home/hermes.nix` を編集 → `darwin-rebuild switch` し直す。
+このファイルは **通常ファイル**。Home Manager は初回作成と旧 read-only symlink からの
+実ファイル移行だけ行い、既存ファイルの内容は上書きしない。`hermes config set` や
+`hermes model` ウィザード、手動編集で直接変更できる。
 
 - `model.default` は**配信モデル名と一致必須**（= `serve.py` の `DEFAULT_MODEL`
   `LiquidAI/LFM2.5-8B-A1B-MLX-4bit`）。量子化バリアントを変えるなら両方を揃える。
-- `base_url` は `http://localhost:8080/v1`（末尾スラッシュ無し）。
+- `providers.local-llama.api` は `http://localhost:8080/v1`（末尾スラッシュ無し）。
 - ローカルは認証不要だが `api_key` は空だと弾かれることがあるためダミー値を入れる。
 - API キー等の秘密情報は HM 管理外の `~/.hermes/.env` に手で置く。
 
 ### ポート番号を変える
 
-`darwin/lfm-server.nix` の `--port 8080` と `home/hermes.nix` の `base_url` を両方変更。
+`darwin/lfm-server.nix` の `--port 8080` と `~/.hermes/config.yaml` の provider URL を両方変更。
 
 ### サンドボックスのイメージを変える
 
-`home/hermes.nix` の `terminal.docker_image`（既定 `ubuntu:24.04`）。
+`~/.hermes/config.yaml` の `terminal.docker_image`（既定 `ubuntu:24.04`）。
 Docker Official Image の base OS なので、Python/Node 等が必要な場合は sandbox 内で
 `apt update && apt install ...` する。
 
@@ -113,7 +114,7 @@ LFM サーバの依存を変えるとき（`my-LFM2.5-agent` 側）:
 |---|---|
 | Hermes がモデルに繋がらない | `curl localhost:8080/v1/models`、`~/Library/Logs/lfm2-serve.err.log` を確認。落ちていれば `launchctl kickstart -k ...` |
 | docker backend が動かない | `colima status` で起動確認 → `colima start --vm-type vz`。`docker ps` が通るか |
-| 設定変更が反映されない | `config.yaml` は HM 管理 read-only。`home/hermes.nix` を直して rebuild |
+| 設定変更が反映されない | `~/.hermes/config.yaml` を確認。YAML 構文や Hermes 側の読み込みタイミングを疑う |
 | `tool_calls` が返らない | LFM サーバ (`serve.py`) が pythonic パーサ用モンキーパッチ込みで起動しているか。`lfm2-serve` 経由なら適用済み |
 | 初回起動が遅い | モデル DL(~4.5GB→`~/.cache/huggingface`) と Hermes の初回ビルドのため。2回目以降は速い |
 | `'system' has been renamed...` 警告 | nixpkgs の非推奨警告。`pkgs.system`→`pkgs.stdenv.hostPlatform.system`。本リポジトリでは対応済み |
@@ -121,7 +122,7 @@ LFM サーバの依存を変えるとき（`my-LFM2.5-agent` 側）:
 ## 関連ファイル
 
 - `flake.nix` … `hermes-agent` / `lfm2-agent` input
-- `home/hermes.nix` … Hermes 本体 + `~/.hermes/config.yaml`
+- `home/hermes.nix` … Hermes 本体 + `~/.hermes/config.yaml` の初期値
 - `darwin/lfm-server.nix` … LFM2.5 サーバの launchd 常駐
 - `home/default.nix` … colima / docker-client / docker-compose
 - 上流: `github:NousResearch/hermes-agent`, `github:tori3-po4/LFM2.5_for_MLX`

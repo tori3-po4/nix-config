@@ -46,7 +46,7 @@
     (if stdenv.isDarwin then ghostty-bin else ghostty)
 
     # ===== AIコーディング支援 =====
-    # Hermes Agent 本体と ~/.hermes/config.yaml は home/hermes.nix で管理
+    # Hermes Agent 本体と ~/.hermes/config.yaml の初期値は home/hermes.nix で管理
     codex
 
     # ===== ローカルLLM =====

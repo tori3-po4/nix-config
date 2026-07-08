@@ -1,21 +1,15 @@
-{ pkgs, inputs, ... }:
 {
-  # Hermes Agent (Nous Research)。nixpkgs 未収録なので公式 flake の
-  # aarch64-darwin パッケージを直接参照する。terminal backend は docker(colima)、
-  # モデルは ~/devs/my-LFM2.5-agent の OpenAI 互換サーバ(:8080)を使う。
-  home.packages = [
-    inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default
-  ];
-
-  # ~/.hermes/config.yaml を home-manager で管理する。
-  # 注意: nix store への read-only symlink になるため、`hermes config set` や
-  # `hermes model` ウィザードからの書き込みは失敗する。モデル/エンドポイントの
-  # 変更はこの Nix ファイルを編集して darwin-rebuild し直すこと。
-  # API キー等の秘密情報は HM 管理外の ~/.hermes/.env に手で置く。
-  home.file.".hermes/config.yaml".text = ''
-    # このファイルは home-manager 管理 (home/hermes.nix)。直接編集しても rebuild で戻る。
-    # モデル: ~/devs/my-LFM2.5-agent の OpenAI 互換サーバ (MLX / LFM2.5)
-    # 端末: コマンド実行サンドボックスを docker 上に隔離する
+  pkgs,
+  inputs,
+  lib,
+  config,
+  ...
+}:
+let
+  defaultHermesConfig = pkgs.writeText "hermes-config.yaml" ''
+    # このファイルは home-manager が初回だけ作成する通常ファイル。
+    # `hermes config set` や `hermes model` から直接更新できる。
+    # Nix 側の初期値を変える場合は home/hermes.nix を編集する。
 
     model:
       # llama.cpp router の既定モデル。モデル一覧は下の named provider に明示する。
@@ -44,6 +38,43 @@
 
     display:
       skin: default  # Dark default skin; alternatives: "ares", "mono", or a custom filename
+  '';
+in
+{
+  # Hermes Agent (Nous Research)。nixpkgs 未収録なので公式 flake の
+  # aarch64-darwin パッケージを直接参照する。terminal backend は docker(colima)、
+  # モデルは ~/devs/my-LFM2.5-agent の OpenAI 互換サーバ(:8080)を使う。
+  home.packages = [
+    inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default
+  ];
 
+  # ~/.hermes/config.yaml は Hermes 自身が頻繁に更新するため、home.file では
+  # 管理しない。初回だけ通常ファイルとして配置し、以降は外部からの変更を保つ。
+  # 旧構成の nix store symlink が残っていれば、同じ内容の実ファイルへ移行する。
+  # API キー等の秘密情報は ~/.hermes/.env に手で置く。
+  home.activation.ensureHermesConfig = lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" ] ''
+    config_dir="${config.home.homeDirectory}/.hermes"
+    config_file="$config_dir/config.yaml"
+
+    if [ ! -e "$config_file" ] && [ ! -L "$config_file" ]; then
+      $DRY_RUN_CMD mkdir -p "$config_dir"
+      $DRY_RUN_CMD install -m 0644 ${defaultHermesConfig} "$config_file"
+    elif [ -L "$config_file" ]; then
+      target="$(readlink "$config_file" || true)"
+      case "$target" in
+        /nix/store/*)
+          tmp_file="$config_file.hm-mutable"
+          if [ -e "$config_file" ]; then
+            $DRY_RUN_CMD cp "$config_file" "$tmp_file"
+          else
+            $DRY_RUN_CMD cp ${defaultHermesConfig} "$tmp_file"
+          fi
+          $DRY_RUN_CMD chmod u+w "$tmp_file"
+          $DRY_RUN_CMD mv "$tmp_file" "$config_file"
+          ;;
+      esac
+    elif [ ! -w "$config_file" ]; then
+      $DRY_RUN_CMD chmod u+w "$config_file"
+    fi
   '';
 }
