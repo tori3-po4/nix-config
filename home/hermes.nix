@@ -15,7 +15,7 @@
   home.file.".hermes/config.yaml".text = ''
     # このファイルは home-manager 管理 (home/hermes.nix)。直接編集しても rebuild で戻る。
     # モデル: ~/devs/my-LFM2.5-agent の OpenAI 互換サーバ (MLX / LFM2.5)
-    # 端末: コマンド実行サンドボックスを colima(docker) 上に隔離する
+    # 端末: コマンド実行サンドボックスを docker 上に隔離する
 
     model:
       # llama.cpp router の既定モデル。モデル一覧は下の named provider に明示する。
@@ -38,8 +38,9 @@
 
     terminal:
       backend: docker
-      # node + python が入った汎用サンドボックスイメージ (初回 colima 上に pull)
-      docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+      # Docker Official Image の Ubuntu LTS。base image なので必要なツールは
+      # sandbox 内で apt install する。
+      docker_image: ubuntu:24.04
 
     display:
       skin: default  # Dark default skin; alternatives: "ares", "mono", or a custom filename

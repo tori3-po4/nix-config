@@ -87,7 +87,9 @@ docker ps                    # 動作確認（context は colima に自動切替
 
 ### サンドボックスのイメージを変える
 
-`home/hermes.nix` の `terminal.docker_image`（既定 `nikolaik/python-nodejs:python3.11-nodejs20`）。
+`home/hermes.nix` の `terminal.docker_image`（既定 `ubuntu:24.04`）。
+Docker Official Image の base OS なので、Python/Node 等が必要な場合は sandbox 内で
+`apt update && apt install ...` する。
 
 ## 更新
 
