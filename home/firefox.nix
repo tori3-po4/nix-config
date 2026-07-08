@@ -32,9 +32,9 @@
         "browser.toolbars.bookmarks.visibility" = "always";
         "layout.css.devPixelsPerPx" = "-1.0";
 
-        # ===== サイドバー / 縦タブ =====
+        # ===== サイドバー =====
         "sidebar.revamp" = true;
-        "sidebar.verticalTabs" = true;
+        "sidebar.verticalTabs" = false;
         "sidebar.main.tools" = "aichat,syncedtabs,history,bookmarks";
 
         # ===== AI チャット (Claude) =====
@@ -115,7 +115,7 @@
         "gfx.canvas.accelerated" = true;
         "media.hardware-video-decoding.force-enabled" = true;
 
-        # ===== ツールバーレイアウト (縦タブ構成) =====
+        # ===== ツールバーレイアウト (横タブ構成) =====
         # 添付の attrset / list は home-manager が JSON 文字列に encode して user.js に書き込む。
         "browser.uiCustomization.state" = {
           placements = {
@@ -125,19 +125,19 @@
               "back-button"
               "forward-button"
               "stop-reload-button"
-              "customizableui-special-spring1"
-              "vertical-spacer"
               "sidebar-button"
               "urlbar-container"
-              "customizableui-special-spring2"
               "downloads-button"
               "fxa-toolbar-menu-button"
               "unified-extensions-button"
+            ];
+            "TabsToolbar" = [
               "firefox-view-button"
+              "tabbrowser-tabs"
+              "new-tab-button"
               "alltabs-button"
             ];
-            "TabsToolbar" = [ ];
-            "vertical-tabs" = [ "tabbrowser-tabs" ];
+            "vertical-tabs" = [ ];
             "PersonalToolbar" = [ "personal-bookmarks" ];
           };
           seen = [
@@ -146,7 +146,6 @@
           ];
           dirtyAreaCache = [
             "nav-bar"
-            "vertical-tabs"
             "PersonalToolbar"
             "TabsToolbar"
           ];
