@@ -8,6 +8,7 @@
     ./firefox.nix
     ./fzf.nix
     ./zoxide.nix
+    ./espanso.nix
     ./git.nix
     ./hermes.nix
   ];
