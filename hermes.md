@@ -19,7 +19,7 @@ Hermes (host, nix管理) ──LLM(OpenAI互換)──▶ localhost:8080
 - **モデルは必ずホスト常駐**: MLX は Apple GPU(Metal) 依存でコンテナ内では動かせない。
   docker は「コマンド実行の隔離」専用で、LLM 接続には使わない（だから `localhost` で届く）。
 - **web backend**: `services/hermes-web/docker-compose.yml`。SearXNG を検索、
-  Firecrawl を URL 抽出に使うローカル compose stack。
+  Crawl4AI を URL 抽出に使うローカル compose stack。
 
 各コンポーネントの依存・バージョンは `uv.lock` / 各 flake の `flake.lock` に固定。
 
@@ -70,7 +70,7 @@ colima stop                  # 停止
 docker ps                    # 動作確認（context は colima に自動切替）
 ```
 
-### web backend (SearXNG + Firecrawl)
+### web backend (SearXNG + Crawl4AI)
 
 ```bash
 cd ~/nix-config/services/hermes-web
@@ -81,31 +81,58 @@ docker compose up -d
 公開ポートはローカル限定:
 
 - SearXNG: `http://localhost:8888`
-- Firecrawl: `http://localhost:3002`
+- Crawl4AI: `http://localhost:11235`
 
 Hermes から使うには `~/.hermes/config.yaml` の `web` を以下にする。
 
 ```yaml
 web:
-  backend: firecrawl
+  backend: searxng
   search_backend: searxng
-  extract_backend: firecrawl
   use_gateway: false
+
+mcp_servers:
+  crawl4ai:
+    url: http://localhost:11235/mcp/sse
+    transport: sse
+    enabled: true
+    headers:
+      Authorization: "Bearer ${CRAWL4AI_API_TOKEN}"
 ```
 
-`~/.hermes/.env` には以下を置く。Firecrawl は
-`USE_DB_AUTHENTICATION=false` のローカル self-host なので API key は不要。
+`~/.hermes/.env` には以下を置く。`CRAWL4AI_API_TOKEN` は
+`services/hermes-web/.env` と同じ値にする。Crawl4AI は token 未設定だと
+コンテナ内 loopback にだけ bind するため、Docker のポート公開経由で使う今回の構成では token が必要。
 
 ```dotenv
 SEARXNG_URL=http://localhost:8888
-FIRECRAWL_API_URL=http://localhost:3002
+CRAWL4AI_API_TOKEN=local-only-crawl4ai-change-me
+```
+
+Hermes TUI では Web Search provider を `searxng` にする。Web Extract provider
+は未設定、または Crawl4AI を選ばない。Plugins では `web/crawl4ai` を有効化しない。
+MCP は `crawl4ai` / `http://localhost:11235/mcp/sse` / transport `sse` を使う。
+MCP の header は `Authorization: Bearer ${CRAWL4AI_API_TOKEN}`。URL 抽出は
+`crawl4ai-web-extract` skill から Crawl4AI MCP tools を使う。
+
+TUI で反映するには、上の YAML を `~/.hermes/config.yaml` に置き、
+`~/.hermes/.env` に `CRAWL4AI_API_TOKEN` を置いてから TUI を再起動する。
+起動中なら `/reload-mcp`、確認は `/tools list`。CLI で設定する場合は:
+
+```bash
+hermes config set mcp_servers.crawl4ai.url http://localhost:11235/mcp/sse
+hermes config set mcp_servers.crawl4ai.transport sse
+hermes config set mcp_servers.crawl4ai.enabled true
+hermes config set 'mcp_servers.crawl4ai.headers.Authorization' 'Bearer ${CRAWL4AI_API_TOKEN}'
+hermes mcp test crawl4ai
 ```
 
 動作確認:
 
 ```bash
 curl 'http://localhost:8888/search?q=hermes&format=json' | jq '.results[0]'
-curl -s http://localhost:3002 | head
+curl -s http://localhost:11235/health
+hermes mcp list
 hermes config check
 ```
 
@@ -174,7 +201,7 @@ LFM サーバの依存を変えるとき（`my-LFM2.5-agent` 側）:
 |---|---|
 | Hermes がモデルに繋がらない | `curl localhost:8080/v1/models`、`~/Library/Logs/lfm2-serve.err.log` を確認。落ちていれば `launchctl kickstart -k ...` |
 | docker backend が動かない | `colima status` で起動確認 → `colima start --vm-type vz`。`docker ps` が通るか |
-| web search/extract が動かない | `cd ~/nix-config/services/hermes-web && docker compose ps`、`SEARXNG_URL` / `FIRECRAWL_API_URL`、`web.search_backend` / `web.extract_backend` を確認 |
+| web search / Crawl4AI MCP が動かない | `cd ~/nix-config/services/hermes-web && docker compose ps`、`SEARXNG_URL`、`mcp_servers.crawl4ai.url`、`hermes mcp test crawl4ai` を確認 |
 | 設定変更が反映されない | `~/.hermes/config.yaml` を確認。YAML 構文や Hermes 側の読み込みタイミングを疑う |
 | `tool_calls` が返らない | LFM サーバ (`serve.py`) が pythonic パーサ用モンキーパッチ込みで起動しているか。`lfm2-serve` 経由なら適用済み |
 | 初回起動が遅い | モデル DL(~4.5GB→`~/.cache/huggingface`) と Hermes の初回ビルドのため。2回目以降は速い |
@@ -186,5 +213,5 @@ LFM サーバの依存を変えるとき（`my-LFM2.5-agent` 側）:
 - `home/hermes.nix` … Hermes 本体 + `~/.hermes/config.yaml` の初期値
 - `darwin/lfm-server.nix` … LFM2.5 サーバの launchd 常駐
 - `home/default.nix` … colima / docker-client / docker-compose
-- `services/hermes-web/` … SearXNG + Firecrawl のローカル web backend
+- `services/hermes-web/` … SearXNG + Crawl4AI のローカル web backend
 - 上流: `github:NousResearch/hermes-agent`, `github:tori3-po4/LFM2.5_for_MLX`

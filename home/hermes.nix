@@ -6,6 +6,8 @@
   ...
 }:
 let
+  crawl4aiSkillDir = ./hermes-skills/research/crawl4ai-web-extract;
+
   defaultHermesConfig = pkgs.writeText "hermes-config.yaml" ''
     # このファイルは home-manager が初回だけ作成する通常ファイル。
     # `hermes config set` や `hermes model` から直接更新できる。
@@ -41,10 +43,17 @@ let
       docker_image: ubuntu:24.04
 
     web:
-      backend: firecrawl
+      backend: searxng
       use_gateway: false
       search_backend: searxng
-      extract_backend: firecrawl
+
+    mcp_servers:
+      crawl4ai:
+        url: http://localhost:11235/mcp/sse
+        transport: sse
+        enabled: true
+        headers:
+          Authorization: "Bearer ''${CRAWL4AI_API_TOKEN}"
 
     browser:
       cloud_provider: local
@@ -152,5 +161,11 @@ in
     elif [ ! -w "$config_file" ]; then
       $DRY_RUN_CMD chmod u+w "$config_file"
     fi
+  '';
+
+  home.activation.ensureHermesCrawl4AISkill = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    skill_dir="${config.home.homeDirectory}/.hermes/skills/research/crawl4ai-web-extract"
+    $DRY_RUN_CMD mkdir -p "$skill_dir"
+    $DRY_RUN_CMD install -m 0644 ${crawl4aiSkillDir}/SKILL.md "$skill_dir/SKILL.md"
   '';
 }
