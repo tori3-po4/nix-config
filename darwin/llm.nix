@@ -7,6 +7,7 @@
 let
   home = "/Users/${username}";
   defaultModel = "LiquidAI/LFM2.5-8B-A1B-GGUF:Q4_K_M";
+  gemma4E2b = "lmstudio-community/gemma-4-E2B-it-GGUF:Q4_K_M";
   gemma4E4b = "lmstudio-community/gemma-4-E4B-it-GGUF:Q4_K_M";
   granite8b = "unsloth/granite-4.1-8b-GGUF:Q6_K";
   gemma4_12bQat = "lmstudio-community/gemma-4-12B-it-QAT-GGUF:Q4_0";
@@ -16,6 +17,10 @@ let
 
     [${defaultModel}]
     hf-repo = ${defaultModel}
+    load-on-startup = false
+
+    [${gemma4E2b}]
+    hf-repo = ${gemma4E2b}
     load-on-startup = false
 
     [${gemma4E4b}]
