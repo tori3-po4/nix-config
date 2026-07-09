@@ -68,7 +68,6 @@ in
         (symbol ";hash" "#")
         (symbol ";dol" "$")
         (symbol ";per" "%")
-        (symbol ";caret" "^")
         (symbol ";hat" "^")
         (symbol ";til" "~")
         (symbol ";bquote" "`")
