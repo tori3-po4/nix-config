@@ -48,7 +48,6 @@
 
     # ===== AIコーディング支援 =====
     # Hermes Agent 本体は home/hermes.nix、~/.hermes 配下の設定は chezmoi で管理
-    codex
 
     # ===== ローカルLLM =====
     llama-cpp
