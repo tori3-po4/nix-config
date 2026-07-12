@@ -6,7 +6,6 @@
     ./jetbrains-wrapper-fix.nix
     ./bitwarden.nix
     ./llm.nix
-    ./gpu-wired-limit.nix
   ];
 
   system.stateVersion = 5;
