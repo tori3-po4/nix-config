@@ -95,7 +95,6 @@
 
     # ===== 専門ツール =====
     tree-sitter
-    llama-cpp
     sqlite
     flyctl
 

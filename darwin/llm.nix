@@ -56,6 +56,7 @@ in
       "127.0.0.1"
       "--port"
       "8080"
+      "--no-ui"
       "--n-gpu-layers"
       "all"
       "--cache-type-k"

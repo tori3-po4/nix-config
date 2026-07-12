@@ -57,9 +57,35 @@
       # 想定対応システム: aarch64-darwin / x86_64-linux / aarch64-linux
       # (実ホストは下の *Configurations で個別に紐づける)
 
+      # llama.cpp の server 用 Web UI は nodejs_latest/npm を引くので、API 用途では無効化する。
+      llamaCppNoUiOverlay = final: prev: {
+        llama-cpp = prev.llama-cpp.overrideAttrs (old: {
+          nativeBuildInputs = final.lib.subtractLists [
+            final.nodejs_latest
+            final.npmHooks.npmConfigHook
+          ] (old.nativeBuildInputs or [ ]);
+
+          npmDeps = null;
+          npmDepsHash = null;
+          npmRoot = null;
+
+          preConfigure = ''
+            prependToVar cmakeFlags "-DLLAMA_BUILD_COMMIT:STRING=$(cat COMMIT)"
+          '';
+
+          cmakeFlags = (old.cmakeFlags or [ ]) ++ [
+            (final.lib.cmakeBool "LLAMA_BUILD_UI" false)
+            (final.lib.cmakeBool "LLAMA_USE_PREBUILT_UI" false)
+          ];
+        });
+      };
+
       # 共通 nixpkgs 設定 (overlay + unfree)
       sharedNixpkgsModule = {
-        nixpkgs.overlays = [ nix-vscode-extensions.overlays.default ];
+        nixpkgs.overlays = [
+          nix-vscode-extensions.overlays.default
+          llamaCppNoUiOverlay
+        ];
         nixpkgs.config.allowUnfree = true;
       };
 
