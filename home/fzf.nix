@@ -15,19 +15,23 @@
     ];
 
     # CTRL-T(ファイル選択)
-    fileWidgetCommand = "${pkgs.fd}/bin/fd --type f --hidden --follow --exclude .git";
-    fileWidgetOptions = [
-      "--preview '${pkgs.bat}/bin/bat --style=numbers --color=always --line-range :200 {}'"
-    ];
+    fileWidget = {
+      command = "${pkgs.fd}/bin/fd --type f --hidden --follow --exclude .git";
+      options = [
+        "--preview '${pkgs.bat}/bin/bat --style=numbers --color=always --line-range :200 {}'"
+      ];
+    };
 
     # ALT-C / Ctrl-G(ディレクトリ移動・ホーム起点)
-    changeDirWidgetCommand = "${pkgs.fd}/bin/fd --type d --hidden --follow --exclude .git . $HOME";
-    changeDirWidgetOptions = [
-      "--preview '${pkgs.eza}/bin/eza --tree --level=1 --color=always {}'"
-    ];
+    changeDirWidget = {
+      command = "${pkgs.fd}/bin/fd --type d --hidden --follow --exclude .git . $HOME";
+      options = [
+        "--preview '${pkgs.eza}/bin/eza --tree --level=1 --color=always {}'"
+      ];
+    };
 
     # CTRL-R(履歴検索)
-    historyWidgetOptions = [
+    historyWidget.options = [
       "--sort"
       "--exact"
     ];
