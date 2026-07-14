@@ -22,24 +22,28 @@
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│ Nix (nix-darwin)       │ システム設定 + Homebrew統合            │
-│  - system.defaults     │ Dock/Finder/トラックパッド/Stage Mgr   │
-│  - homebrew.casks      │ GUIアプリ                              │
-│  - homebrew.brews      │ macOS toolchain系のみ残し               │
+│ Nix (nix-darwin)       │ システム設定 + Homebrew統合 + 常駐サービス │
+│  - system.defaults     │ Dock/Finder/トラックパッド等           │
+│  - homebrew.casks      │ GUIアプリ (自己更新型・権限要求系)     │
+│  - launchd.user.agents │ llama.cpp サーバ常駐 (darwin/llm.nix)  │
+│  - bitwarden.nix       │ Bitwarden SSH agent (SSH_AUTH_SOCK)    │
 ├────────────────────────┼───────────────────────────────────────┤
-│ Nix (home-manager)     │ パッケージとツールチェーン             │
-│  - home.packages       │ CLIツール、LSP、フォーマッタ           │
-│  - programs.vscode     │ VSCode拡張 + settings.json             │
+│ Nix (home-manager)     │ パッケージ + アプリ設定                │
+│  - home.packages       │ CLI、LSP、VSCode/JetBrains/Ghostty本体 │
+│  - programs.*          │ zsh/bash/starship/fzf/zoxide/firefox/  │
+│                        │ espanso/vscode (拡張 + settings.json)  │
 ├────────────────────────┼───────────────────────────────────────┤
 │ chezmoi                │ dotfile (試行錯誤するもの)             │
-│  - dot_zshrc 等        │ シェル / git / tmux / latex            │
-│  - dot_config/*        │ ghostty, cagent, gtk-3.0 等            │
-│  - private_dot_hermes  │ Hermes config / SOUL / skills          │
-│  - .chezmoiexternal    │ NvChad, Emacs 設定 (別リポジトリ)      │
+│  - dot_gitconfig 等    │ git / tmux / latexmk                   │
+│  - dot_ssh             │ SSH config のみ (鍵は Bitwarden 管理)  │
+│  - dot_config/*        │ ghostty, cagent, gtk-3.0               │
+│  - private_dot_hermes  │ Hermes config / SOUL                   │
+│  - .chezmoiexternal    │ NvChad 設定 (別リポジトリ)             │
 ├────────────────────────┼───────────────────────────────────────┤
-│ Homebrew (Cask中心)    │ Sparkle更新が必要なGUIアプリ           │
-│  - VSCode本体は手動    │ Cask管理外、自動更新                   │
-│  - opam (OCaml)        │ ocaml-lsp 等は opam switch ごと        │
+│ Homebrew (Cask専用)    │ brews は空。Cask のみ                  │
+│  - chrome, slack 等    │ 自己更新型・プライバシー権限系 GUI     │
+│  - docker-desktop      │ Hermes のサンドボックス実行基盤        │
+│  - claude-code, codex  │ AI CLI (更新が速いので brew 管理)      │
 └────────────────────────┴───────────────────────────────────────┘
 ```
 
@@ -50,8 +54,7 @@
 | Nix 設定 | `~/nix-config/` | (private) |
 | dotfile | `~/.local/share/chezmoi/` | `git@github.com:tori3-po4/chezmoi-dotfiles.git` |
 | Neovim 設定 | `~/.config/nvim/` (chezmoi external) | `git@github.com:tori3-po4/tori-NV-settings.git` |
-| Emacs 設定 | `~/.emacs.d/` (chezmoi external) | `git@github.com:tori3-po4/tori-emacs-settings.git` |
-| 旧 Stow リポジトリ | `~/dotfiles/` | (アーカイブ) |
+| Hermes web backend | `~/devs/hermes-web/` | (local) |
 
 ---
 
@@ -59,32 +62,47 @@
 
 ```
 ~/nix-config/
-├── flake.nix            # 入力定義 (nixpkgs, nix-darwin, home-manager, nix-vscode-extensions)
+├── flake.nix            # 入力定義 + overlay + darwinConfigurations
 ├── flake.lock           # ロックファイル (Nixが管理 / sudoで触ると root 所有になる)
 ├── .gitignore
+├── README.md            # このファイル
+├── hermes.md            # Hermes Agent + ローカルLLM 運用メモ
+├── nix-macos-guide.md   # Nix + macOS 全般の移行/構築ガイド
 ├── private/             # ホスト/ユーザ固有情報 (公開リポジトリで隠蔽するための隔離先)
 │   ├── user.nix.example # 公開テンプレート (これだけ git 追跡)
 │   └── user.nix         # 実情報 (各自で作成。intent-to-add + skip-worktree でコミットされない)
 ├── darwin/              # macOSシステム/ユーザレベル設定
-│   ├── default.nix      # darwin/* を import するエントリポイント
-│   ├── homebrew.nix     # cask + brew + tap 宣言
-│   └── defaults.nix     # system.defaults (Dock, Finder, トラックパッド, Stage Manager 等)
+│   ├── default.nix      # darwin/* を import するエントリポイント + zsh高速化等
+│   ├── homebrew.nix     # cask 宣言 (brews は現在空)
+│   ├── defaults.nix     # system.defaults (Dock, Finder, トラックパッド等)
+│   ├── llm.nix          # llama.cpp サーバの launchd 常駐 (router mode, :8080)
+│   ├── bitwarden.nix    # Bitwarden SSH agent を SSH_AUTH_SOCK に設定
+│   └── jetbrains-wrapper-fix.nix  # JetBrains CLI ランチャーの日本語CWD問題対策 overlay
 └── home/                # home-manager (yourname 用)
-    ├── default.nix      # home.packages 一覧 + vscode.nix import
-    ├── vscode.nix       # programs.vscode (拡張 + 設定)
-    └── vscode-settings.json  # VSCode の userSettings (JSON)
+    ├── default.nix      # home.packages 一覧 + 各モジュール import
+    ├── vscode.nix       # programs.vscode (拡張 + 設定 + スニペット)
+    ├── vscode-settings.json  # VSCode の userSettings (JSON)
+    ├── zsh.nix / bash.nix    # シェル設定 (chezmoi から移行済み)
+    ├── starship.nix / fzf.nix / zoxide.nix  # シェル支援ツール設定
+    ├── firefox.nix      # Firefox プロファイル (user.js) 生成
+    ├── git.nix          # Nix git の credential.helper=osxkeychain 打ち消し
+    ├── espanso.nix      # services.espanso (スニペット展開)
+    └── hermes.nix       # Hermes Agent 本体の導入
 ```
 
 ### 各ファイルの役割
 
-- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。`nix-vscode-extensions` overlay と `nixpkgs.config.allowUnfree = true` もここで設定。
+- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / llama-cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。インプットは nixpkgs / nix-darwin / home-manager / nix-vscode-extensions / nix-homebrew / hermes-agent / nixpkgs-espanso (後述のピン留め用)。
 - **`private/user.nix`**: ホスト名・ユーザ名・アーキを保持する個人情報ファイル。`.gitignore` 対象だが `git add -N -f` で intent-to-add し、Nix flake から見えるようにする。`git update-index --skip-worktree` で誤コミットも防止。
 - **`private/user.nix.example`**: 公開可能なテンプレート。新マシンでは `cp private/user.nix.example private/user.nix` から始める。
-- **`darwin/default.nix`**: `system.stateVersion` / `system.primaryUser` / Nixpkgs設定。`./homebrew.nix` と `./defaults.nix` を import。
-- **`darwin/homebrew.nix`**: Brewfile相当の宣言。`onActivation.cleanup = "none"` で安全運用 (将来 `"uninstall"` → `"zap"` に強化)。
+- **`darwin/default.nix`**: `system.stateVersion` / `system.primaryUser` / チャネル無効化 / `/etc/zshrc` の compinit 無効化 (zsh 起動高速化)。darwin/* を import。
+- **`darwin/homebrew.nix`**: Cask 宣言。`onActivation.cleanup = "uninstall"` + `autoUpdate`/`upgrade` = true + `greedyCasks = true` で、宣言外の cask は自動削除・自己更新型 cask も rebuild で更新。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
-- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等)。
-- **`home/vscode.nix`**: `programs.vscode` で 23拡張 + `userSettings`。`mutableExtensionsDir = true` なのでGUIから追加もOK。
+- **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。詳細は `hermes.md`。
+- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と GUI 本体 (VSCode, JetBrains IDE, Ghostty, Firefox, LM Studio)。
+- **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
+- **`home/zsh.nix` / `bash.nix` / `starship.nix` / `fzf.nix` / `zoxide.nix`**: シェルと周辺ツールの設定。以前は chezmoi (`.zshrc` 等) で管理していたが home-manager の `programs.*` に移行済み。
+- **`home/firefox.nix`**: `programs.firefox` (`package = null`) でプロファイル `user.js` のみ生成。about:config で変えても起動時にここの値へ戻る点に注意。
 
 ---
 
@@ -93,8 +111,8 @@
 ### Nix側
 
 ```bash
-# 設定変更後の反映 (sudo 必須)
-sudo darwin-rebuild switch --flake ~/nix-config
+# 設定変更後の反映 (sudo 必須。--impure は private/user.nix を $HOME 起点で読むため必須)
+sudo darwin-rebuild switch --flake ~/nix-config --impure
 
 # 履歴確認
 sudo darwin-rebuild --list-generations
@@ -105,10 +123,13 @@ sudo darwin-rebuild rollback
 # 入力(リポジトリ)を最新に更新
 cd ~/nix-config
 nix flake update
+# → 更新後は switch の前に必ずビルドが通るか確認する:
+nix build .#darwinConfigurations.default.system --impure --no-link
+# 壊れていたら「8. トラブルシュート → nix flake update 後にビルドが壊れた」参照
 
 # Nix store のごみ掃除
 sudo nix-collect-garbage -d
-sudo darwin-rebuild switch --flake ~/nix-config  # 起動可能世代を再確定
+sudo darwin-rebuild switch --flake ~/nix-config --impure  # 起動可能世代を再確定
 ```
 
 ### chezmoi 側
@@ -140,7 +161,7 @@ exit
 brew install --cask <name>
 
 # nix-darwin の宣言と実態を整合させたい時
-sudo darwin-rebuild switch --flake ~/nix-config  # cleanup の強度に応じて整理
+sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall" なので宣言外は消える
 ```
 
 ---
@@ -148,41 +169,46 @@ sudo darwin-rebuild switch --flake ~/nix-config  # cleanup の強度に応じて
 ## 4. 何をどこで管理しているか
 
 ### Nix (`home/default.nix`)
-- 基本CLI: ripgrep, fd, fzf, jq, bat, eza, coreutils
+- 基本CLI: ripgrep, fd, fzf, jq, bat, eza, zoxide, coreutils
 - Git周辺: git, git-filter-repo, lazygit, gh
-- エディタ/シェル支援: neovim, tmux, zoxide, starship, direnv, stow, chezmoi
-- 暗号: gnupg, age
-- 言語処理系: deno, nodejs_22, uv, opam, R
-- ビルド: automake, cmake, meson, pkgconf, gnumake
-- 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler
-- 特殊: tree-sitter, iverilog, llama-cpp, arduino-cli
-- LaTeX: texlive (scheme-full), tex-fmt
-- LSP: lua-language-server, nil, pyright, rust-analyzer, typescript-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
-- Formatter/Linter: stylua, nixfmt-rfc-style, ruff, rustfmt, prettier, shellcheck, shfmt
+- エディタ/GUI本体: neovim, vscode, jetbrains (pycharm/clion/idea), ghostty-bin, firefox
+- シェル支援: tmux, zellij, direnv, stow, chezmoi
+- AI/ローカルLLM: hermes-agent (flake input), llama-cpp (UI無効 overlay), lmstudio
+- 暗号/パスワード: gnupg, age, bitwarden-cli
+- 言語処理系: deno, nodejs_22, uv, jdk, gradle
+- ビルド: automake, cmake, meson, pkgconf, gnumake, gcc, lld, lldb, llvm, openmp
+- 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
+- コンテナ: docker-client, docker-compose (daemon は Docker Desktop cask)
+- LaTeX: texlive (scheme-full), ghostscript, tex-fmt
+- LSP: lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
+- Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
+- programs.* 設定: zsh, bash, starship, fzf, zoxide, firefox (user.js), vscode, espanso
 
 ### Homebrew (`darwin/homebrew.nix`)
-- **Casks**: blender, claude-code, cmake-app, emacs-app, font-hackgen-nerd, ghostty, obsidian, pearcleaner, raspberry-pi-imager, rstudio, skim, utm
-- **Brews (macOS toolchain系のみ)**: sqlite, flyctl, gcc, libomp, llvm, gtkwave (with `randomplum/gtkwave` tap)
+- **Casks**: bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, font-hackgen-nerd, google-chrome, latexit, logi-options+, minecraft, obsidian, pearcleaner, raspberry-pi-imager, skim, slack, tailscale-app, wireshark-app, zotero
+- **Brews**: なし (gtkwave は必要になったら `randomplum/gtkwave` tap で復活させる)
+- 運用: `cleanup = "uninstall"` / `autoUpdate` / `upgrade` / `greedyCasks` すべて有効
 
 ### chezmoi (`~/.local/share/chezmoi/`)
-- `dot_zshrc`, `dot_zprofile`, `dot_zshenv` (PATH 修正含む)
 - `dot_gitconfig`, `dot_tmux.conf`, `dot_latexmkrc`
-- `dot_config/{cagent,ghostty,gtk-3.0}/`
+- `dot_config/{cagent,ghostty,private_gtk-3.0}/`
 - `dot_vscode/argv.json`
-- `dot_ssh/encrypted_*.age`: SSH config + 鍵一式 (age 暗号化)
-- `.chezmoiexternal.toml`: `.config/nvim` と `.emacs.d` を別リポジトリから clone
-- `.chezmoiignore`: `.DS_Store` 除外
-- 暗号化: age (`encryption = "age"`)
+- `dot_ssh/config`: SSH config のみ (秘密鍵は Bitwarden SSH agent 管理。`darwin/bitwarden.nix` 参照)
+- `private_dot_hermes/`: Hermes の config.yaml / SOUL.md
+- `.chezmoiexternal.toml`: `.config/nvim` を別リポジトリから clone
+- ※ age 暗号化はオフ (シークレットは Bitwarden / ローカルファイルで管理)
+- ※ シェル設定 (`.zshrc` 等) は home-manager の `programs.zsh/bash` に移行済み
 
 ### システム設定 (`darwin/defaults.nix`)
 - Dock: autohide=off, mineffect=genie, tilesize=60, mru-spaces=off, show-recents=off
 - Finder: AppleShowAllExtensions=true, FXPreferredViewStyle="icnv"
-- WindowManager (Stage Manager): GloballyEnabled=true, AppWindowGrouping=true
+- WindowManager (Stage Manager): GloballyEnabled=false (無効化済み)
 - トラックパッド: Clicking=off, ThreeFingerDrag=off, RightClick=on
 - 時計: ShowAMPM=true, ShowDate=0 (when space allows), ShowDayOfWeek=true
-- Screencapture: style=window
+- 外観: AppleInterfaceStyle=Dark, reduceTransparency=on, increaseContrast=on
+- Screencapture: style=window, 保存先 ~/Pictures/Screenshots
 - NSGlobalDomain: AppleSpacesSwitchOnActivate=true 等
-- それ以外は `CustomUserPreferences` で plist 直書き
+- それ以外 (Multitouch ジェスチャ等) は `CustomUserPreferences` で plist 直書き
 
 ---
 
@@ -195,58 +221,17 @@ sudo darwin-rebuild switch --flake ~/nix-config  # cleanup の強度に応じて
 - **接頭辞**: `dot_` → `.` に変換。`private_` → 権限 600。`encrypted_` → 暗号化。`empty_` → 空ファイル可。
 - **テンプレート**: `*.tmpl` 拡張子。Goテンプレート構文でマシン別差分を吸収。
 
-### 暗号化 (age)
+### シークレットの扱い
 
-- 鍵ファイル: `~/.config/chezmoi/key.txt` (chmod 600)
-- 公開鍵 (recipient): `age1a7rzqkdaedfqhzktkdyvpfkxx3mkw6nkccuj7na9v45pu3hqse8s0dvj32`
+chezmoi の age 暗号化は**現在オフ**にしている。秘密情報は chezmoi に置かず、以下で管理する:
 
-#### バックアップ戦略
-
-age 鍵は chezmoi で管理している暗号化ファイル全部 (SSH 秘密鍵を含む) を復号する**マスターキー**なので、**マシン移行 / 災害復旧で確実に復元できる**場所に置く必要がある。
-
-| 手法 | 用途 | 同一マシン復旧 | 別マシン復旧 |
-|---|---|---|---|
-| age tarball + iCloud Drive | **メイン**。SSH 鍵と age 鍵を passphrase 付き age で固めて iCloud に置く | ✅ | ✅ |
-| macOS Keychain | 同一マシンでファイル消失した時の予備 | ✅ | ❌ (generic password は iCloud 同期されない) |
-
-**メイン: age tarball**
-
-```bash
-# 作成 (パスフレーズを 2 回入力)
-tar czf - -C "$HOME" \
-  .config/chezmoi/key.txt \
-  .ssh/id_ed25519 \
-  .ssh/id_ed25519.pub \
-  | age -p > "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age"
-
-# 内容確認
-age -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age" | tar -tz
-
-# 復元 (新マシン or 鍵紛失時)
-age -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age" | tar xz -C "$HOME"
-chmod 600 ~/.config/chezmoi/key.txt ~/.ssh/id_ed25519
-```
-
-tarball のパスフレーズを忘れると復旧不能なので、強いパスフレーズを別途記録しておく (1Password / 紙メモ + 金庫 等)。
-
-**予備: macOS Keychain (同一マシン復旧専用)**
-
-```bash
-# 確認
-security find-generic-password -s "chezmoi-age-key" -a "$USER" -w | xxd -r -p
-
-# 復元 (同じマシンで key.txt を消してしまった等)
-security find-generic-password -s "chezmoi-age-key" -a "$USER" -w | xxd -r -p > ~/.config/chezmoi/key.txt
-chmod 600 ~/.config/chezmoi/key.txt
-```
-
-> Keychain の generic password は iCloud Keychain で同期されないため、**別マシンには復元不能**。あくまで同じマシン内のファイル消失対策。
+- **SSH 秘密鍵**: Bitwarden の SSH agent (`darwin/bitwarden.nix` で `SSH_AUTH_SOCK` を Bitwarden に向けている)。chezmoi 管理は `~/.ssh/config` のみ。
+- **API キー等** (Hermes の `~/.hermes/.env` など): Nix / chezmoi 管理外の通常ファイルとしてローカルに置く。
 
 ### 既存ファイルを取り込む
 
 ```bash
 chezmoi add ~/.gitconfig                  # 通常
-chezmoi add --encrypt ~/.ssh/config       # 暗号化
 chezmoi chattr +template ~/.gitconfig     # テンプレート化
 ```
 
@@ -263,17 +248,12 @@ exit
 
 ### .chezmoiexternal.toml
 
-`~/.config/nvim/` と `~/.emacs.d/` は別リポジトリで管理しているため、chezmoi では「外部リポジトリ参照」として宣言:
+`~/.config/nvim/` は別リポジトリで管理しているため、chezmoi では「外部リポジトリ参照」として宣言:
 
 ```toml
 [".config/nvim"]
     type = "git-repo"
     url = "git@github.com:tori3-po4/tori-NV-settings.git"
-    refreshPeriod = "168h"
-
-[".emacs.d"]
-    type = "git-repo"
-    url = "git@github.com:tori3-po4/tori-emacs-settings.git"
     refreshPeriod = "168h"
 ```
 
@@ -305,9 +285,12 @@ exit
 ~/nix-config/         # システム + パッケージ宣言
 ~/.local/share/chezmoi/  # dotfile 宣言
 ~/.config/nvim/       # tori-NV-settings 直 clone (chezmoi external)
-~/.emacs.d/           # tori-emacs-settings 直 clone (chezmoi external)
-~/dotfiles/           # アーカイブ (削除可だが念のため残す)
 ```
+
+> 移行直後は `~/.emacs.d/` (chezmoi external) と `~/dotfiles/` (旧 Stow アーカイブ) も
+> あったが、Emacs は運用をやめ、旧アーカイブも削除済み。
+> また移行後の整理で、シェル設定 (`.zshrc` 等) は chezmoi から home-manager の
+> `programs.*` へさらに移した (「4. 何をどこで管理しているか」参照)。
 
 ### 主要な変更点
 
@@ -315,7 +298,7 @@ exit
 |---|---|---|
 | パッケージ管理 | Brewfile + brew bundle | `home/default.nix` (Nix) + `darwin/homebrew.nix` (Cask中心) |
 | dotfile 配置 | GNU Stow (シンボリックリンク) | chezmoi (実ファイル + テンプレート) |
-| dotfile暗号化 | なし | age (Keychainバックアップ) |
+| シークレット管理 | なし | Bitwarden (SSH agent 含む)。chezmoi の age 暗号化は一時使用後オフ |
 | 新マシン復元 | 手動 (brew install + stow) | `nix run nix-darwin -- switch` + `chezmoi init --apply` |
 | システム設定 | 手動 `defaults write` | `darwin/defaults.nix` |
 | VSCode設定 | GUIで設定 | `programs.vscode` で宣言 (`mutableExtensionsDir=true`) |
@@ -335,28 +318,12 @@ exit
 
 ## 7. 新マシンセットアップ手順
 
-### Phase -1: 旧マシンでの事前準備 (移行前にやっておくこと)
-
-新マシンには **SSH 鍵が無いと private リポジトリの clone もできない**ので、鍵束を旧マシンで暗号化バックアップしておく必要がある。
-
-```bash
-# 旧マシンで実行: keys.tar.age を iCloud Drive に作成
-mkdir -p "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup"
-tar czf - -C "$HOME" \
-  .config/chezmoi/key.txt \
-  .ssh/id_ed25519 \
-  .ssh/id_ed25519.pub \
-  | age -p > "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age"
-```
-
-- パスフレーズは強いものを設定し、別途記録しておく (忘れると復旧不能)
-- iCloud Drive に置いた tarball は新マシンの Apple ID サインイン後に自動で同期される
-- 詳細は「5. chezmoi の使い方 → 暗号化 (age) → バックアップ戦略」参照
+秘密情報 (SSH 鍵) は Bitwarden にあるため、旧マシンでの事前準備は不要。Bitwarden アカウントにログインできることだけ確認しておく。
 
 ### Phase 0〜8: 新マシンでの作業
 
 ```bash
-# 0. macOS 初期セットアップ (Apple ID 手動 → iCloud Drive で keys.tar.age が同期される)
+# 0. macOS 初期セットアップ (Apple ID サインイン等は手動)
 
 # 1. Xcode CLT
 xcode-select --install
@@ -365,58 +332,50 @@ xcode-select --install
 curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install --enable-flakes
 # → 新しいターミナルを開く
 
-# 3. age を最低限 nix-shell で取り出して鍵束を復元
-nix-shell -p age --run '
-  age -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs/keys-backup/keys.tar.age" \
-    | tar xz -C "$HOME"
-'
-chmod 700 ~/.ssh ~/.config/chezmoi
-chmod 600 ~/.config/chezmoi/key.txt ~/.ssh/id_ed25519
-# → ここで Phase -1 で設定した tarball のパスフレーズを 1 回入力
-# → ~/.config/chezmoi/key.txt と ~/.ssh/id_ed25519{,.pub} が復元される
-# → tar が自動生成する中間ディレクトリは 755 になるため、~/.ssh を 700 に直さないと SSH が鍵を拒否する
+# 3. SSH 鍵を Bitwarden から復元
+#    Bitwarden デスクトップアプリを手動インストール (後で darwin-rebuild すると
+#    cask 管理に整合される) → ログイン → 設定から SSH agent を有効化。
+#    シェルで SSH_AUTH_SOCK を Bitwarden のソケットに向ける (rebuild 後は
+#    darwin/bitwarden.nix が恒久設定する):
+export SSH_AUTH_SOCK=~/.bitwarden-ssh-agent.sock
+ssh-add -l   # Bitwarden 内の鍵が見えればOK
 
-# 4. SSH 鍵を ssh-agent + Keychain に登録
-ssh-add --apple-use-keychain ~/.ssh/id_ed25519
-# → ここで SSH 鍵自体のパスフレーズを 1 回入力 (以降 Keychain から自動取得)
-
-# 5. nix-config を取得
+# 4. nix-config を取得
 git clone git@github.com:<your-account>/nix-config.git ~/nix-config
 cd ~/nix-config
 
-# 5a. 個人情報ファイルを作成 (テンプレートをコピーして編集)
+# 4a. 個人情報ファイルを作成 (テンプレートをコピーして編集)
 cp private/user.nix.example private/user.nix
 $EDITOR private/user.nix
 # → username (whoami の出力) / hostname (scutil --get LocalHostName) /
 #    system (Apple Silicon は "aarch64-darwin") を自分の環境に合わせる
 
-# 5b. Nix から見えるように intent-to-add し、誤コミット防止に skip-worktree も設定
+# 4b. Nix から見えるように intent-to-add し、誤コミット防止に skip-worktree も設定
 git add -N -f private/user.nix
 git update-index --skip-worktree private/user.nix
 # → これで Nix flake からは見えるが、git status / VSCode の git client には表示されない
 
-# 5c. 適用 (default ホストを使うと hostname を意識しなくて済む)
-sudo nix run nix-darwin -- switch --flake ".#default"
+# 4c. 適用 (default ホストを使うと hostname を意識しなくて済む。--impure 必須)
+sudo nix run nix-darwin -- switch --flake ".#default" --impure
 
-# 6. chezmoi 初期化 (dotfile 一式 + nvim/emacs を一発展開)
+# 5. chezmoi 初期化 (dotfile 一式 + nvim 設定を一発展開)
 chezmoi init --apply git@github.com:tori3-po4/chezmoi-dotfiles.git
-# → SSH 鍵で clone → age 鍵で encrypted_*.age を復号 → ホームに展開
+# → SSH 鍵 (Bitwarden agent) で clone → ホームに展開 → external の nvim 設定も clone
 
-# 7. シェル再読込
+# 6. シェル再読込
 exec zsh
 
-# 8. Neovim 初回起動 (lazy.nvim 自動セットアップ)
+# 7. Neovim 初回起動 (lazy.nvim 自動セットアップ)
 nvim
 :Lazy restore   # lazy-lock.json から復元
 :q
 
-# 9. App Store サインイン、プライバシー権限許可など (手動)
+# 8. App Store サインイン、プライバシー権限許可など (手動)
 ```
 
-### 鍵を忘れた / iCloud が使えない場合のフォールバック
+### 鍵が使えない場合のフォールバック
 
-- **age tarball のパスフレーズを忘れた**: 復旧不能。新規 SSH 鍵生成 → GitHub 公開鍵差し替え → 新規 age 鍵生成 → 旧 chezmoi リポジトリの暗号化ファイルは捨てて再構築。
-- **iCloud Drive にアクセスできない**: 旧マシンが生きていれば AirDrop / scp で `keys.tar.age` を転送、または `~/.config/chezmoi/key.txt` と `~/.ssh/id_ed25519` を直接転送。
+- **Bitwarden にログインできない**: SSH 鍵が取り出せない。新規 SSH 鍵を生成して GitHub の公開鍵を差し替える。
 
 ---
 
@@ -442,12 +401,41 @@ sudo chown $(id -u):staff ~/nix-config/flake.lock
 ```
 
 #### `vscode-extension-* removed on aarch64-darwin`
-`ms-vscode.cpptools` 等の proprietary 拡張は darwin で除外される。
-`vscode.nix` から外し、`mutableExtensionsDir = true` のため VSCode GUI から手動で追加可能。
+`ms-vscode.cpptools` 等の proprietary 拡張は `nix-vscode-extensions` 側で darwin から除外される。
+本リポジトリでは nixpkgs 同梱の `pkgs.vscode-extensions.ms-vscode.cpptools` (unfree) で代替している (`home/vscode.nix` 参照)。`mutableExtensionsDir = false` なので GUI からの追加は反映されない — 拡張は必ず `vscode.nix` に書く。
 
 #### `attribute 'foo' missing` / `option does not exist`
 nix-darwin が知らないオプション名を `system.defaults.*` に書いた。
 [MyNixOS](https://mynixos.com/) で正しい名前を検索するか、`CustomUserPreferences` に逃がす。
+
+### `nix flake update` 後にビルドが壊れた
+
+nixpkgs-unstable を追従している以上、上流のツールチェーン更新でパッケージが壊れることがある。切り分けと対処:
+
+```bash
+# 1. まず switch せずビルドだけして原因パッケージを特定
+nix build .#darwinConfigurations.default.system --impure --no-link --keep-going 2>&1 | grep "Cannot build"
+
+# 2. 上流で既知/修正済みか確認 (Hydra のジョブ状況、nixpkgs の issue)
+#    https://hydra.nixos.org/job/nixpkgs/trunk/<pkg>.aarch64-darwin/latest
+
+# 3. 上流修正待ちの間は、壊れたパッケージだけ旧 nixpkgs リビジョンにピン留めする
+```
+
+ピン留めの手順 (espanso での実例が `flake.nix` にある):
+
+1. `flake.nix` の inputs に旧リビジョンを追加: `nixpkgs-<pkg>.url = "github:NixOS/nixpkgs/<動いていた rev>";`
+2. overlay で該当パッケージだけ差し替え: `<pkg> = inputs.nixpkgs-<pkg>.legacyPackages.${prev.stdenv.hostPlatform.system}.<pkg>;`
+3. `nix flake lock` で lock に反映 → ビルド確認
+4. **上流で直ったら input と overlay を削除する** (ピン留めしたままだと古いバイナリが残り続ける)
+
+#### 実例: espanso (2026-07 適用中)
+
+2026-07 の update で nixpkgs が LLVM/clang 21 系に移行した際、espanso 2.3.0 が
+aarch64-darwin のリンク段階で失敗するようになった (`clang: linker command failed
+with exit code 133`)。上流未修正のため、ビルドが通っていたリビジョンを
+`nixpkgs-espanso` input としてピン留めし、`espansoPinOverlay` で espanso だけ
+そこから取得している。上流で修正が入ったら両方を削除すること。
 
 ### `private/user.nix` 関連
 
@@ -485,42 +473,28 @@ ls -la
 git ls-files
 ```
 
-#### age 鍵を紛失した
-**バックアップから復元** (Keychain の `chezmoi-age-key`):
-```bash
-security find-generic-password -s "chezmoi-age-key" -a "$USER" -w | xxd -r -p > ~/.config/chezmoi/key.txt
-chmod 600 ~/.config/chezmoi/key.txt
-```
-
 ### システム defaults が反映されない
 ```bash
 killall Dock; killall Finder; killall cfprefsd
 # または再ログイン
 ```
 
-### Homebrew tap が手動で消えた
-```bash
-brew tap randomplum/gtkwave    # 手動再追加 → switch すると整合
-```
-
-### nvim / Emacs が起動しない
+### nvim が起動しない / 設定が壊れた
 chezmoi external の clone 失敗の可能性:
 ```bash
 chezmoi apply -v   # 詳細ログで状況確認
-# 必要なら ~/.config/nvim や ~/.emacs.d を rm -rf して chezmoi apply で再 clone
+# 必要なら ~/.config/nvim を rm -rf して chezmoi apply で再 clone
 ```
 
 ---
 
 ## 9. 今後の TODO / 既知の制限
 
-- **VSCode 拡張**: `ms-vscode.cpptools` 系は GUI 手動インストール (proprietary かつ darwin 配信なし)
-- **OCaml LSP**: opam switch ABI 互換のため Nix 化せず、`opam install ocaml-lsp-server` で各 switch ごとに管理
-- **gcc / libomp / llvm**: brew 残し (macOS toolchain 統合)
-- **Emacs venv 連携**: `direnv` + `nix-direnv` を programs.direnv で本格化していない (現状は `buffer-env` で `.envrc` 想定)
-- **`~/.vscode/extensions.backup-pre-nix`**: 920MB の旧拡張バックアップ。動作確認後 `rm -rf` で削除可
-- **`~/dotfiles/`**: 旧 Stow リポジトリをアーカイブ。数週間運用安定確認後にリネーム/削除
-- **homebrew cleanup**: 現状 `cleanup = "none"`。重複ツール (Nix と brew両方にある git, fd等) を整理する場合は `"uninstall"` → `"zap"` 段階引き上げ
+- **espanso のピン留め解除**: nixpkgs の LLVM/clang 21 移行で espanso が darwin でビルド不能 (2026-07 時点)。`nixpkgs-espanso` input + `espansoPinOverlay` で旧リビジョンにピン留め中。上流修正後に削除する (「8. トラブルシュート」参照)
+- **jetbrains-wrapper-fix.nix の上流化**: JetBrains CLI ランチャーの日本語 CWD 問題は overlay で対処中。nixpkgs に PR を出して不要にする (ファイル内 TODO 参照)
+- **homebrew cleanup**: 現状 `cleanup = "uninstall"`。安定運用が続けば `"zap"` へ引き上げ検討
+- **direnv 連携**: パッケージとして direnv は入れているが `programs.direnv` (nix-direnv 統合) は未設定
+- **Nix で管理できないもの**: TCC (プライバシー権限)、App Store サインイン、Bitwarden ログイン等は新マシンで手動
 
 ---
 
@@ -531,4 +505,5 @@ chezmoi apply -v   # 詳細ログで状況確認
 - [chezmoi docs](https://www.chezmoi.io/)
 - [nix-vscode-extensions](https://github.com/nix-community/nix-vscode-extensions)
 - [MyNixOS (オプション横断検索)](https://mynixos.com/)
-- 移行プロセス全体ガイド: `~/dotfiles/nix-macos-guide.md`
+- 移行プロセス全体ガイド: [`nix-macos-guide.md`](./nix-macos-guide.md) (リポジトリ直下)
+- Hermes Agent + ローカルLLM 運用: [`hermes.md`](./hermes.md)

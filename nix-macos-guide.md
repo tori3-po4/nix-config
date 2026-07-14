@@ -556,6 +556,11 @@ grep "public key" ~/.config/chezmoi/key.txt
 
 **重要**：このキーを**1Password等にバックアップ**する。失うと暗号化ファイルが復号できなくなる。
 
+> **注 (2026-07)**: 本リポジトリではその後、シークレット管理を Bitwarden に寄せた
+> (SSH 鍵は Bitwarden SSH agent、API キー類は管理外のローカルファイル)。
+> chezmoi の age 暗号化は現在オフにしているため、暗号化を使わない方針なら
+> この節と以降の `--encrypt` はスキップしてよい。
+
 #### 4. chezmoi初期化
 
 ```bash
@@ -1198,18 +1203,25 @@ defaults read-type com.google.Chrome HomepageLocation
 | ブラウザ（Chrome、Firefox、Arc、Brave） | Cask |
 | コミュニケーション系（Slack、Discord、Zoom） | Cask（プライバシー権限のため重要） |
 | クリエイティブ系（Figma、Sketch、Notion、Obsidian） | Cask |
-| VSCode | Cask（拡張機能の署名問題回避） |
+| VSCode | どちらも可（下記注参照） |
 | Docker Desktop / OrbStack | Cask |
+| 更新の速いAIツール（Claude Code、Codex CLI） | Cask（nixpkgs の追従を待たなくて済む） |
 | CLIツール全般 | Nix |
 | 言語処理系（Node.js、Python、Go、Rust） | Nix |
 | クラウドCLI（aws、terraform、kubectl） | Nix |
-| 設定をNix管理したいGUI（Alacritty、WezTerm、Emacs） | Nix |
+| 設定をNix管理したいGUI（Alacritty、WezTerm、Ghostty） | Nix |
 | App Store専売（Xcode、Things 3、Pages等） | masApps |
+
+> **VSCode について (2026-07 時点の実運用)**: 以前は「Cask一択」としていたが、
+> 本リポジトリでは現在 nixpkgs の `vscode` (unfree) + `programs.vscode`
+> (`package = null`, `mutableExtensionsDir = false`) で本体・拡張とも Nix 管理して
+> 問題なく運用できている。拡張は `nix-vscode-extensions` overlay の
+> `pkgs.vscode-marketplace` から取り、darwin で配信されない `ms-vscode.cpptools`
+> だけ nixpkgs 同梱版で補う。自動更新に任せたい場合は従来どおり Cask でよい。
 
 #### Nixで入れるとSparkle更新で衝突する例
 
 - 多くの商用macOSアプリ
-- VSCode（拡張機能の署名検証エラー、特にApple Silicon）
 - カメラ・マイク・画面収録権限を要求するアプリ
 
 これらは**Cask一択**。
@@ -1264,7 +1276,8 @@ programs.vscode.profiles.default.extensions = with pkgs.vscode-marketplace; [
 #### 落とし穴
 
 - **settings.jsonが読み取り専用になる**：home-managerが配置するファイルはNixストアへのリンクで書き込み禁止。GUIから設定変更できない
-- **拡張機能管理が二重になる**：`mutableExtensionsDir = true` でVSCode側からの追加も許可可能だが本末転倒
+- **拡張機能管理が二重になる**：`mutableExtensionsDir = true` でVSCode側からの追加も許可可能だが本末転倒。完全宣言管理なら `false` にして拡張は必ず .nix に書く（本リポジトリはこの運用）
+- **darwin配信のないproprietary拡張**：`ms-vscode.cpptools` 等は `nix-vscode-extensions` から消えることがある。nixpkgs 同梱の `pkgs.vscode-extensions.*`（unfree）で代替できる場合がある
 - **Apple SiliconでのSparkle更新衝突**：本体はCaskで入れ、設定だけhome-managerで管理する分離もあり
 
 #### Cask + 設定だけNix管理
@@ -1285,25 +1298,18 @@ home.file."Library/Application Support/Code/User/settings.json".text =
 
 macOSではNixからのソースビルドが現状不可。3つの選択肢：
 
-#### A. ghostty-bin（公式DMGをNixで再パッケージ）
+#### A. ghostty-bin（公式DMGをNixで再パッケージ・本リポジトリの現行方式）
 
 ```nix
-programs.ghostty = {
-  enable = true;
-  package = if pkgs.stdenv.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
-  enableZshIntegration = true;
-  
-  settings = {
-    font-family = "JetBrainsMono Nerd Font";
-    font-size = 14;
-    theme = "tokyonight";
-  };
-};
+home.packages = with pkgs; [
+  (if stdenv.isDarwin then ghostty-bin else ghostty)
+];
+# 設定ファイル (~/.config/ghostty/config) は chezmoi 側で管理
 ```
 
-Sparkle自動更新は壊れる。
+Sparkle自動更新は壊れる（darwin-rebuild での更新に一本化される）。
 
-#### B. Cask + 設定だけNix管理（推奨）
+#### B. Cask + 設定だけNix管理
 
 ```nix
 # nix-darwin
@@ -1550,6 +1556,27 @@ killall Finder
 nix flake update
 darwin-rebuild switch --flake .
 ```
+
+#### `nix flake update` 後に特定パッケージがビルドできない
+
+nixpkgs-unstable 追従では、上流のツールチェーン更新（コンパイラのメジャーバージョン
+上げ等）で個別パッケージが壊れることがある（例: 2026-07 の LLVM/clang 21 移行で
+espanso が aarch64-darwin でリンクエラー）。上流修正を待つ間は、壊れたパッケージ
+だけ旧 nixpkgs リビジョンにピン留めするのが定石：
+
+```nix
+# flake.nix
+inputs.nixpkgs-foo.url = "github:NixOS/nixpkgs/<動いていたrev>";
+
+# overlay
+final: prev: {
+  foo = inputs.nixpkgs-foo.legacyPackages.${prev.stdenv.hostPlatform.system}.foo;
+}
+```
+
+`nix flake lock` で反映し、上流で直ったら input と overlay を削除する。
+壊れているかどうかは Hydra（`https://hydra.nixos.org/job/nixpkgs/trunk/<pkg>.<system>/latest`）
+や nixpkgs の issue で確認できる。
 
 ### Rollback機能
 

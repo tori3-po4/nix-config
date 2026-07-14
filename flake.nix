@@ -21,6 +21,12 @@
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
+    # espanso が LLVM/clang 21 系に上がった nixpkgs-unstable でリンクエラーになる
+    # (aarch64-darwin, exit code 133)。上流で修正されるまで、ビルドが通っていた
+    # リビジョンにピン留めして espanso だけここから取る。修正後はこの input と
+    # espansoPinOverlay を削除すること。
+    nixpkgs-espanso.url = "github:NixOS/nixpkgs/3d46470bb3030020f7e1361f33514854f5bfa86d";
+
     # Hermes Agent (Nous Research) は公式 flake を持つので install.sh ではなく
     # input 化して Nix 管理する。uv2nix + npm ビルドが上流ピン留めの nixpkgs
     # (nixos-unstable) 前提なので、あえて inputs.nixpkgs.follows は付けず、
@@ -80,11 +86,17 @@
         });
       };
 
+      # espanso を旧 nixpkgs にピン留め (inputs の nixpkgs-espanso コメント参照)
+      espansoPinOverlay = final: prev: {
+        espanso = inputs.nixpkgs-espanso.legacyPackages.${prev.stdenv.hostPlatform.system}.espanso;
+      };
+
       # 共通 nixpkgs 設定 (overlay + unfree)
       sharedNixpkgsModule = {
         nixpkgs.overlays = [
           nix-vscode-extensions.overlays.default
           llamaCppNoUiOverlay
+          espansoPinOverlay
         ];
         nixpkgs.config.allowUnfree = true;
       };
