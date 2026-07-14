@@ -270,7 +270,6 @@
           ms-vscode.remote-explorer
           rust-lang.rust-analyzer
           vscodevim.vim
-          pdconsec.vscode-print
           vscjava.vscode-java-pack
           redhat.java
         ])
