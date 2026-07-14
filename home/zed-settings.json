@@ -1,0 +1,101 @@
+{
+  "auto_update": false,
+  "base_keymap": "VSCode",
+  "vim_mode": false,
+  "theme": "GitHub Dark High Contrast",
+  "buffer_font_family": "HackGen Console NF",
+  "buffer_font_size": 16,
+  "ui_font_size": 16,
+  "format_on_save": "on",
+  "soft_wrap": "editor_width",
+  "restore_on_startup": "empty_tab",
+  "disable_ai": true,
+  "features": {
+    "edit_predictions": {
+      "provider": "none"
+    }
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "gutter": {
+    "folds": false
+  },
+  "minimap": {
+    "show": "never"
+  },
+  "sticky_scroll": {
+    "enabled": false
+  },
+  "terminal": {
+    "font_family": "HackGen Console NF",
+    "font_size": 16,
+    "shell": {
+      "program": "zsh"
+    }
+  },
+  "languages": {
+    "C": {
+      "format_on_save": "on",
+      "formatter": "language_server"
+    },
+    "C++": {
+      "format_on_save": "on",
+      "formatter": "language_server"
+    },
+    "LaTeX": {
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "tex-fmt",
+          "arguments": [
+            "--stdin"
+          ]
+        }
+      }
+    },
+    "Nix": {
+      "language_servers": [
+        "nixd",
+        "!nil"
+      ],
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "nixfmt",
+          "arguments": []
+        }
+      }
+    },
+    "Python": {
+      "language_servers": [
+        "pyright",
+        "ruff",
+        "!basedpyright"
+      ],
+      "format_on_save": "on",
+      "formatter": {
+        "language_server": {
+          "name": "ruff"
+        }
+      },
+      "use_on_type_format": true
+    },
+    "Rust": {
+      "format_on_save": "on",
+      "formatter": "language_server"
+    }
+  },
+  "lsp": {
+    "clangd": {
+      "binary": {
+        "arguments": [
+          "--background-index",
+          "--clang-tidy",
+          "--completion-style=detailed"
+        ]
+      }
+    }
+  }
+}

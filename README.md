@@ -31,7 +31,7 @@
 │ Nix (home-manager)     │ パッケージ + アプリ設定                │
 │  - home.packages       │ CLI、LSP、VSCode/JetBrains/Ghostty本体 │
 │  - programs.*          │ zsh/bash/starship/fzf/zoxide/firefox/  │
-│                        │ espanso/vscode (拡張 + settings.json)  │
+│                        │ espanso/vscode/zed (拡張 + 設定)       │
 ├────────────────────────┼───────────────────────────────────────┤
 │ chezmoi                │ dotfile (試行錯誤するもの)             │
 │  - dot_gitconfig 等    │ git / tmux / latexmk                   │
@@ -82,6 +82,9 @@
     ├── default.nix      # home.packages 一覧 + 各モジュール import
     ├── vscode.nix       # programs.vscode (拡張 + 設定 + スニペット)
     ├── vscode-settings.json  # VSCode の userSettings (JSON)
+    ├── zed.nix          # programs.zed-editor (拡張 + LSP + task/debug)
+    ├── zed-settings.json # Zed の userSettings (JSON)
+    ├── cpp-snippets.json # VSCode/Zed 共有の C++ スニペット
     ├── zsh.nix / bash.nix    # シェル設定 (chezmoi から移行済み)
     ├── starship.nix / fzf.nix / zoxide.nix  # シェル支援ツール設定
     ├── firefox.nix      # Firefox プロファイル (user.js) 生成
@@ -99,8 +102,9 @@
 - **`darwin/homebrew.nix`**: Cask 宣言。`onActivation.cleanup = "uninstall"` + `autoUpdate`/`upgrade` = true + `greedyCasks = true` で、宣言外の cask は自動削除・自己更新型 cask も rebuild で更新。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。詳細は `hermes.md`。
-- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と GUI 本体 (VSCode, JetBrains IDE, Ghostty, Firefox, LM Studio)。
+- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と GUI 本体 (VSCode, Zed, JetBrains IDE, Ghostty, Firefox, LM Studio)。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
+- **`home/zed.nix`**: `programs.zed-editor` (`package = null`、本体は home.packages 側) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
 - **`home/zsh.nix` / `bash.nix` / `starship.nix` / `fzf.nix` / `zoxide.nix`**: シェルと周辺ツールの設定。以前は chezmoi (`.zshrc` 等) で管理していたが home-manager の `programs.*` に移行済み。
 - **`home/firefox.nix`**: `programs.firefox` (`package = null`) でプロファイル `user.js` のみ生成。about:config で変えても起動時にここの値へ戻る点に注意。
 
@@ -182,7 +186,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - LaTeX: texlive (scheme-full), ghostscript, tex-fmt
 - LSP: lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
-- programs.* 設定: zsh, bash, starship, fzf, zoxide, firefox (user.js), vscode, espanso
+- programs.* 設定: zsh, bash, starship, fzf, zoxide, firefox (user.js), vscode, zed-editor, espanso
 
 ### Homebrew (`darwin/homebrew.nix`)
 - **Casks**: bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, font-hackgen-nerd, google-chrome, latexit, logi-options+, minecraft, obsidian, pearcleaner, raspberry-pi-imager, skim, slack, tailscale-app, wireshark-app, zotero

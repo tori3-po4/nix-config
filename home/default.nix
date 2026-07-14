@@ -2,6 +2,7 @@
 {
   imports = [
     ./vscode.nix
+    ./zed.nix
     ./zsh.nix
     ./bash.nix
     ./starship.nix
@@ -35,6 +36,7 @@
     # ===== エディタ/シェル支援 =====
     neovim
     vscode
+    zed-editor
     jetbrains.pycharm
     jetbrains.clion
     jetbrains.idea
