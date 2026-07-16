@@ -22,6 +22,9 @@
   targets.darwin.copyApps.enable = pkgs.stdenv.isDarwin;
 
   home.packages = with pkgs; [
+    # ===== Nix utilties =====
+    nh
+
     # ===== 基本CLI =====
     ripgrep
     fd
