@@ -8,7 +8,7 @@
     clean = {
       enable = true;
       dates = "weekly";
-      extraArgs = "--keep-since 30d --keep-one";
+      extraArgs = "--keep-since 14d --keep 3";
     };
   };
 }
