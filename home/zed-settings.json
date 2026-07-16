@@ -8,7 +8,7 @@
   "ui_font_size": 16,
   "format_on_save": "on",
   "soft_wrap": "editor_width",
-  "restore_on_startup": "empty_tab",
+  "restore_on_startup": "launchpad",
   "disable_ai": true,
   "features": {
     "edit_predictions": {
