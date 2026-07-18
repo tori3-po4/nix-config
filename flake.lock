@@ -82,6 +82,22 @@
         "type": "github"
       }
     },
+    "llama-cpp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784327369,
+        "narHash": "sha256-R5oiaZcuDsw64xLhUHosO89Nlz8J/IqMX1bHEMHebuk=",
+        "owner": "ggml-org",
+        "repo": "llama.cpp",
+        "rev": "86a9c79f866799eb0e7e89c03578ccfbcc5d808e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ggml-org",
+        "repo": "llama.cpp",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
@@ -264,6 +280,7 @@
       "inputs": {
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager",
+        "llama-cpp": "llama-cpp",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nix-vscode-extensions": "nix-vscode-extensions",

@@ -32,6 +32,14 @@
     # (nixos-unstable) 前提なので、あえて inputs.nixpkgs.follows は付けず、
     # 上流のロックで固定ビルドさせる(こちらの nixpkgs-unstable とのズレ事故回避)。
     hermes-agent.url = "github:NousResearch/hermes-agent";
+
+    # llama.cpp 本体は GitHub から取得し、ビルド定義と依存関係は現在の
+    # nixpkgs を使う。上流の Nix 定義は削除済みの Darwin SDK 互換属性を
+    # 参照しているため、flake としては評価しない。
+    llama-cpp = {
+      url = "github:ggml-org/llama.cpp";
+      flake = false;
+    };
   };
 
   outputs =
@@ -80,9 +88,13 @@
         else
           throw "Unsupported Darwin system for the Linux builder: ${system}";
 
-      # llama.cpp の server 用 Web UI は nodejs_latest/npm を引くので、API 用途では無効化する。
-      llamaCppNoUiOverlay = final: prev: {
+      # Darwin 対応済みの nixpkgs のビルド定義を使い、ソースだけ GitHub 版へ
+      # 差し替える。server 用 Web UI は API 用途では不要なのでビルドしない。
+      llamaCppGitHubOverlay = final: prev: {
         llama-cpp = prev.llama-cpp.overrideAttrs (old: {
+          version = builtins.substring 0 8 inputs.llama-cpp.lastModifiedDate;
+          src = inputs.llama-cpp.outPath;
+
           nativeBuildInputs = final.lib.subtractLists [
             final.nodejs_latest
             final.npmHooks.npmConfigHook
@@ -93,7 +105,7 @@
           npmRoot = null;
 
           preConfigure = ''
-            prependToVar cmakeFlags "-DLLAMA_BUILD_COMMIT:STRING=$(cat COMMIT)"
+            prependToVar cmakeFlags "-DLLAMA_BUILD_COMMIT:STRING=${inputs.llama-cpp.shortRev}"
           '';
 
           cmakeFlags = (old.cmakeFlags or [ ]) ++ [
@@ -112,7 +124,7 @@
       sharedNixpkgsModule = {
         nixpkgs.overlays = [
           nix-vscode-extensions.overlays.default
-          llamaCppNoUiOverlay
+          llamaCppGitHubOverlay
           espansoPinOverlay
         ];
         nixpkgs.config.allowUnfree = true;
