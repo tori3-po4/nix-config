@@ -2,7 +2,7 @@
   ...
 }:
 {
-  programs.sh = {
+  programs.nh = {
     enable = true;
     package = null;
     clean = {
