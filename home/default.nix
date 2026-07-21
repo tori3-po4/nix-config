@@ -12,6 +12,7 @@
     ./espanso.nix
     ./git.nix
     ./hermes.nix
+    ./nh.nix
   ];
 
   home.stateVersion = "24.11";
