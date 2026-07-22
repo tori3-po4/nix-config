@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, pkgs, ... }:
 let
   zedExtensions = [
     "dockerfile"
@@ -21,6 +21,29 @@ let
     "-output-directory=.out"
     "$ZED_FILE"
   ];
+
+  mkLatexSkimTask =
+    { label, latexmkArgs }:
+    {
+      inherit label;
+      command = "/bin/zsh";
+      args = [
+        "-c"
+        ''
+          previewDirectory="$1"
+          previewStem="$2"
+          shift 2
+          latexmk "$@" && open -a Skim "$previewDirectory/.out/$previewStem.pdf"
+        ''
+        "zed-latex-preview"
+        "$ZED_DIRNAME"
+        "$ZED_STEM"
+      ]
+      ++ latexmkArgs
+      ++ latexmkCommonArgs;
+      cwd = "$ZED_DIRNAME";
+      save = "current";
+    };
 in
 {
   programs.zed-editor = {
@@ -110,6 +133,19 @@ in
         cwd = "$ZED_DIRNAME";
         save = "current";
       }
+    ]
+    ++ lib.optionals pkgs.stdenv.isDarwin [
+      (mkLatexSkimTask {
+        label = "LaTeX: platex -> dvipdfmx -> Skim";
+        latexmkArgs = [
+          "-latex=platex"
+          "-pdfdvi"
+        ];
+      })
+      (mkLatexSkimTask {
+        label = "LaTeX: lualatex -> Skim";
+        latexmkArgs = [ "-lualatex" ];
+      })
     ];
 
     userDebug = [
