@@ -121,15 +121,30 @@ in
         args = [
           "-latex=platex"
           "-pdfdvi"
-        ]
-        ++ latexmkCommonArgs;
+          "-verbose"
+          "-file-line-error"
+          "-synctex=1"
+          "-interaction=nonstopmode"
+          "-aux-directory=.aux"
+          "-output-directory=.out"
+          "$ZED_FILE"
+        ];
         cwd = "$ZED_DIRNAME";
         save = "current";
       }
       {
         label = "LaTeX: lualatex";
         command = "latexmk";
-        args = [ "-lualatex" ] ++ latexmkCommonArgs;
+        args = [
+          "-lualatex"
+          "-verbose"
+          "-file-line-error"
+          "-synctex=1"
+          "-interaction=nonstopmode"
+          "-aux-directory=.aux"
+          "-output-directory=.out"
+          "$ZED_FILE"
+        ];
         cwd = "$ZED_DIRNAME";
         save = "current";
       }
