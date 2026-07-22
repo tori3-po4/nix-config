@@ -4,7 +4,6 @@
 {
   programs.nh = {
     enable = true;
-    package = null;
     clean = {
       enable = true;
       dates = "weekly";
