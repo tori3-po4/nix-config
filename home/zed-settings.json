@@ -87,6 +87,28 @@
           "--completion-style=detailed"
         ]
       }
+    },
+    "texlab": {
+      "settings": {
+        "texlab": {
+          "build": {
+            "executable": "latexmk",
+            "args": [
+              "-verbose",
+              "-file-line-error",
+              "-synctex=1",
+              "-interaction=nonstopmode",
+              "-aux-directory=.aux",
+              "-output-directory=.out",
+              "%f"
+            ],
+            "onSave": true,
+            "auxDirectory": ".aux",
+            "logDirectory": ".aux",
+            "pdfDirectory": ".out"
+          }
+        }
+      }
     }
   }
 }

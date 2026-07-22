@@ -12,6 +12,23 @@ let
     "toml"
   ];
 
+  baseZedSettings = builtins.fromJSON (builtins.readFile ./zed-settings.json);
+
+  platformZedSettings = lib.optionalAttrs pkgs.stdenv.isDarwin {
+    lsp.texlab.settings.texlab = {
+      build.forwardSearchAfter = true;
+      forwardSearch = {
+        executable = "/Applications/Skim.app/Contents/SharedSupport/displayline";
+        args = [
+          "-r"
+          "%l"
+          "%p"
+          "%f"
+        ];
+      };
+    };
+  };
+
   latexmkCommonArgs = [
     "-verbose"
     "-file-line-error"
@@ -58,7 +75,7 @@ in
     mutableUserDebug = false;
 
     extensions = zedExtensions;
-    userSettings = builtins.fromJSON (builtins.readFile ./zed-settings.json);
+    userSettings = lib.recursiveUpdate baseZedSettings platformZedSettings;
 
     userTasks = [
       {
