@@ -74,6 +74,7 @@
     deno
     nodejs_22
     uv
+    pixi
 
     # ===== ビルドツール =====
     automake
