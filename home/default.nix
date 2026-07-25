@@ -67,6 +67,9 @@
     # ===== ブラウザ =====
     firefox
 
+    # ===== ゲーム(minecraft) ====
+    prismlauncher
+
     # ===== ドキュメント =====
     pandoc
 
