@@ -5,6 +5,7 @@
     ./defaults.nix
     ./jetbrains-wrapper-fix.nix
     ./bitwarden.nix
+    ./karabiner.nix
     ./llm.nix
   ];
 
