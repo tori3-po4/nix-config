@@ -68,8 +68,8 @@ in
     # 本体は他の GUI アプリと同様に home/default.nix の home.packages で管理する。
     package = null;
 
-    # VS Code と同様、設定ファイルは Home Manager だけで管理する。
-    mutableUserSettings = false;
+    # Remote Projects の SSH 接続情報を Zed が保存できるよう、設定の変更を許可する。
+    mutableUserSettings = true;
     mutableUserKeymaps = false;
     mutableUserTasks = false;
     mutableUserDebug = false;
