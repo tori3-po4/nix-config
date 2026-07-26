@@ -66,6 +66,7 @@
 ├── flake.lock           # ロックファイル (Nixが管理 / sudoで触ると root 所有になる)
 ├── .gitignore
 ├── README.md            # このファイル
+├── image-build.md       # Docker / qcow2 image のビルド手順
 ├── hermes.md            # Hermes Agent + ローカルLLM 運用メモ
 ├── nix-macos-guide.md   # Nix + macOS 全般の移行/構築ガイド
 ├── private/             # ホスト/ユーザ固有情報 (公開リポジトリで隠蔽するための隔離先)
@@ -76,8 +77,12 @@
 │   ├── homebrew.nix     # cask 宣言 (brews は現在空)
 │   ├── defaults.nix     # system.defaults (Dock, Finder, トラックパッド等)
 │   ├── llm.nix          # llama.cpp サーバの launchd 常駐 (router mode, :8080)
+│   ├── linux-builder.nix # macOS から Linux image を作る builder VM
 │   ├── bitwarden.nix    # Bitwarden SSH agent を SSH_AUTH_SOCK に設定
 │   └── jetbrains-wrapper-fix.nix  # JetBrains CLI ランチャーの日本語CWD問題対策 overlay
+├── images/              # Linux image の宣言
+│   ├── docker.nix       # Docker load 用 nix-hello image
+│   └── vm.nix           # systemd-repart ベースの NixOS VM image
 └── home/                # home-manager (yourname 用)
     ├── default.nix      # home.packages 一覧 + 各モジュール import
     ├── vscode.nix       # programs.vscode (拡張 + 設定 + スニペット)
@@ -135,6 +140,12 @@ nix build .#darwinConfigurations.default.system --impure --no-link
 sudo nix-collect-garbage -d
 sudo darwin-rebuild switch --flake ~/nix-config --impure  # 起動可能世代を再確定
 ```
+
+### Docker / qcow2 image
+
+macOS では nix-darwin の Linux builder を介し、Linux binary だけを含む image を
+生成します。初回設定、アーキテクチャ別コマンド、image のカスタマイズ方法は
+[image-build.md](./image-build.md) を参照してください。
 
 ### chezmoi 側
 
