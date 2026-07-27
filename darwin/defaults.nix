@@ -1,4 +1,40 @@
 {
+  lib,
+  pkgs,
+  username,
+  ...
+}:
+let
+  internalKeyboardMatcher = builtins.toJSON {
+    Product = "Apple Internal Keyboard / Trackpad";
+    PrimaryUsagePage = 1;
+    PrimaryUsage = 6;
+  };
+
+  capsControlMapping = builtins.toJSON {
+    UserKeyMapping = [
+      {
+        HIDKeyboardModifierMappingSrc = 30064771129; # Caps Lock
+        HIDKeyboardModifierMappingDst = 30064771296; # Left Control
+      }
+      {
+        HIDKeyboardModifierMappingSrc = 30064771296; # Left Control
+        HIDKeyboardModifierMappingDst = 30064771129; # Caps Lock
+      }
+    ];
+  };
+
+  applyInternalKeyboardMapping = pkgs.writeShellScript "apply-internal-keyboard-mapping" ''
+    # 以前の全キーボード共通マッピングを消して、外部キーボードを標準に戻す。
+    /usr/bin/hidutil property --set '{"UserKeyMapping":[]}'
+
+    # 内蔵キーボードにだけ Caps Lock / 左 Control の入れ替えを適用する。
+    /usr/bin/hidutil property \
+      --matching ${lib.escapeShellArg internalKeyboardMatcher} \
+      --set ${lib.escapeShellArg capsControlMapping}
+  '';
+in
+{
   system.defaults = {
     dock = {
       autohide = false;
@@ -15,6 +51,10 @@
       AppleShowAllExtensions = true;
       FXPreferredViewStyle = "icnv";
     };
+
+    # ANSI (英語) 配列には「英数」「かな」キーがないため、配列に依存しない
+    # 入力ソース切り替えを有効にする。
+    hitoolbox.AppleFnUsageType = "Change Input Source";
 
     NSGlobalDomain = {
       AppleEnableSwipeNavigateWithScrolls = false;
@@ -60,6 +100,9 @@
     CustomUserPreferences = {
       NSGlobalDomain = {
         AppleMiniaturizeOnDoubleClick = 0;
+        # Caps Lock (内蔵キーボードでは物理左 Control) で日本語入力と
+        # ABC を切り替えられるようにする。
+        TISRomanSwitchState = 1;
       };
 
       "com.apple.dock" = {
@@ -115,6 +158,30 @@
       };
     };
   };
+
+  # hidutil の設定は再起動で消えるため、ログインのたびに再適用する。
+  launchd.user.agents.internal-keyboard-mapping = {
+    command = "${applyInternalKeyboardMapping}";
+    serviceConfig.RunAtLoad = true;
+  };
+
+  # Minecraft のダッシュ (Control) + ジャンプ (Space) が macOS の入力ソース
+  # 切り替えに奪われないようにする。-dict-add で対象だけを変更し、ほかの
+  # AppleSymbolicHotKeys は保持する。
+  system.activationScripts.postActivation.text = lib.mkAfter ''
+    keyboard_user=${lib.escapeShellArg username}
+    keyboard_uid="$(/usr/bin/id -u -- "$keyboard_user")"
+
+    /bin/launchctl asuser "$keyboard_uid" \
+      /usr/bin/sudo --user="$keyboard_user" -- \
+      /usr/bin/defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
+        -dict-add \
+        60 '{ enabled = 0; }' \
+        61 '{ enabled = 0; }'
+
+    /usr/bin/killall -qu "$keyboard_user" cfprefsd || true
+  '';
+
   networking = {
     knownNetworkServices = [
       "Wi-Fi"
