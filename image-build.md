@@ -10,19 +10,19 @@ Linux container では実行できない。そこで nix-darwin の `nix.linux-b
 
 ## 初回セットアップ
 
-Apple Silicon では最初に native aarch64-linux builder を起動し、その builder
-を使って x86_64-linux の binfmt/QEMU 対応版をビルドする。初回のみ二段階で
-反映する。
+Linux builder を含む nix-darwin 設定を一度反映する。
 
 ```bash
 cd ~/nix-config
-nh darwin switch "path:$PWD" --hostname bootstrap --impure
-nh darwin switch "path:$PWD" --impure
+# commit 前に試す場合、Git flake から新規ファイルを見えるようにする
+git add -N darwin/linux-builder.nix images/docker.nix images/vm.nix
+sudo darwin-rebuild switch --flake .#default --impure
 ```
 
-`bootstrap` は Mac と同じ architecture の Linux VM だけを有効にする。通常構成は
-その VM 内で x86_64-linux をエミュレーションし、両 architecture を build machine
-として公開する。
+`darwin/linux-builder.nix` は初回 bootstrap が binary cache だけで完了するよう、
+builder VM の既定リソースを変更していない。最初の反映と image build が成功した
+後なら、同ファイルの `nix.linux-builder.config.virtualisation` で CPU、メモリ、
+ディスク容量を拡張できる。
 
 設定を確認する場合:
 
@@ -32,55 +32,6 @@ nix build nixpkgs#legacyPackages.aarch64-linux.hello --no-link -L
 ```
 
 Intel Mac では確認コマンドの `aarch64-linux` を `x86_64-linux` に置き換える。
-
-## GTX 1060対応GUIインストーラー
-
-Plasma 6とCalamaresを含むx86_64 ISOをビルドする。
-
-```bash
-cd ~/nix-config
-nix build --impure \
-  'path:.#packages.x86_64-linux.iso-gui-gtx1060-server' \
-  -L -o result-iso
-ls -lh result-iso/iso/*.iso
-```
-
-GTX 1060では起動メニューの `NVIDIA GTX 1060 (legacy 580)` を選ぶ。通常項目は
-Intel、AMD、Nouveau用のフォールバックとして残している。
-
-このカスタムCalamaresは、インストール先へ
-`/etc/nixos/gtx1060-server.nix` を配置し、生成する `configuration.nix` から
-自動的にimportする。次の設定がインストール後も有効になる。
-
-- GTX 1060向けNVIDIA proprietary legacy 580 driver
-- DockerとDocker Compose
-- NVIDIA Container Toolkit（CDI）
-- Tailscale
-- WireGuard tools
-
-初回起動後の確認:
-
-```bash
-nvidia-smi
-sudo tailscale up
-sudo docker run --rm \
-  --device=nvidia.com/gpu=all \
-  ubuntu:24.04 nvidia-smi -L
-```
-
-WireGuardは接続先と秘密鍵が環境固有なので自動接続しない。秘密鍵をNix storeへ
-入れないよう、次のようにrootだけが読める場所へ生成する。
-
-```bash
-sudo install -d -m 0700 /var/lib/wireguard
-sudo sh -c 'umask 077; wg genkey > /var/lib/wireguard/wg0.key'
-sudo nano /etc/nixos/gtx1060-server.nix
-sudo nixos-rebuild switch
-```
-
-`gtx1060-server.nix` 内の `networking.wg-quick.interfaces.wg0` 例を、実際の
-address、peer public key、endpointに合わせて有効化する。Dockerの代わりに
-Podmanを使う場合の切り替え例も同じファイルに記載している。
 
 ## Docker image
 
@@ -138,8 +89,6 @@ Linux builder 上で生成できる。
 - `darwin/linux-builder.nix`: builder VM、SSH、Nix build machine の宣言
 - `images/docker.nix`: Docker image の内容と runtime config
 - `images/vm.nix`: NixOS と systemd-repart の disk layout
-- `images/iso.nix`: GTX 1060対応GUIインストーラー
-- `nixos/profiles/gtx1060-server.nix`: インストール先のサーバー設定
 - `flake.nix`: Linux package 出力と raw → qcow2 変換
 
 どちらも macOS からは `.#docker-image` のような current-system shorthand を使わず、

@@ -76,9 +76,9 @@
         "x86_64-linux"
       ];
 
-      # nix-darwin の Linux builder VM は macOS と同じ CPU architecture
-      # で起動する。Apple Silicon から x86_64 Linux をビルドするときは、
-      # VM 内の binfmt/QEMU emulation を別途有効にする。
+      # macOS と同じ CPU アーキテクチャの Linux を native build の対象にする。
+      # Docker/VM image は Linux の derivation なので、Darwin の pkgs から
+      # cross build せず nix-darwin の Linux builder へ委譲する。
       linuxSystemFor =
         system:
         if system == "aarch64-darwin" then
@@ -87,8 +87,6 @@
           "x86_64-linux"
         else
           throw "Unsupported Darwin system for the Linux builder: ${system}";
-
-      emulatedSystemsFor = system: if system == "aarch64-darwin" then [ "x86_64-linux" ] else [ ];
 
       # Darwin 対応済みの nixpkgs のビルド定義を使い、ソースだけ GitHub 版へ
       # 差し替える。server 用 Web UI は API 用途では不要なのでビルドしない。
@@ -145,15 +143,11 @@
 
       # darwinConfigurations のアトリビュート名がホスト名として使われる
       mkDarwin =
-        {
-          username,
-          system,
-          emulatedSystems ? [ ],
-        }:
+        { username, system }:
         nix-darwin.lib.darwinSystem {
           inherit system;
           specialArgs = {
-            inherit inputs username emulatedSystems;
+            inherit inputs username;
             linuxSystem = linuxSystemFor system;
           };
           modules = [
@@ -189,28 +183,11 @@
         }) linuxSystems
       );
 
-      # Plasma 6 + Calamares の x86_64 GUI installer。
-      # 標準の open driver と NVIDIA driver を起動時に選択できる。
-      isoNixos = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [ ./images/iso.nix ];
-      };
-
     in
     {
       darwinConfigurations = {
-        ${user.hostname} = mkDarwin {
-          inherit (user) username system;
-          emulatedSystems = emulatedSystemsFor user.system;
-        };
-        default = mkDarwin {
-          inherit (user) username system;
-          emulatedSystems = emulatedSystemsFor user.system;
-        };
-
-        # カスタム builder は、その builder 自身の初回ビルドには使えない。
-        # 先にこの構成で native VM を起動してから default へ切り替える。
-        bootstrap = mkDarwin { inherit (user) username system; };
+        ${user.hostname} = mkDarwin { inherit (user) username system; };
+        default = mkDarwin { inherit (user) username system; };
       };
 
       # ---------------------------------------------------------------------
@@ -246,8 +223,6 @@
       nixosConfigurations = {
         image-aarch64 = imageNixos.aarch64-linux;
         image-x86_64 = imageNixos.x86_64-linux;
-        installer-x86_64-gtx1060 = isoNixos;
-        installer-x86_64-nvidia = isoNixos;
       };
       homeConfigurations = { };
 
@@ -276,10 +251,6 @@
                   ${nixos.config.system.build.image}/${nixos.config.image.filePath} \
                   "$out/nix-vm-${system}.qcow2"
               '';
-            }
-            // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
-              iso-gui-gtx1060-server = isoNixos.config.system.build.isoImage;
-              iso-gui-nvidia = isoNixos.config.system.build.isoImage;
             };
           }
         ) linuxSystems
