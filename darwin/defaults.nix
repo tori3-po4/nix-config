@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  username,
   ...
 }:
 let
@@ -164,23 +163,6 @@ in
     command = "${applyInternalKeyboardMapping}";
     serviceConfig.RunAtLoad = true;
   };
-
-  # Minecraft のダッシュ (Control) + ジャンプ (Space) が macOS の入力ソース
-  # 切り替えに奪われないようにする。-dict-add で対象だけを変更し、ほかの
-  # AppleSymbolicHotKeys は保持する。
-  system.activationScripts.postActivation.text = lib.mkAfter ''
-    keyboard_user=${lib.escapeShellArg username}
-    keyboard_uid="$(/usr/bin/id -u -- "$keyboard_user")"
-
-    /bin/launchctl asuser "$keyboard_uid" \
-      /usr/bin/sudo --user="$keyboard_user" -- \
-      /usr/bin/defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
-        -dict-add \
-        60 '{ enabled = 0; }' \
-        61 '{ enabled = 0; }'
-
-    /usr/bin/killall -qu "$keyboard_user" cfprefsd || true
-  '';
 
   networking = {
     knownNetworkServices = [
