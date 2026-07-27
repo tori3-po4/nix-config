@@ -32,6 +32,9 @@ nix build nixpkgs#legacyPackages.aarch64-linux.hello --no-link -L
 ```
 
 Intel Mac では確認コマンドの `aarch64-linux` を `x86_64-linux` に置き換える。
+Apple Silicon の builder は QEMU/binfmt により `x86_64-linux` も実行できるため、
+x86_64 image も同じコマンド体系で生成できる。ただし native の
+`aarch64-linux` よりビルド時間は長くなる。
 
 ## Docker image
 
