@@ -41,6 +41,8 @@
       "bitwarden"
       "docker-desktop"
       "claude-code@latest"
+      "raspberry-pi-imager"
+      "balenaetcher"
     ];
 
   };
