@@ -4,8 +4,10 @@
   ...
 }:
 let
+  # 内蔵キーボードは LocationID 0xda、外部キーボード (M87US) は
+  # 0x1100000。UsagePage / Usage も指定して、内蔵トラックパッド等を除外する。
   internalKeyboardMatcher = builtins.toJSON {
-    Product = "Apple Internal Keyboard / Trackpad";
+    LocationID = 218; # 0xda
     PrimaryUsagePage = 1;
     PrimaryUsage = 6;
   };
