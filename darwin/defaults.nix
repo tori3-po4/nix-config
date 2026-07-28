@@ -101,9 +101,10 @@ in
     CustomUserPreferences = {
       NSGlobalDomain = {
         AppleMiniaturizeOnDoubleClick = 0;
-        # Caps Lock (内蔵キーボードでは物理左 Control) で日本語入力と
-        # ABC を切り替えられるようにする。
-        TISRomanSwitchState = 1;
+        # 内蔵キーボードの物理 Caps Lock は Control として使うため、
+        # Caps Lock による日本語入力と ABC の切り替えを無効化する。
+        # 入力ソースは Globe/Fn キーで切り替える。
+        TISRomanSwitchState = 0;
       };
 
       "com.apple.dock" = {

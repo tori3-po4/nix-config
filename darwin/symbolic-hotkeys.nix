@@ -18,7 +18,8 @@ let
 in
 {
   # この辞書全体を宣言し、macOS のショートカット設定を Nix で完全管理する。
-  # ID 60/61 は Minecraft の Control + Space と競合するため無効化する。
+  # ID 60 は Minecraft の Control + Space と競合するため無効化する。
+  # IME は競合しない Control + Option + Space (ID 61) で切り替える。
   system.defaults.CustomUserPreferences."com.apple.symbolichotkeys".AppleSymbolicHotKeys = {
     # キーボードフォーカス
     "7" = standard true [
@@ -210,13 +211,13 @@ in
       1048576
     ]; # VoiceOver 切り替え: Command+F5
 
-    # 入力ソース: Minecraft の Control + Space と競合するため無効
+    # 入力ソース: Control+Space のみ無効にし、Option 付きは有効にする。
     "60" = standard false [
       32
       49
       262144
     ]; # 前の入力ソース: Control+Space
-    "61" = standard false [
+    "61" = standard true [
       32
       49
       786432
