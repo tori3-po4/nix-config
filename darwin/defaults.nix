@@ -12,6 +12,9 @@ let
     PrimaryUsage = 6;
   };
 
+  # 物理 Caps Lock を Control に、物理 Control を Caps Lock に入れ替える。
+  # 入れ替え後の Caps Lock は TISRomanSwitchState = 1 により IME 切り替えとして
+  # 働くので、左下のキーが「かな/英数」、左端のキーが Control になる。
   capsControlMapping = builtins.toJSON {
     UserKeyMapping = [
       {
@@ -101,10 +104,12 @@ in
     CustomUserPreferences = {
       NSGlobalDomain = {
         AppleMiniaturizeOnDoubleClick = 0;
-        # 内蔵キーボードの物理 Caps Lock は Control として使うため、
-        # Caps Lock による日本語入力と ABC の切り替えを無効化する。
-        # 入力ソースは Globe/Fn キーで切り替える。
-        TISRomanSwitchState = 0;
+        # 内蔵キーボードは物理 Caps Lock と物理 Control を入れ替えている
+        # (下の capsControlMapping 参照)。その結果、物理 Control キーが
+        # Caps Lock を送出するので、そのキーを日本語入力と ABC の切り替えに使う。
+        # これで IME 切り替えに Control + Space を使わずに済み、Minecraft の
+        # スプリント + ジャンプ (Control + Space) と競合しない。
+        TISRomanSwitchState = 1;
       };
 
       "com.apple.dock" = {

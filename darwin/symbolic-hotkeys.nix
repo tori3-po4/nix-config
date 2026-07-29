@@ -19,7 +19,9 @@ in
 {
   # この辞書全体を宣言し、macOS のショートカット設定を Nix で完全管理する。
   # ID 60 は Minecraft の Control + Space と競合するため無効化する。
-  # IME は競合しない Control + Option + Space (ID 61) で切り替える。
+  # IME は入れ替え後の Caps Lock キー (物理 Control キー) で切り替えるため、
+  # Space を使うショートカットは IME 切り替えに一切使わない。
+  # ID 61 は予備として残してある。
   system.defaults.CustomUserPreferences."com.apple.symbolichotkeys".AppleSymbolicHotKeys = {
     # キーボードフォーカス
     "7" = standard true [
