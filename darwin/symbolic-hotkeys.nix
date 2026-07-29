@@ -160,12 +160,15 @@ in
       125
       2490368
     ]; # アプリケーションウインドウ (スロー): Shift+Control+↓
-    "36" = standard true [
+    # F11 は Minecraft の全画面切り替えに使うため、macOS 側の割り当てを外す。
+    # Fn キーは押した F キーをそのまま送出する設定 (fnState 未設定) のままなので、
+    # Fn + F11 が横取りされずにアプリへ届く。
+    "36" = standard false [
       65535
       103
       0
     ]; # デスクトップを表示: F11
-    "37" = standard true [
+    "37" = standard false [
       65535
       103
       131072
