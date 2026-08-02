@@ -70,6 +70,9 @@
     # ===== ゲーム(minecraft) ====
     prismlauncher
 
+    # ===== 学習アプリ ====
+    anki
+
     # ===== ドキュメント =====
     pandoc
 
