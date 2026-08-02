@@ -68,7 +68,7 @@
 ├── README.md            # このファイル
 ├── image-build.md       # Docker / qcow2 image のビルド手順
 ├── hermes.md            # Hermes Agent + ローカルLLM 運用メモ
-├── chrome-remote-desktop.md # Chrome Remote Desktop で Windows に接続する手順
+├── sunshine-moonlight.md # WindowsゲームをMacへストリーミングする手順
 ├── nix-macos-guide.md   # Nix + macOS 全般の移行/構築ガイド
 ├── private/             # ホスト/ユーザ固有情報 (公開リポジトリで隠蔽するための隔離先)
 │   ├── user.nix.example # 公開テンプレート (これだけ git 追跡)
@@ -104,7 +104,7 @@
 - **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / llama-cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。インプットは nixpkgs / nix-darwin / home-manager / nix-vscode-extensions / nix-homebrew / hermes-agent / nixpkgs-espanso (後述のピン留め用)。
 - **`private/user.nix`**: ホスト名・ユーザ名・アーキを保持する個人情報ファイル。`.gitignore` 対象だが `git add -N -f` で intent-to-add し、Nix flake から見えるようにする。`git update-index --skip-worktree` で誤コミットも防止。
 - **`private/user.nix.example`**: 公開可能なテンプレート。新マシンでは `cp private/user.nix.example private/user.nix` から始める。
-- **`chrome-remote-desktop.md`**: Mac から Chrome Remote Desktop で Windows PC に接続するためのセットアップと運用手順。
+- **`sunshine-moonlight.md`**: Windows側SunshineとMac側MoonlightをTailscale経由で接続するセットアップ・運用手順。
 - **`darwin/default.nix`**: `system.stateVersion` / `system.primaryUser` / チャネル無効化 / `/etc/zshrc` の compinit 無効化 (zsh 起動高速化)。darwin/* を import。
 - **`darwin/homebrew.nix`**: Cask 宣言。`onActivation.cleanup = "uninstall"` + `autoUpdate`/`upgrade` = true + `greedyCasks = true` で、宣言外の cask は自動削除・自己更新型 cask も rebuild で更新。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
@@ -525,4 +525,4 @@ chezmoi apply -v   # 詳細ログで状況確認
 - [MyNixOS (オプション横断検索)](https://mynixos.com/)
 - 移行プロセス全体ガイド: [`nix-macos-guide.md`](./nix-macos-guide.md) (リポジトリ直下)
 - Hermes Agent + ローカルLLM 運用: [`hermes.md`](./hermes.md)
-- Chrome Remote Desktop: [`chrome-remote-desktop.md`](./chrome-remote-desktop.md)
+- Sunshine + Moonlight: [`sunshine-moonlight.md`](./sunshine-moonlight.md)

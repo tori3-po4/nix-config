@@ -67,8 +67,9 @@
     # ===== ブラウザ =====
     firefox
 
-    # ===== ゲーム(minecraft) ====
+    # ===== ゲーム / リモートプレイ ====
     prismlauncher
+    moonlight-qt
 
     # ===== ドキュメント =====
     pandoc
