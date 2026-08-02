@@ -12,7 +12,6 @@
     greedyCasks = true;
 
     taps = [
-      "Sikarugir-App/sikarugir"
       # "randomplum/gtkwave"
     ];
 
@@ -32,10 +31,6 @@
       "obsidian"
       "pearcleaner"
       "skim"
-      {
-        name = "Sikarugir-App/sikarugir/sikarugir";
-        trusted = true; # 非公式 tap のうち、この Cask だけ activation 中に信頼する
-      }
       "slack"
       "tailscale-app"
       "zotero"
