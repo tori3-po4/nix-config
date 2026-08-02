@@ -120,12 +120,23 @@
         espanso = inputs.nixpkgs-espanso.legacyPackages.${prev.stdenv.hostPlatform.system}.espanso;
       };
 
+      ankiMacHelperVersionFixOverlay = _final: prev: {
+        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+          (_pythonFinal: pythonPrev: {
+            "anki-mac-helper" = pythonPrev."anki-mac-helper".overridePythonAttrs (_old: {
+              version = "0.1.1";
+            });
+          })
+        ];
+      };
+
       # 共通 nixpkgs 設定 (overlay + unfree)
       sharedNixpkgsModule = {
         nixpkgs.overlays = [
           nix-vscode-extensions.overlays.default
           llamaCppGitHubOverlay
           espansoPinOverlay
+          ankiMacHelperVersionFixOverlay
         ];
         nixpkgs.config.allowUnfree = true;
       };
