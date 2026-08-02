@@ -21,6 +21,7 @@
     ];
 
     casks = [
+      "anki"
       "blender"
       "discord"
       "font-hackgen-nerd"
