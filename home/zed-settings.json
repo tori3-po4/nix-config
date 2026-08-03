@@ -5,9 +5,10 @@
   "theme": "Gruvbox Light Soft",
   "buffer_font_family": "HackGen Console NF",
   "buffer_font_size": 24,
+  "git_commit_buffer_font_size": 22,
   "ui_font_size": 22,
   "format_on_save": "on",
-  "soft_wrap": "editor_width",
+  "soft_wrap": "none",
   "restore_on_startup": "launchpad",
   "disable_ai": true,
   "features": {
@@ -30,7 +31,7 @@
   },
   "terminal": {
     "font_family": "HackGen Console NF",
-    "font_size": 16,
+    "font_size": 22,
     "shell": {
       "program": "zsh"
     }
