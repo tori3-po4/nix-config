@@ -31,7 +31,7 @@
   },
   "terminal": {
     "font_family": "HackGen Console NF",
-    "font_size": 22,
+    "font_size": 18,
     "shell": {
       "program": "zsh"
     }
