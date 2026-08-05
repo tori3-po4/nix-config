@@ -143,6 +143,12 @@ sudo nix-collect-garbage -d
 sudo darwin-rebuild switch --flake ~/nix-config --impure  # 起動可能世代を再確定
 ```
 
+#### Zed 内蔵ターミナルから実行する場合
+
+`darwin-rebuild` や Nix store の GC は、Home Manager がコピーした `.app` の更新・削除を伴う。
+Zed 内蔵ターミナルから実行する場合は、macOS の「システム設定 → プライバシーとセキュリティ → アプリ管理」で **Zed** を許可してから、Zed を完全終了して起動し直すこと。
+Nix 版 Zed の更新後はアプリの署名ハッシュが変わり、再度許可を求められる場合がある。
+
 ### Docker / qcow2 image
 
 macOS では nix-darwin の Linux builder を介し、Linux binary だけを含む image を
@@ -389,6 +395,9 @@ nvim
 :q
 
 # 8. App Store サインイン、プライバシー権限許可など (手動)
+#    Zed 内蔵ターミナルから Nix を操作するため、次の権限を必ず有効にする:
+#    システム設定 → プライバシーとセキュリティ → アプリ管理 → Zed
+#    設定後は Zed を完全終了して起動し直す
 ```
 
 ### 鍵が使えない場合のフォールバック
@@ -417,6 +426,11 @@ home-manager がホームの既存ファイルを上書きできない。
 ```bash
 sudo chown $(id -u):staff ~/nix-config/flake.lock
 ```
+
+#### GC が `fchmodat ... Operation not permitted` で失敗する
+
+Zed 内蔵ターミナルから実行した Nix の GC が、古い `.app` を削除するための「アプリ管理」権限を macOS に拒否されている。
+「システム設定 → プライバシーとセキュリティ → アプリ管理」で **Zed** を許可し、Zed を完全終了して起動し直してから GC を再実行する。
 
 #### `vscode-extension-* removed on aarch64-darwin`
 `ms-vscode.cpptools` 等の proprietary 拡張は `nix-vscode-extensions` 側で darwin から除外される。
