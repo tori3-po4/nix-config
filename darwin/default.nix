@@ -6,7 +6,6 @@
     ./symbolic-hotkeys.nix
     ./jetbrains-wrapper-fix.nix
     ./bitwarden.nix
-    ./llm.nix
     ./linux-builder.nix
   ];
 
