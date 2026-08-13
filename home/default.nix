@@ -3,6 +3,7 @@
   imports = [
     ./vscode.nix
     ./zed.nix
+    ./llama-cpp.nix
     ./zsh.nix
     ./bash.nix
     ./starship.nix

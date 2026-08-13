@@ -10,11 +10,34 @@
   "format_on_save": "on",
   "soft_wrap": "none",
   "restore_on_startup": "launchpad",
-  "disable_ai": true,
+  "disable_ai": false,
+  "show_edit_predictions": true,
   "show_completions_on_input": true,
-  "features": {
-    "edit_predictions": {
-      "provider": "none"
+  "edit_predictions": {
+    "provider": "open_ai_compatible_api",
+    "mode": "eager",
+    "open_ai_compatible_api": {
+      "api_url": "http://127.0.0.1:18080/v1/completions",
+      "model": "qwen2.5-coder-3b-base",
+      "prompt_format": "qwen",
+      "max_output_tokens": 64
+    }
+  },
+  "profiles": {
+    "Local Qwen (AI on)": {
+      "settings": {
+        "disable_ai": false,
+        "show_edit_predictions": true
+      }
+    },
+    "AtCoder (AI off)": {
+      "settings": {
+        "disable_ai": true,
+        "show_edit_predictions": false,
+        "edit_predictions": {
+          "provider": "none"
+        }
+      }
     }
   },
   "telemetry": {
