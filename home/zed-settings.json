@@ -11,6 +11,7 @@
   "soft_wrap": "none",
   "restore_on_startup": "launchpad",
   "disable_ai": true,
+  "show_completions_on_input": true,
   "features": {
     "edit_predictions": {
       "provider": "none"
@@ -42,6 +43,10 @@
       "formatter": "language_server"
     },
     "C++": {
+      "completions": {
+        "lsp": true,
+        "words": "enabled"
+      },
       "format_on_save": "on",
       "formatter": "language_server"
     },
@@ -85,7 +90,9 @@
         "arguments": [
           "--background-index",
           "--clang-tidy",
-          "--completion-style=detailed"
+          "--completion-style=detailed",
+          "--completion-parse=always",
+          "--limit-results=300"
         ]
       }
     },
