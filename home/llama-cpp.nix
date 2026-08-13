@@ -14,6 +14,8 @@ lib.mkIf pkgs.stdenv.isDarwin {
         "127.0.0.1"
         "--port"
         "18080"
+        "--cors-origins"
+        "localhost"
         "--ctx-size"
         "8192"
         "--parallel"
