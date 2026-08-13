@@ -27,7 +27,10 @@
     "Local Qwen (AI on)": {
       "settings": {
         "disable_ai": false,
-        "show_edit_predictions": true
+        "show_edit_predictions": true,
+        "edit_predictions": {
+          "provider": "open_ai_compatible_api"
+        }
       }
     },
     "AtCoder (AI off)": {
