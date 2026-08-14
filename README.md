@@ -93,7 +93,7 @@
     ├── cpp-snippets.json # VSCode/Zed 共有の C++ スニペット
     ├── zsh.nix / bash.nix    # シェル設定 (chezmoi から移行済み)
     ├── starship.nix / fzf.nix / zoxide.nix  # シェル支援ツール設定
-    ├── firefox.nix      # Firefox プロファイル (user.js) 生成
+    ├── firefox.nix      # Firefox プロファイル (profiles.ini / user.js) 生成
     ├── git.nix          # Nix git の credential.helper=osxkeychain 打ち消し
     ├── espanso.nix      # services.espanso (スニペット展開)
     └── hermes.nix       # Hermes Agent 本体の導入
@@ -113,7 +113,7 @@
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`、本体は home.packages 側) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
 - **`home/zsh.nix` / `bash.nix` / `starship.nix` / `fzf.nix` / `zoxide.nix`**: シェルと周辺ツールの設定。以前は chezmoi (`.zshrc` 等) で管理していたが home-manager の `programs.*` に移行済み。
-- **`home/firefox.nix`**: Firefox 本体は Homebrew Cask、`programs.firefox` (`package = null`) でプロファイル `user.js` のみ生成。about:config で変えても起動時にここの値へ戻る点に注意。
+- **`home/firefox.nix`**: Firefox 本体は Homebrew Cask、`programs.firefox` (`package = null`) で `profiles.ini` とプロファイルの `user.js` を生成。新プロファイル方式との対応は既存の `storeId` を固定して維持する。about:config で変えても起動時に `user.js` の値へ戻る点に注意。
 
 ---
 
@@ -399,6 +399,55 @@ nvim
 #    システム設定 → プライバシーとセキュリティ → アプリ管理 → Zed
 #    設定後は Zed を完全終了して起動し直す
 ```
+
+### Firefox の設定と拡張機能を旧 Mac から移行
+
+この構成ではFirefoxプロファイル全体をコピーしない。宣言済みの設定は `home/firefox.nix` から再生成し、それ以外のFirefox設定と拡張機能はFirefox Syncで復元する。Cookie、保存済みログイン、ログイン状態、履歴、セッション、サイトストレージは移行対象外とする。
+
+| 移行対象 | 移行方法 |
+|---|---|
+| `about:config`、UI、ツールバー、キャッシュ等 | `home/firefox.nix` → Home Managerの `user.js` |
+| プロファイルパスとStore ID | `home/firefox.nix` → Home Managerの `profiles.ini` |
+| `home/firefox.nix` にないFirefox設定 | Firefox Syncの「設定」を同期 |
+| 拡張機能のインストール | Firefox Syncの「アドオン」を同期 |
+| 拡張機能固有の設定 | 拡張機能自身の同期機能またはエクスポート／インポート |
+| Cookie、保存済みログイン、履歴、セッション等 | 移行しない |
+
+#### 1. 旧 Mac で準備
+
+1. `home/firefox.nix` を含む最新のNix設定をコミットしてリモートへpushする。
+2. Firefoxの「設定 → Sync → 同期する項目を変更」で **アドオンと設定だけ** を有効にする。パスワード、履歴、開いているタブ、ブックマーク、住所、支払い方法等は無効にする。同期対象の変更方法は[Mozilla公式ヘルプ](https://support.mozilla.org/en-US/kb/how-do-i-choose-what-information-sync-firefox)を参照。
+3. 拡張機能固有の設定が必要なら、それぞれの拡張機能が提供する同期機能を有効にするか、設定をエクスポートする。Firefox Syncで拡張機能本体が復元されても、拡張機能内部のデータまで必ず同期されるとは限らない。
+
+現在有効なユーザ導入拡張機能は、移行確認用に次のコマンドで一覧を保存できる。
+
+```bash
+firefox_extensions="$HOME/Library/Application Support/Firefox/Profiles/default/extensions.json"
+
+jq -r '
+  .addons[]
+  | select(.type == "extension" and .active == true and .location == "app-profile")
+  | [(.defaultLocale.name // .id), .id]
+  | @tsv
+' "$firefox_extensions" > "$HOME/Desktop/firefox-extensions.tsv"
+```
+
+#### 2. 新 Mac で復元
+
+1. 前節のPhase 4cを実行する。Homebrew版Firefoxが導入され、`profiles.ini`、Store ID、`user.js`がHome Managerから生成される。
+2. `/Applications/Firefox.app` を起動する。
+3. 旧 Macと同じFirefoxアカウントへログインし、Syncは **アドオンと設定だけ** を有効にする。`home/firefox.nix` と重複する設定は、次回起動時にHome Managerの `user.js` の値が優先される。
+4. `firefox-extensions.tsv` と「アドオンとテーマ」の一覧を比較し、不足している拡張機能を手動で導入する。
+5. 旧 Macでエクスポートした拡張機能固有の設定があればインポートする。各サービスや拡張機能へのログインは新 Macでやり直す。
+
+復元後に次を確認する。
+
+- `about:config` の設定、UI、ツールバー配置が `home/firefox.nix` の内容になっている。
+- `about:config` の `toolkit.profiles.storeID` が `home/firefox.nix` の `storeId` と一致する。
+- 必要な拡張機能が有効になっている。
+- DRMコンテンツを使う場合は「設定 → 一般 → DRMコンテンツを再生」とWidevineが有効になっている。
+
+> `~/Library/Application Support/Firefox` は旧 Macからコピーしない。これによりCookie、ログイン状態、保存済みログイン、履歴、セッション、サイトストレージ等を新 Macへ持ち込まない。`profiles.ini`、`user.js`、Store IDを含む宣言部分はHome Managerが再生成する。
 
 ### 鍵が使えない場合のフォールバック
 
