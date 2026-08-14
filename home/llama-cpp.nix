@@ -7,9 +7,9 @@ lib.mkIf pkgs.stdenv.isDarwin {
     config = {
       ProgramArguments = [
         "${pkgs.llama-cpp}/bin/llama-server"
-        "--fim-qwen-3b-default"
+        "--fim-qwen-1.5b-default"
         "--alias"
-        "qwen2.5-coder-3b-base"
+        "qwen2.5-coder-1.5b-base"
         "--host"
         "127.0.0.1"
         "--port"
