@@ -109,11 +109,11 @@
 - **`darwin/homebrew.nix`**: Cask 宣言。`onActivation.cleanup = "uninstall"` + `autoUpdate`/`upgrade` = true + `greedyCasks = true` で、宣言外の cask は自動削除・自己更新型 cask も rebuild で更新。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。詳細は `hermes.md`。
-- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と GUI 本体 (VSCode, Zed, JetBrains IDE, Ghostty, Firefox, LM Studio)。
+- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と GUI 本体 (VSCode, Zed, JetBrains IDE, Ghostty, LM Studio)。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`、本体は home.packages 側) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
 - **`home/zsh.nix` / `bash.nix` / `starship.nix` / `fzf.nix` / `zoxide.nix`**: シェルと周辺ツールの設定。以前は chezmoi (`.zshrc` 等) で管理していたが home-manager の `programs.*` に移行済み。
-- **`home/firefox.nix`**: `programs.firefox` (`package = null`) でプロファイル `user.js` のみ生成。about:config で変えても起動時にここの値へ戻る点に注意。
+- **`home/firefox.nix`**: Firefox 本体は Homebrew Cask、`programs.firefox` (`package = null`) でプロファイル `user.js` のみ生成。about:config で変えても起動時にここの値へ戻る点に注意。
 
 ---
 
@@ -194,7 +194,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 ### Nix (`home/default.nix`)
 - 基本CLI: ripgrep, fd, fzf, jq, bat, eza, zoxide, coreutils
 - Git周辺: git, git-filter-repo, lazygit, gh
-- エディタ/GUI本体: neovim, vscode, jetbrains (pycharm/clion/idea), ghostty-bin, firefox
+- エディタ/GUI本体: neovim, vscode, jetbrains (pycharm/clion/idea), ghostty-bin
 - シェル支援: tmux, zellij, direnv, stow, chezmoi
 - AI/ローカルLLM: hermes-agent (flake input), llama-cpp (UI無効 overlay), lmstudio
 - 暗号/パスワード: gnupg, age, bitwarden-cli
@@ -208,7 +208,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - programs.* 設定: zsh, bash, starship, fzf, zoxide, firefox (user.js), vscode, zed-editor, espanso
 
 ### Homebrew (`darwin/homebrew.nix`)
-- **Casks**: bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, font-hackgen-nerd, google-chrome, latexit, logi-options+, minecraft, obsidian, pearcleaner, raspberry-pi-imager, skim, slack, tailscale-app, wireshark-app, zotero
+- **Casks**: bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, latexit, logi-options+, minecraft, obsidian, pearcleaner, raspberry-pi-imager, skim, slack, tailscale-app, wireshark-app, zotero
 - **Taps**: なし
 - **Brews**: なし (gtkwave は必要になったら `randomplum/gtkwave` tap で復活させる)
 - 運用: `cleanup = "uninstall"` / `autoUpdate` / `upgrade` / `greedyCasks` すべて有効

@@ -65,9 +65,6 @@
     llama-cpp
     lmstudio
 
-    # ===== ブラウザ =====
-    firefox
-
     # ===== ゲーム / リモートプレイ ====
     prismlauncher
     moonlight-qt

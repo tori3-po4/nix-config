@@ -1,7 +1,7 @@
 { ... }:
 {
-  # Firefox 本体は home.packages 側で管理しているため、ここでは
-  # プロファイル (user.js) の生成のみを行う。package = null にすると
+  # Firefox 本体は Homebrew Cask 側で管理しているため、ここでは
+  # プロファイル定義 (profiles.ini / user.js) のみを生成する。package = null にすると
   # home-manager は .app を再インストールせず、設定だけ反映する。
   programs.firefox = {
     enable = true;
@@ -14,6 +14,9 @@
     # 等を export して新プロファイルに import すること。
     profiles.default = {
       isDefault = true;
+      # Firefox の新しい切り替え可能プロファイルと profiles.ini を対応付ける。
+      # 既存 Profiles/default の toolkit.profiles.storeID と同じ値を維持する。
+      storeId = "14355ba7";
 
       # 値は user.js に user_pref(...) として書き込まれ、毎回起動時に prefs.js を上書きする。
       # 設定変更したくなったら about:config で値を変えてもここの値で戻されるので注意。

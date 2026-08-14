@@ -25,6 +25,11 @@
       "blender"
       "discord"
       "font-hackgen-nerd"
+      # Mozilla 公式 DMG の本体だけを Cask 管理し、プロファイルは Home Manager で維持する。
+      {
+        name = "firefox";
+        args.language = "ja";
+      }
       "google-chrome"
       "logi-options+"
       "minecraft"
