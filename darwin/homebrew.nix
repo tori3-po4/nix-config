@@ -18,6 +18,7 @@
     # gtkwave GUI は randomplum tap でのみ macOS 対応されているため brew 残し
     brews = [
       # "randomplum/gtkwave/gtkwave"
+      "mole"
     ];
 
     casks = [
