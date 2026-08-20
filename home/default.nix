@@ -18,6 +18,10 @@
 
   home.stateVersion = "24.11";
 
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
+
   # Spotlight/F4 が Nix store への symlink をアプリとして索引化しないため、
   # macOS では .app バンドルを ~/Applications に実体コピーする。
   targets.darwin.linkApps.enable = false;
