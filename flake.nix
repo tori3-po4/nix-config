@@ -27,12 +27,6 @@
     # espansoPinOverlay を削除すること。
     nixpkgs-espanso.url = "github:NixOS/nixpkgs/3d46470bb3030020f7e1361f33514854f5bfa86d";
 
-    # Hermes Agent (Nous Research) は公式 flake を持つので install.sh ではなく
-    # input 化して Nix 管理する。uv2nix + npm ビルドが上流ピン留めの nixpkgs
-    # (nixos-unstable) 前提なので、あえて inputs.nixpkgs.follows は付けず、
-    # 上流のロックで固定ビルドさせる(こちらの nixpkgs-unstable とのズレ事故回避)。
-    hermes-agent.url = "github:NousResearch/hermes-agent";
-
     # llama.cpp 本体は GitHub から取得し、ビルド定義と依存関係は現在の
     # nixpkgs を使う。上流の Nix 定義は削除済みの Darwin SDK 互換属性を
     # 参照しているため、flake としては評価しない。

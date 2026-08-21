@@ -37,12 +37,11 @@
 │  - dot_gitconfig 等    │ git / tmux / latexmk                   │
 │  - dot_ssh             │ SSH config のみ (鍵は Bitwarden 管理)  │
 │  - dot_config/*        │ ghostty, cagent, gtk-3.0               │
-│  - private_dot_hermes  │ Hermes config / SOUL                   │
 │  - .chezmoiexternal    │ NvChad 設定 (別リポジトリ)             │
 ├────────────────────────┼───────────────────────────────────────┤
 │ Homebrew (Cask専用)    │ brews は空。Cask のみ                  │
 │  - chrome, slack 等    │ 自己更新型・プライバシー権限系 GUI     │
-│  - docker-desktop      │ Hermes のサンドボックス実行基盤        │
+│  - docker-desktop      │ 開発用コンテナの実行基盤              │
 │  - claude-code, codex  │ AI CLI (更新が速いので brew 管理)      │
 └────────────────────────┴───────────────────────────────────────┘
 ```
@@ -54,7 +53,6 @@
 | Nix 設定 | `~/nix-config/` | (private) |
 | dotfile | `~/.local/share/chezmoi/` | `git@github.com:tori3-po4/chezmoi-dotfiles.git` |
 | Neovim 設定 | `~/.config/nvim/` (chezmoi external) | `git@github.com:tori3-po4/tori-NV-settings.git` |
-| Hermes web backend | `~/devs/hermes-web/` | (local) |
 
 ---
 
@@ -67,7 +65,6 @@
 ├── .gitignore
 ├── README.md            # このファイル
 ├── image-build.md       # Docker / qcow2 image のビルド手順
-├── hermes.md            # Hermes Agent + ローカルLLM 運用メモ
 ├── sunshine-moonlight.md # WindowsゲームをMacへストリーミングする手順
 ├── nix-macos-guide.md   # Nix + macOS 全般の移行/構築ガイド
 ├── private/             # ホスト/ユーザ固有情報 (公開リポジトリで隠蔽するための隔離先)
@@ -95,20 +92,19 @@
     ├── starship.nix / fzf.nix / zoxide.nix  # シェル支援ツール設定
     ├── firefox.nix      # Firefox プロファイル (profiles.ini / user.js) 生成
     ├── git.nix          # Nix git の credential.helper=osxkeychain 打ち消し
-    ├── espanso.nix      # services.espanso (スニペット展開)
-    └── hermes.nix       # Hermes Agent 本体の導入
+    └── espanso.nix      # services.espanso (スニペット展開)
 ```
 
 ### 各ファイルの役割
 
-- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / llama-cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。インプットは nixpkgs / nix-darwin / home-manager / nix-vscode-extensions / nix-homebrew / hermes-agent / nixpkgs-espanso (後述のピン留め用)。
+- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / llama-cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。インプットは nixpkgs / nix-darwin / home-manager / nix-vscode-extensions / nix-homebrew / llama-cpp / nixpkgs-espanso (後述のピン留め用)。
 - **`private/user.nix`**: ホスト名・ユーザ名・アーキを保持する個人情報ファイル。`.gitignore` 対象だが `git add -N -f` で intent-to-add し、Nix flake から見えるようにする。`git update-index --skip-worktree` で誤コミットも防止。
 - **`private/user.nix.example`**: 公開可能なテンプレート。新マシンでは `cp private/user.nix.example private/user.nix` から始める。
 - **`sunshine-moonlight.md`**: Windows側SunshineとMac側MoonlightをTailscale経由で接続するセットアップ・運用手順。
 - **`darwin/default.nix`**: `system.stateVersion` / `system.primaryUser` / チャネル無効化 / `/etc/zshrc` の compinit 無効化 (zsh 起動高速化)。darwin/* を import。
 - **`darwin/homebrew.nix`**: Cask 宣言。`onActivation.cleanup = "uninstall"` + `autoUpdate`/`upgrade` = true + `greedyCasks = true` で、宣言外の cask は自動削除・自己更新型 cask も rebuild で更新。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
-- **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。詳細は `hermes.md`。
+- **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
 - **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と GUI 本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Zed 本体は Homebrew Cask で管理。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`、macOS の本体は Homebrew Cask 側) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
@@ -196,7 +192,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - Git周辺: git, git-filter-repo, lazygit, gh
 - エディタ/GUI本体: neovim, vscode, jetbrains (pycharm/clion/idea), ghostty-bin
 - シェル支援: tmux, zellij, direnv, stow, chezmoi
-- AI/ローカルLLM: hermes-agent (flake input), llama-cpp (UI無効 overlay), lmstudio
+- ローカルLLM: llama-cpp (UI無効 overlay), lmstudio
 - 暗号/パスワード: gnupg, age, bitwarden-cli
 - 言語処理系: deno, nodejs_22, uv, jdk, gradle
 - ビルド: automake, cmake, meson, pkgconf, gnumake, gcc, lld, lldb, llvm, openmp
@@ -218,7 +214,6 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - `dot_config/{cagent,ghostty,private_gtk-3.0}/`
 - `dot_vscode/argv.json`
 - `dot_ssh/config`: SSH config のみ (秘密鍵は Bitwarden SSH agent 管理。`darwin/bitwarden.nix` 参照)
-- `private_dot_hermes/`: Hermes の config.yaml / SOUL.md
 - `.chezmoiexternal.toml`: `.config/nvim` を別リポジトリから clone
 - ※ age 暗号化はオフ (シークレットは Bitwarden / ローカルファイルで管理)
 - ※ シェル設定 (`.zshrc` 等) は home-manager の `programs.zsh/bash` に移行済み
@@ -250,7 +245,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 chezmoi の age 暗号化は**現在オフ**にしている。秘密情報は chezmoi に置かず、以下で管理する:
 
 - **SSH 秘密鍵**: Bitwarden の SSH agent (`darwin/bitwarden.nix` で `SSH_AUTH_SOCK` を Bitwarden に向けている)。chezmoi 管理は `~/.ssh/config` のみ。
-- **API キー等** (Hermes の `~/.hermes/.env` など): Nix / chezmoi 管理外の通常ファイルとしてローカルに置く。
+- **API キー等**: Nix / chezmoi 管理外の通常ファイルとしてローカルに置く。
 
 ### 既存ファイルを取り込む
 
@@ -587,5 +582,4 @@ chezmoi apply -v   # 詳細ログで状況確認
 - [nix-vscode-extensions](https://github.com/nix-community/nix-vscode-extensions)
 - [MyNixOS (オプション横断検索)](https://mynixos.com/)
 - 移行プロセス全体ガイド: [`nix-macos-guide.md`](./nix-macos-guide.md) (リポジトリ直下)
-- Hermes Agent + ローカルLLM 運用: [`hermes.md`](./hermes.md)
 - Sunshine + Moonlight: [`sunshine-moonlight.md`](./sunshine-moonlight.md)

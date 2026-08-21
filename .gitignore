@@ -4,4 +4,3 @@ result-*
 .direnv/
 private/*
 !private/*.example
-services/hermes-web/.env

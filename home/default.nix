@@ -12,7 +12,6 @@
     ./zoxide.nix
     ./espanso.nix
     ./git.nix
-    ./hermes.nix
     ./nh.nix
   ];
 
@@ -44,7 +43,6 @@
     # ===== Git周辺 =====
     git
     git-filter-repo
-    lazygit
     gh
 
     # ===== エディタ/シェル支援 =====
@@ -60,9 +58,6 @@
 
     # ===== ターミナルエミュレーター ====
     (if stdenv.isDarwin then ghostty-bin else ghostty)
-
-    # ===== AIコーディング支援 =====
-    # Hermes Agent 本体は home/hermes.nix、~/.hermes 配下の設定は chezmoi で管理
 
     # ===== ローカルLLM =====
     llama-cpp
@@ -115,7 +110,6 @@
     flyctl
 
     # ===== コンテナ =====
-    # docker: Hermes Agent の terminal backend は docker 前提(podman は未対応)。
     docker-client
     docker-compose
 
