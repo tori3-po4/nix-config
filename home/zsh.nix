@@ -29,9 +29,7 @@
         eval "$(uv generate-shell-completion zsh)"
         eval "$(uvx --generate-shell-completion zsh)"
       fi
-      # opam (存在すれば読み込み)
-      [[ ! -r "$HOME/.opam/opam-init/init.zsh" ]] || \
-        source "$HOME/.opam/opam-init/init.zsh" > /dev/null 2> /dev/null
+
 
       # Ctrl-G: fzf-file-widget をディレクトリ候補で呼び出す(パス挿入のみ)
       # (macOS の Option キー干渉回避もかねる)
