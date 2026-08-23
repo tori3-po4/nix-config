@@ -1302,7 +1302,7 @@ macOSではNixからのソースビルドが現状不可。3つの選択肢：
 
 ```nix
 home.packages = with pkgs; [
-  (if stdenv.isDarwin then ghostty-bin else ghostty)
+  (if stdenv.hostPlatform.isDarwin  then ghostty-bin else ghostty)
 ];
 # 設定ファイル (~/.config/ghostty/config) は chezmoi 側で管理
 ```

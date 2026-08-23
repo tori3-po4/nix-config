@@ -24,7 +24,7 @@
   # Spotlight/F4 が Nix store への symlink をアプリとして索引化しないため、
   # macOS では .app バンドルを ~/Applications に実体コピーする。
   targets.darwin.linkApps.enable = false;
-  targets.darwin.copyApps.enable = pkgs.stdenv.isDarwin;
+  targets.darwin.copyApps.enable = pkgs.stdenv.hostPlatform.isDarwin;
 
   home.packages = with pkgs; [
     # ===== Nix utilties =====
@@ -57,7 +57,7 @@
     zellij
 
     # ===== ターミナルエミュレーター ====
-    (if stdenv.isDarwin then ghostty-bin else ghostty)
+    (if stdenv.hostPlatform.isDarwin then ghostty-bin else ghostty)
 
     # ===== ローカルLLM =====
     llama-cpp

@@ -1,5 +1,5 @@
 { lib, pkgs, ... }:
-lib.mkIf pkgs.stdenv.isDarwin {
+lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
   # Zed の Edit Prediction 用ローカル FIM サーバー。
   # 初回起動時に llama.cpp の既定 Qwen 2.5 Coder 3B GGUF を取得する。
   launchd.agents.llama-cpp-fim = {

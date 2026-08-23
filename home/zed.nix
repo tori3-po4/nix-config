@@ -14,7 +14,7 @@ let
 
   baseZedSettings = builtins.fromJSON (builtins.readFile ./zed-settings.json);
 
-  platformZedSettings = lib.optionalAttrs pkgs.stdenv.isDarwin {
+  platformZedSettings = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
     lsp.texlab.settings.texlab = {
       build.forwardSearchAfter = true;
       forwardSearch = {
@@ -166,7 +166,7 @@ in
         save = "current";
       }
     ]
-    ++ lib.optionals pkgs.stdenv.isDarwin [
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
       (mkLatexSkimTask {
         label = "LaTeX: platex -> dvipdfmx -> Skim";
         latexmkArgs = [
