@@ -7,14 +7,14 @@
     enable = true;
     package = null;
 
-    # 新規プロファイルとして home-manager に管理させる:
-    #   ~/Library/Application Support/Firefox/Profiles/default/user.js
-    # path はデフォルトで attribute 名 (= "default") を使うため明示不要。
-    # 旧プロファイル (0trwkxau.default) を引き継ぎたい場合は事前にブックマーク
-    # 等を export して新プロファイルに import すること。
+    # Firefox 上で「デフォルト」と表示される既存プロファイルを
+    # home-manager の唯一の管理対象にする。このディレクトリには Firefox Sync
+    # で復元した拡張機能とローカル導入した拡張機能が保存されている。
     profiles.default = {
+      name = "デフォルト";
+      path = "Wa1Sr0Oe.プロファイル 2";
       isDefault = true;
-      # 単一の Profiles/default だけを使う。Store ID は既存プロファイルと
+      # 単一の上記プロファイルだけを使う。Store ID は既存プロファイルと
       # profiles.ini の対応を安定させるため、現在の値を維持する。
       storeId = "14355ba7";
 
