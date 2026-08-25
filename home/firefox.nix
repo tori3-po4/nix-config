@@ -1,28 +1,37 @@
-{ ... }:
+{ pkgs, ... }:
+let
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+
+  # Firefox が生成するランダムなディレクトリ名には依存せず、全OSで共通の
+  # 相対パスを使う。既存マシンでは一度だけこのパスへプロファイルを移行する。
+  firefoxProfilePath = "default";
+
+  # Linuxでもネイティブ版と共通の標準パスをprograms.firefoxの管理先にする。
+  # Flatpak固有の~/.var/app以下へHome Managerから直接書き込まない。
+  firefoxConfigPath = if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
+
+in
 {
-  # Firefox 本体は Homebrew Cask 側で管理しているため、ここでは
-  # プロファイル定義 (profiles.ini / user.js) のみを生成する。package = null にすると
-  # home-manager は .app を再インストールせず、設定だけ反映する。
   programs.firefox = {
     enable = true;
-    package = null;
 
-    # Firefox 上で「デフォルト」と表示される既存プロファイルを
-    # home-manager の唯一の管理対象にする。このディレクトリには Firefox Sync
-    # で復元した拡張機能とローカル導入した拡張機能が保存されている。
+    # Firefox本体はmacOSではHomebrew Cask、LinuxではFlatpakで管理する。
+    # Home Managerには本体を重複インストールさせない。
+    package = null;
+    configPath = firefoxConfigPath;
+
+    # Firefox上で「デフォルト」と表示される単一プロファイルを全OSで使う。
+    # 実体はmacOSではProfiles/default、Linuxでは.mozilla/firefox/defaultになる。
     profiles.default = {
       name = "デフォルト";
-      path = "Wa1Sr0Oe.プロファイル 2";
+      path = firefoxProfilePath;
       isDefault = true;
-      # 単一の上記プロファイルだけを使う。Store ID は既存プロファイルと
-      # profiles.ini の対応を安定させるため、現在の値を維持する。
-      storeId = "14355ba7";
 
       # 値は user.js に user_pref(...) として書き込まれ、毎回起動時に prefs.js を上書きする。
       # 設定変更したくなったら about:config で値を変えてもここの値で戻されるので注意。
       settings = {
         # ===== プロファイル =====
-        # この Mac は単一ユーザー・単一プロファイルで運用するため、Firefox の
+        # 各マシンを単一ユーザー・単一プロファイルで運用するため、Firefoxの
         # 新しい切り替え可能プロファイル機能を無効化する。
         "browser.profiles.enabled" = false;
         "browser.profiles.created" = false;
@@ -119,8 +128,8 @@
         "browser.sessionstore.max_tabs_undo" = 5;
 
         # ===== パフォーマンス: ハードウェアアクセラレーション =====
-        # Apple Silicon の GPU / メディアエンジンに decode/描画をオフロード
-        # (CPU 仕事 → GPU 仕事に振り替わるだけだが、CPU 競合を IDE と起こしにくい)
+        # 利用可能なGPU / メディアエンジンにdecode/描画をオフロード
+        # (CPU仕事をGPUへ移し、IDEとのCPU競合を抑える)
         "gfx.canvas.accelerated" = true;
         "media.hardware-video-decoding.force-enabled" = true;
 

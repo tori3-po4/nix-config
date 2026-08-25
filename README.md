@@ -109,7 +109,7 @@
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`、macOS の本体は Homebrew Cask 側) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
 - **`home/zsh.nix` / `bash.nix` / `starship.nix` / `fzf.nix` / `zoxide.nix`**: シェルと周辺ツールの設定。以前は chezmoi (`.zshrc` 等) で管理していたが home-manager の `programs.*` に移行済み。
-- **`home/firefox.nix`**: Firefox 本体は Homebrew Cask、`programs.firefox` (`package = null`) で `profiles.ini` とFirefox上の「デフォルト」プロファイルの `user.js` を生成。複数プロファイル機能は無効化し、既存のパスと `storeId` を固定して維持する。about:config で変えても起動時に `user.js` の値へ戻る点に注意。
+- **`home/firefox.nix`**: Firefox本体はmacOSではHomebrew Cask、LinuxではFlatpak (`org.mozilla.firefox`) で管理し、Home Managerの `programs.firefox` だけで `profiles.ini`、Firefox上の「デフォルト」プロファイルの `user.js`、SpeedUpperを反映する。プロファイル実体はmacOSの `Profiles/default` とLinuxの `~/.mozilla/firefox/default` に固定し、Firefox生成のランダムなパスやStore IDには依存しない。Home ManagerはFlatpak固有の `~/.var/app` 以下へ直接書き込まない。about:configで変えても起動時に `user.js` の値へ戻る点に注意。
 
 ---
 
@@ -395,29 +395,31 @@ nvim
 #    設定後は Zed を完全終了して起動し直す
 ```
 
-### Firefox の設定と拡張機能を旧 Mac から移行
+### Firefox の設定と拡張機能を別マシンへ移行
 
-この構成ではFirefoxプロファイル全体をコピーしない。宣言済みの設定は `home/firefox.nix` から再生成し、それ以外のFirefox設定と拡張機能はFirefox Syncで復元する。Cookie、保存済みログイン、ログイン状態、履歴、セッション、サイトストレージは移行対象外とする。
+この構成ではFirefoxプロファイル全体をコピーしない。宣言済みの設定は `home/firefox.nix` から再生成し、SpeedUpperはリポジトリ内のMozilla署名済みXPIから復元する。Zotero Connectorは新しいマシンでZotero公式サイトから手動導入し、それ以外のFirefox設定と拡張機能はFirefox Syncで復元する。Cookie、保存済みログイン、ログイン状態、履歴、セッション、サイトストレージは移行対象外とする。
 
 | 移行対象 | 移行方法 |
 |---|---|
 | `about:config`、UI、ツールバー、キャッシュ等 | `home/firefox.nix` → Home Managerの `user.js` |
-| プロファイルパスとStore ID | `home/firefox.nix` → Home Managerの `profiles.ini` |
+| プロファイルパス | Home Manager → macOSは `Profiles/default`、Linuxは `~/.mozilla/firefox/default` |
 | `home/firefox.nix` にないFirefox設定 | Firefox Syncの「設定」を同期 |
-| 拡張機能のインストール | Firefox Syncの「アドオン」を同期 |
+| Zotero Connector | 新しいマシンでZotero公式サイトから手動導入 |
+| SpeedUpper | `home/firefox-extensions/` の署名済みXPI → Home Manager |
+| その他の拡張機能 | Firefox Syncの「アドオン」を同期 |
 | 拡張機能固有の設定 | 拡張機能自身の同期機能またはエクスポート／インポート |
 | Cookie、保存済みログイン、履歴、セッション等 | 移行しない |
 
-#### 1. 旧 Mac で準備
+#### 1. 移行元のMacで準備
 
-1. `home/firefox.nix` を含む最新のNix設定をコミットしてリモートへpushする。
+1. `home/firefox.nix` と `home/firefox-extensions/` を含む最新のNix設定をコミットしてリモートへpushする。
 2. Firefoxの「設定 → Sync → 同期する項目を変更」で **アドオンと設定だけ** を有効にする。パスワード、履歴、開いているタブ、ブックマーク、住所、支払い方法等は無効にする。同期対象の変更方法は[Mozilla公式ヘルプ](https://support.mozilla.org/en-US/kb/how-do-i-choose-what-information-sync-firefox)を参照。
 3. 拡張機能固有の設定が必要なら、それぞれの拡張機能が提供する同期機能を有効にするか、設定をエクスポートする。Firefox Syncで拡張機能本体が復元されても、拡張機能内部のデータまで必ず同期されるとは限らない。
 
 現在有効なユーザ導入拡張機能は、移行確認用に次のコマンドで一覧を保存できる。
 
 ```bash
-firefox_extensions="$HOME/Library/Application Support/Firefox/Profiles/Wa1Sr0Oe.プロファイル 2/extensions.json"
+firefox_extensions="$HOME/Library/Application Support/Firefox/Profiles/default/extensions.json"
 
 jq -r '
   .addons[]
@@ -427,22 +429,58 @@ jq -r '
 ' "$firefox_extensions" > "$HOME/Desktop/firefox-extensions.tsv"
 ```
 
-#### 2. 新 Mac で復元
+#### 2. 新しいmacOSで復元
 
-1. 前節のPhase 4cを実行する。Homebrew版Firefoxが導入され、`profiles.ini`、Store ID、`user.js`がHome Managerから生成される。
+1. 前節のPhase 4cを実行する。Homebrew版Firefoxが導入され、共通パス `Profiles/default` の `profiles.ini` と `user.js` に加えてSpeedUpperの署名済みXPIがHome Managerから配置される。
 2. `/Applications/Firefox.app` を起動する。
 3. 旧 Macと同じFirefoxアカウントへログインし、Syncは **アドオンと設定だけ** を有効にする。`home/firefox.nix` と重複する設定は、次回起動時にHome Managerの `user.js` の値が優先される。
-4. `firefox-extensions.tsv` と「アドオンとテーマ」の一覧を比較し、不足している拡張機能を手動で導入する。
-5. 旧 Macでエクスポートした拡張機能固有の設定があればインポートする。各サービスや拡張機能へのログインは新 Macでやり直す。
+4. Zotero公式サイトからZotero Connectorを導入し、Zoteroとの接続を確認する。
+5. `firefox-extensions.tsv` と「アドオンとテーマ」の一覧を比較し、SpeedUpper以外で不足している拡張機能を手動で導入する。
+6. 旧 Macでエクスポートした拡張機能固有の設定があればインポートする。各サービスや拡張機能へのログインは新 Macでやり直す。
 
 復元後に次を確認する。
 
 - `about:config` の設定、UI、ツールバー配置が `home/firefox.nix` の内容になっている。
-- `about:config` の `toolkit.profiles.storeID` が `home/firefox.nix` の `storeId` と一致する。
 - 必要な拡張機能が有効になっている。
 - DRMコンテンツを使う場合は「設定 → 一般 → DRMコンテンツを再生」とWidevineが有効になっている。
 
-> `~/Library/Application Support/Firefox` は旧 Macからコピーしない。これによりCookie、ログイン状態、保存済みログイン、履歴、セッション、サイトストレージ等を新 Macへ持ち込まない。`profiles.ini`、`user.js`、Store IDを含む宣言部分はHome Managerが再生成する。
+> `~/Library/Application Support/Firefox` は旧 Macからコピーしない。これによりCookie、ログイン状態、保存済みログイン、履歴、セッション、サイトストレージ等を新 Macへ持ち込まない。`profiles.ini`、`Profiles/default`、`user.js`を含む宣言部分はHome Managerが再生成する。
+
+#### 3. 新しいLinux（Flatpak）で復元
+
+1. ディストリビューション側でFlatpakとFlathubを準備し、Firefoxを導入する。
+
+   ```bash
+   flatpak install --user flathub org.mozilla.firefox
+   ```
+
+2. Flatpak版FirefoxからHome Manager管理の標準プロファイルと、そのリンク先のNix storeを参照できるようにする。プロファイルにはFirefoxが状態を書き込むため読み書き、Nix storeには読み取り専用の権限を与える。
+
+   ```bash
+   flatpak override --user \
+     --filesystem="$HOME/.mozilla/firefox:rw" \
+     --filesystem=/nix/store:ro \
+     org.mozilla.firefox
+   ```
+
+3. `flake.nix` のコメント例に従って対象マシンの `homeConfigurations."<user>@<host>"` を追加する。LinuxのCPUに応じて `system` は `x86_64-linux` または `aarch64-linux` にする。
+4. Firefoxを終了してから対象のHome Manager構成を適用する。
+
+   ```bash
+   home-manager switch --flake ~/nix-config#'<user>@<host>' --impure
+   ```
+
+5. `flatpak run org.mozilla.firefox` で起動する。Firefoxアカウントへログインし、Zotero ConnectorはZotero公式サイトから手動導入する。
+
+Linuxでは `programs.firefox.configPath` が通常のFirefoxと同じ場所を管理し、SpeedUpperも `profiles.default.extensions.packages` で配置する。
+
+```text
+~/.mozilla/firefox/profiles.ini
+~/.mozilla/firefox/default/user.js
+~/.mozilla/firefox/default/extensions/speedupper@local.xpi
+```
+
+Home Managerの管理ファイルは `/nix/store` へのシンボリックリンクになるため、手順2のoverrideだけはFirefoxモジュール外で必要になる。Flatpakの公式仕様上、アプリは既定では自身のデータ領域以外のホストファイルを参照できない。Home Manager自身は `~/.var/app/org.mozilla.firefox` へ書き込まない。macOSとLinuxで共有するのは宣言済み設定と署名済みXPIであり、Cookie、ログイン状態、履歴、拡張機能内部データなどのプロファイル実データは共有しない。
 
 ### 鍵が使えない場合のフォールバック
 
