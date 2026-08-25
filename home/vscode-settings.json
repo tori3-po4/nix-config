@@ -131,7 +131,7 @@
     "editor.formatOnType": true,
     "editor.wordBasedSuggestions": "off"
   },
-  "workbench.colorTheme": "GitHub Dark High Contrast",
+  "workbench.colorTheme": "Solarized light",
   "workbench.browser.showInTitleBar": false,
   "workbench.sideBar.location": "right",
   "workbench.activityBar.location": "default",

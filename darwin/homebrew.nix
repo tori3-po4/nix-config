@@ -34,7 +34,7 @@
       "google-chrome"
       "logi-options+"
       "minecraft"
-      "obsidian"
+      "multipass"
       "pearcleaner"
       "skim"
       "slack"

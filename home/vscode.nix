@@ -3,7 +3,7 @@
   programs.vscode = {
     enable = true;
     package = null;
-    mutableExtensionsDir = false;
+    mutableExtensionsDir = true;
 
     profiles.default = {
       userSettings = builtins.fromJSON (builtins.readFile ./vscode-settings.json);
