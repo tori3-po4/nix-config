@@ -14,13 +14,19 @@
     # 等を export して新プロファイルに import すること。
     profiles.default = {
       isDefault = true;
-      # Firefox の新しい切り替え可能プロファイルと profiles.ini を対応付ける。
-      # 既存 Profiles/default の toolkit.profiles.storeID と同じ値を維持する。
+      # 単一の Profiles/default だけを使う。Store ID は既存プロファイルと
+      # profiles.ini の対応を安定させるため、現在の値を維持する。
       storeId = "14355ba7";
 
       # 値は user.js に user_pref(...) として書き込まれ、毎回起動時に prefs.js を上書きする。
       # 設定変更したくなったら about:config で値を変えてもここの値で戻されるので注意。
       settings = {
+        # ===== プロファイル =====
+        # この Mac は単一ユーザー・単一プロファイルで運用するため、Firefox の
+        # 新しい切り替え可能プロファイル機能を無効化する。
+        "browser.profiles.enabled" = false;
+        "browser.profiles.created" = false;
+
         # ===== ロケール / 地域 =====
         "intl.locale.requested" = "ja,en-US";
         "browser.search.region" = "JP";

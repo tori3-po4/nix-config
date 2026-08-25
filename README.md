@@ -109,7 +109,7 @@
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`、macOS の本体は Homebrew Cask 側) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
 - **`home/zsh.nix` / `bash.nix` / `starship.nix` / `fzf.nix` / `zoxide.nix`**: シェルと周辺ツールの設定。以前は chezmoi (`.zshrc` 等) で管理していたが home-manager の `programs.*` に移行済み。
-- **`home/firefox.nix`**: Firefox 本体は Homebrew Cask、`programs.firefox` (`package = null`) で `profiles.ini` とプロファイルの `user.js` を生成。新プロファイル方式との対応は既存の `storeId` を固定して維持する。about:config で変えても起動時に `user.js` の値へ戻る点に注意。
+- **`home/firefox.nix`**: Firefox 本体は Homebrew Cask、`programs.firefox` (`package = null`) で `profiles.ini` と単一の `Profiles/default/user.js` を生成。複数プロファイル機能は無効化し、既存の `storeId` を固定して維持する。about:config で変えても起動時に `user.js` の値へ戻る点に注意。
 
 ---
 
