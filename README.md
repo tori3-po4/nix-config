@@ -33,13 +33,17 @@
 │  - programs.*          │ zsh/bash/starship/fzf/zoxide/firefox/  │
 │                        │ espanso/vscode/zed (拡張 + 設定)       │
 ├────────────────────────┼───────────────────────────────────────┤
+│ nix-flatpak (Linux)    │ GUIアプリ本体 + sandbox設定           │
+│  - packages            │ Firefox/Zed/Chrome/Anki等             │
+│  - overrides           │ Home Manager設定へのアクセス権限      │
+├────────────────────────┼───────────────────────────────────────┤
 │ chezmoi                │ dotfile (試行錯誤するもの)             │
 │  - dot_gitconfig 等    │ git / tmux / latexmk                   │
 │  - dot_ssh             │ SSH config のみ (鍵は Bitwarden 管理)  │
 │  - dot_config/*        │ ghostty, cagent, gtk-3.0               │
 │  - .chezmoiexternal    │ NvChad 設定 (別リポジトリ)             │
 ├────────────────────────┼───────────────────────────────────────┤
-│ Homebrew (Cask専用)    │ brews は空。Cask のみ                  │
+│ Homebrew (Cask中心)    │ GUI Cask + mole                        │
 │  - chrome, slack 等    │ 自己更新型・プライバシー権限系 GUI     │
 │  - docker-desktop      │ 開発用コンテナの実行基盤              │
 │  - claude-code, codex  │ AI CLI (更新が速いので brew 管理)      │
@@ -72,12 +76,15 @@
 │   └── user.nix         # 実情報 (各自で作成。intent-to-add + skip-worktree でコミットされない)
 ├── darwin/              # macOSシステム/ユーザレベル設定
 │   ├── default.nix      # darwin/* を import するエントリポイント + zsh高速化等
-│   ├── homebrew.nix     # cask 宣言 (brews は現在空)
+│   ├── homebrew.nix     # Caskとmoleの宣言
 │   ├── defaults.nix     # system.defaults (Dock, Finder, トラックパッド等)
 │   ├── llm.nix          # llama.cpp サーバの launchd 常駐 (router mode, :8080)
 │   ├── linux-builder.nix # macOS から Linux image を作る builder VM
 │   ├── bitwarden.nix    # Bitwarden SSH agent を SSH_AUTH_SOCK に設定
 │   └── jetbrains-wrapper-fix.nix  # JetBrains CLI ランチャーの日本語CWD問題対策 overlay
+├── linux/               # Linuxユーザ環境固有の宣言
+│   ├── default.nix      # linux/* を importするエントリポイント
+│   └── flatpak.nix      # Flatpakアプリ、更新方針、sandbox override
 ├── images/              # Linux image の宣言
 │   ├── docker.nix       # Docker load 用 nix-hello image
 │   └── vm.nix           # systemd-repart ベースの NixOS VM image
@@ -97,19 +104,20 @@
 
 ### 各ファイルの役割
 
-- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / llama-cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。インプットは nixpkgs / nix-darwin / home-manager / nix-vscode-extensions / nix-homebrew / llama-cpp / nixpkgs-espanso (後述のピン留め用)。
+- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / llama-cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。インプットは nixpkgs / nix-darwin / home-manager / nix-vscode-extensions / nix-homebrew / nix-flatpak / llama-cpp / nixpkgs-espanso (後述のピン留め用)。
 - **`private/user.nix`**: ホスト名・ユーザ名・アーキを保持する個人情報ファイル。`.gitignore` 対象だが `git add -N -f` で intent-to-add し、Nix flake から見えるようにする。`git update-index --skip-worktree` で誤コミットも防止。
 - **`private/user.nix.example`**: 公開可能なテンプレート。新マシンでは `cp private/user.nix.example private/user.nix` から始める。
 - **`sunshine-moonlight.md`**: Windows側SunshineとMac側MoonlightをTailscale経由で接続するセットアップ・運用手順。
 - **`darwin/default.nix`**: `system.stateVersion` / `system.primaryUser` / チャネル無効化 / `/etc/zshrc` の compinit 無効化 (zsh 起動高速化)。darwin/* を import。
 - **`darwin/homebrew.nix`**: Cask 宣言。`onActivation.cleanup = "uninstall"` + `autoUpdate`/`upgrade` = true + `greedyCasks = true` で、宣言外の cask は自動削除・自己更新型 cask も rebuild で更新。
+- **`linux/flatpak.nix`**: `nix-flatpak` のユーザ用Flatpak宣言。Flathubのアプリ一覧、週次更新、宣言外パッケージの削除、Firefox/ZedからHome Manager管理設定を参照するsandbox overrideをLinux側へ集約。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
-- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と GUI 本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Zed 本体は Homebrew Cask で管理。
+- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と Nix管理するGUI本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Firefox/Zed本体はプラットフォーム側で管理。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
-- **`home/zed.nix`**: `programs.zed-editor` (`package = null`、macOS の本体は Homebrew Cask 側) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
+- **`home/zed.nix`**: `programs.zed-editor` (`package = null`) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。本体はmacOSではHomebrew Cask、Linuxでは `nix-flatpak` が管理する。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
 - **`home/zsh.nix` / `bash.nix` / `starship.nix` / `fzf.nix` / `zoxide.nix`**: シェルと周辺ツールの設定。以前は chezmoi (`.zshrc` 等) で管理していたが home-manager の `programs.*` に移行済み。
-- **`home/firefox.nix`**: Firefox本体はmacOSではHomebrew Cask、LinuxではFlatpak (`org.mozilla.firefox`) で管理し、Home Managerの `programs.firefox` だけで `profiles.ini`、Firefox上の「デフォルト」プロファイルの `user.js`、SpeedUpperを反映する。プロファイル実体はmacOSの `Profiles/default` とLinuxの `~/.mozilla/firefox/default` に固定し、Firefox生成のランダムなパスやStore IDには依存しない。Home ManagerはFlatpak固有の `~/.var/app` 以下へ直接書き込まない。about:configで変えても起動時に `user.js` の値へ戻る点に注意。
+- **`home/firefox.nix`**: 本体を導入せず、Home Managerの `programs.firefox` だけで `profiles.ini`、Firefox上の「デフォルト」プロファイルの `user.js`、SpeedUpperを反映する共通設定。macOSの本体はHomebrew Cask、Linuxの本体とsandbox overrideは `linux/flatpak.nix` が担当する。about:configで変えても起動時に `user.js` の値へ戻る点に注意。
 
 ---
 
@@ -204,10 +212,19 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - programs.* 設定: zsh, bash, starship, fzf, zoxide, firefox (user.js), vscode, zed-editor, espanso
 
 ### Homebrew (`darwin/homebrew.nix`)
-- **Casks**: bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, latexit, logi-options+, minecraft, obsidian, pearcleaner, raspberry-pi-imager, skim, slack, tailscale-app, wireshark-app, zed, zotero
+- **Casks**: anki, bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, latexit, llama-app, logi-options+, minecraft, multipass, pearcleaner, skim, slack, tailscale-app, wireshark-app, zed, zotero
 - **Taps**: なし
-- **Brews**: なし (gtkwave は必要になったら `randomplum/gtkwave` tap で復活させる)
+- **Brews**: mole (gtkwave は必要になったら `randomplum/gtkwave` tap で復活させる)
 - 運用: `cleanup = "uninstall"` / `autoUpdate` / `upgrade` / `greedyCasks` すべて有効
+
+### Flatpak (`linux/flatpak.nix`)
+
+- **全アーキテクチャ**: Anki, Bitwarden, Google Chrome, Firefox, Zed, Zotero
+- **x86_64のみ**: Blender, Discord, Slack
+- `uninstallUnmanaged = true` により、ユーザ単位で導入した宣言外Flatpakを削除
+- activation時更新は無効。アプリ更新は週次のsystemd user timerで実行
+- Firefox/Zedはoverrideを通じて `home/firefox.nix` / `home/zed.nix` の設定を利用
+- WiresharkはFlathub版にパケットキャプチャ機能がないため対象外
 
 ### chezmoi (`~/.local/share/chezmoi/`)
 - `dot_gitconfig`, `dot_tmux.conf`, `dot_latexmkrc`
@@ -448,31 +465,17 @@ jq -r '
 
 #### 3. 新しいLinux（Flatpak）で復元
 
-1. ディストリビューション側でFlatpakとFlathubを準備し、Firefoxを導入する。
-
-   ```bash
-   flatpak install --user flathub org.mozilla.firefox
-   ```
-
-2. Flatpak版FirefoxからHome Manager管理の標準プロファイルと、そのリンク先のNix storeを参照できるようにする。プロファイルにはFirefoxが状態を書き込むため読み書き、Nix storeには読み取り専用の権限を与える。
-
-   ```bash
-   flatpak override --user \
-     --filesystem="$HOME/.mozilla/firefox:rw" \
-     --filesystem=/nix/store:ro \
-     org.mozilla.firefox
-   ```
-
-3. `flake.nix` のコメント例に従って対象マシンの `homeConfigurations."<user>@<host>"` を追加する。LinuxのCPUに応じて `system` は `x86_64-linux` または `aarch64-linux` にする。
-4. Firefoxを終了してから対象のHome Manager構成を適用する。
+1. ディストリビューション側でFlatpak本体とdesktop portalを準備する。Flathub remote、ユーザ用アプリ、overrideは `nix-flatpak` が管理するため、個別の `flatpak install` / `flatpak override` は実行しない。
+2. `flake.nix` のコメント例に従って対象マシンの `homeConfigurations."<user>@<host>"` を追加する。LinuxのCPUに応じて `system` は `x86_64-linux` または `aarch64-linux` にし、modulesには `nix-flatpak`、`./home`、`./linux` を含める。
+3. FirefoxとZedを終了してから対象のHome Manager構成を適用する。
 
    ```bash
    home-manager switch --flake ~/nix-config#'<user>@<host>' --impure
    ```
 
-5. `flatpak run org.mozilla.firefox` で起動する。Firefoxアカウントへログインし、Zotero ConnectorはZotero公式サイトから手動導入する。
+4. `flatpak run org.mozilla.firefox` で起動する。Firefoxアカウントへログインし、Zotero ConnectorはZotero公式サイトから手動導入する。
 
-Linuxでは `programs.firefox.configPath` が通常のFirefoxと同じ場所を管理し、SpeedUpperも `profiles.default.extensions.packages` で配置する。
+LinuxではHome ManagerのFirefoxモジュールが通常のFirefoxと同じ場所を管理し、SpeedUpperも `profiles.default.extensions.packages` で配置する。
 
 ```text
 ~/.mozilla/firefox/profiles.ini
@@ -480,7 +483,7 @@ Linuxでは `programs.firefox.configPath` が通常のFirefoxと同じ場所を�
 ~/.mozilla/firefox/default/extensions/speedupper@local.xpi
 ```
 
-Home Managerの管理ファイルは `/nix/store` へのシンボリックリンクになるため、手順2のoverrideだけはFirefoxモジュール外で必要になる。Flatpakの公式仕様上、アプリは既定では自身のデータ領域以外のホストファイルを参照できない。Home Manager自身は `~/.var/app/org.mozilla.firefox` へ書き込まない。macOSとLinuxで共有するのは宣言済み設定と署名済みXPIであり、Cookie、ログイン状態、履歴、拡張機能内部データなどのプロファイル実データは共有しない。
+Home Managerの管理ファイルは `/nix/store` へのシンボリックリンクになるため、`linux/flatpak.nix` がFirefoxの標準プロファイルへ読み書き、Nix storeへ読み取り専用の権限を与える。ZedはFlatpak内の `XDG_CONFIG_HOME` をHome Managerの `~/.config` へ揃える。Home Manager自身は `~/.var/app` 以下を直接管理せず、Cookie、ログイン状態、履歴、拡張機能内部データなどの可変状態はFlatpak側に残す。
 
 ### 鍵が使えない場合のフォールバック
 

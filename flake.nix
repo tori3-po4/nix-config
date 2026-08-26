@@ -21,6 +21,11 @@
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
+    # Flatpak の宣言管理モジュール自体を安定版へ固定する。
+    # Flatpak アプリの実体は Nix store 外に置かれるため、アプリの更新方針は
+    # linux/flatpak.nix 側で明示的に管理する。
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
+
     # espanso が LLVM/clang 21 系に上がった nixpkgs-unstable でリンクエラーになる
     # (aarch64-darwin, exit code 133)。上流で修正されるまで、ビルドが通っていた
     # リビジョンにピン留めして espanso だけここから取る。修正後はこの input と
@@ -124,14 +129,24 @@
         nixpkgs.config.allowUnfree = true;
       };
 
+      # Linuxユーザ環境で ./home に追加するプラットフォーム固有module。
+      # nix-flatpak本体のmoduleと、アプリ一覧・overrideを必ず同時に読み込む。
+      linuxHomeModules = [
+        inputs.nix-flatpak.homeManagerModules.nix-flatpak
+        ./linux
+      ];
+
       # home-manager を system モジュールとして組み込むときの共通設定
       homeManagerSharedModule =
-        { username }:
+        {
+          username,
+          platformModules ? [ ],
+        }:
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.backupFileExtension = "hmbak";
-          home-manager.users.${username} = import ./home;
+          home-manager.users.${username}.imports = [ ./home ] ++ platformModules;
           home-manager.extraSpecialArgs = { inherit inputs username; };
         };
 
@@ -196,7 +211,10 @@
       #       ./nixos                                    # 別途作成
       #       sharedNixpkgsModule
       #       home-manager.nixosModules.home-manager
-      #       (homeManagerSharedModule { username = "<user>"; })
+      #       (homeManagerSharedModule {
+      #         username = "<user>";
+      #         platformModules = linuxHomeModules;
+      #       })
       #     ];
       #   };
       #
@@ -210,7 +228,7 @@
       #       overlays = [ nix-vscode-extensions.overlays.default ];
       #     };
       #     extraSpecialArgs = { inherit inputs; username = "<user>"; };
-      #     modules = [ ./home ];
+      #     modules = [ ./home ] ++ linuxHomeModules;
       #   };
       # ---------------------------------------------------------------------
 

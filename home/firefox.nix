@@ -1,24 +1,15 @@
-{ pkgs, ... }:
+{ ... }:
 let
-  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-
   # Firefox が生成するランダムなディレクトリ名には依存せず、全OSで共通の
   # 相対パスを使う。既存マシンでは一度だけこのパスへプロファイルを移行する。
   firefoxProfilePath = "default";
-
-  # Linuxでもネイティブ版と共通の標準パスをprograms.firefoxの管理先にする。
-  # Flatpak固有の~/.var/app以下へHome Managerから直接書き込まない。
-  firefoxConfigPath = if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
-
 in
 {
   programs.firefox = {
     enable = true;
 
-    # Firefox本体はmacOSではHomebrew Cask、LinuxではFlatpakで管理する。
-    # Home Managerには本体を重複インストールさせない。
+    # 本体は各プラットフォーム側で管理し、Home Manager は共通設定だけを持つ。
     package = null;
-    configPath = firefoxConfigPath;
 
     # Firefox上で「デフォルト」と表示される単一プロファイルを全OSで使う。
     # 実体はmacOSではProfiles/default、Linuxでは.mozilla/firefox/defaultになる。

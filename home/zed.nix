@@ -65,7 +65,7 @@ in
 {
   programs.zed-editor = {
     enable = true;
-    # 本体は公式 Developer ID 署名を保持する Homebrew Cask で管理する。
+    # 本体は各プラットフォーム側で管理し、Home Manager は共通設定だけを持つ。
     package = null;
 
     # Remote Projects の SSH 接続情報を Zed が保存できるよう、設定の変更を許可する。
