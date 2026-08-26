@@ -19,8 +19,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
-
     # Flatpak の宣言管理モジュール自体を安定版へ固定する。
     # Flatpak アプリの実体は Nix store 外に置かれるため、アプリの更新方針は
     # linux/flatpak.nix 側で明示的に管理する。
@@ -48,7 +46,6 @@
       nix-darwin,
       home-manager,
       nix-vscode-extensions,
-      nix-homebrew,
       ...
     }:
     let
@@ -162,15 +159,6 @@
           modules = [
             ./darwin
             sharedNixpkgsModule
-            nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                enable = true;
-                enableRosetta = true;
-                user = username;
-                autoMigrate = true; # 既存の手動インストール Homebrew を引き継ぐ
-              };
-            }
             home-manager.darwinModules.home-manager
             (homeManagerSharedModule { inherit username; })
           ];
