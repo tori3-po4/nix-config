@@ -163,6 +163,13 @@ Built-in packages such as Eglot, TRAMP, and which-key count as installed."
 (setq evil-want-C-u-scroll t
       evil-want-C-i-jump nil
       evil-undo-system 'undo-redo)
+
+;; Evil 1.15.0 declares this internal variable without an initial value, while
+;; Emacs 32 no longer creates it as a side effect of the global minor-mode
+;; macro.  Evil master removed the dependency; keep the signed NonGNU release
+;; usable until its next release.  `defvar' will not override a future fix.
+(defvar evil-mode-buffers nil)
+
 (use-package evil
   :if (package-installed-p 'evil)
   :config
@@ -177,6 +184,9 @@ Built-in packages such as Eglot, TRAMP, and which-key count as installed."
   (corfu-auto-delay 0.15)
   (corfu-auto-prefix 2)
   (corfu-cycle t)
+  ;; Evil's Ex prompt has its own specialised completion-at-point functions.
+  ;; Corfu auto-completion in that minibuffer corrupts Evil's text properties.
+  (global-corfu-minibuffer nil)
   (corfu-preselect 'prompt)
   (corfu-preview-current 'insert)
   :init
