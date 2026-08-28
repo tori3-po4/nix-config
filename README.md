@@ -224,7 +224,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 
 - macOS: Emacs Plus の `emacs-plus-app@master` (32.0.50 nightly)。AOT native-comp、xwidgets、tree-sitter、mailutils を含む。
 - Linux: `emacs-overlay` の `emacs-git-pgtk`。native-comp、tree-sitter、xwidgets を明示的に有効化し、Wayland と TUI の両方で使える。
-- 共通設定: `~/.config/emacs/init.el`。GNU ELPA と NonGNU ELPA のみを登録し、不足パッケージを初回起動時に自動導入する。
+- 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA と NonGNU ELPA のみを登録し、不足パッケージを初回起動時に自動導入する。
 - TUI: Emacs 31 で入った tty child frame を 32 でも利用できる。Corfu 2.x は自動検出するため `corfu-terminal` は不要。
 
 確認用:

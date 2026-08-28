@@ -8,7 +8,7 @@
 
 (require 'seq)
 
-;; Keep package data and Custom output below the XDG Emacs directory.
+;; Keep package data and Custom output below the active Emacs directory.
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory)
       package-native-compile t
       native-comp-async-report-warnings-errors 'silent)
