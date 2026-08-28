@@ -14,11 +14,6 @@
     greedyCasks = true;
 
     taps = [
-      {
-        name = "d12frosted/emacs-plus";
-        # Homebrew 6 以降は非公式 tap の明示的な trust が必要。
-        trusted = true;
-      }
       # "randomplum/gtkwave"
     ];
 
@@ -57,9 +52,6 @@
       "bitwarden"
       "docker-desktop"
       "claude-code@latest"
-      # Emacs master = 32.0.50。AOT native-comp、xwidgets、tree-sitter、
-      # mailutils を含む Emacs Plus の prebuilt nightly を使う。
-      "d12frosted/emacs-plus/emacs-plus-app@master"
     ];
 
   };

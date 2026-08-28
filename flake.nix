@@ -19,8 +19,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Linux でも Emacs の最新 master (現在は 32.0.50) を追従する。
-    # macOS は darwin/homebrew.nix の Emacs Plus master cask を使う。
+    # macOS/Linux 共通で Emacs の最新 master (現在は 32.0.50) を追従する。
+    # home/emacs.nix で no-X 版を CPU 固有最適化してビルドする。
     emacs-overlay = {
       url = "github:nix-community/emacs-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
