@@ -31,7 +31,7 @@
 │ Nix (home-manager)     │ パッケージ + アプリ設定                │
 │  - home.packages       │ CLI、LSP、VSCode/JetBrains/Ghostty本体 │
 │  - programs.*          │ zsh/bash/starship/fzf/zoxide/firefox/  │
-│                        │ espanso/vscode/zed (拡張 + 設定)       │
+│                        │ espanso/emacs/vscode/zed (拡張 + 設定) │
 ├────────────────────────┼───────────────────────────────────────┤
 │ nix-flatpak (Linux)    │ GUIアプリ本体 + sandbox設定           │
 │  - packages            │ Firefox/Zed/Chrome/Anki等             │
@@ -90,6 +90,8 @@
 │   └── vm.nix           # systemd-repart ベースの NixOS VM image
 └── home/                # home-manager (yourname 用)
     ├── default.nix      # home.packages 一覧 + 各モジュール import
+    ├── emacs.nix        # Linux Emacs 32 + 共通 init.el の配布
+    ├── emacs/init.el    # GNU/NonGNU ELPA、Evil/Corfu/Magit等の設定
     ├── vscode.nix       # programs.vscode (拡張 + 設定 + スニペット)
     ├── vscode-settings.json  # VSCode の userSettings (JSON)
     ├── zed.nix          # programs.zed-editor (拡張 + LSP + task/debug)
@@ -104,7 +106,7 @@
 
 ### 各ファイルの役割
 
-- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / llama-cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。インプットは nixpkgs / nix-darwin / home-manager / nix-vscode-extensions / nix-homebrew / nix-flatpak / llama-cpp / nixpkgs-espanso (後述のピン留め用)。
+- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / `emacs-overlay` / llama.cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。
 - **`private/user.nix`**: ホスト名・ユーザ名・アーキを保持する個人情報ファイル。`.gitignore` 対象だが `git add -N -f` で intent-to-add し、Nix flake から見えるようにする。`git update-index --skip-worktree` で誤コミットも防止。
 - **`private/user.nix.example`**: 公開可能なテンプレート。新マシンでは `cp private/user.nix.example private/user.nix` から始める。
 - **`sunshine-moonlight.md`**: Windows側SunshineとMac側MoonlightをTailscale経由で接続するセットアップ・運用手順。
@@ -114,6 +116,7 @@
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
 - **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と Nix管理するGUI本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Firefox/Zed本体はプラットフォーム側で管理。
+- **`home/emacs.nix` / `home/emacs/init.el`**: macOS/Linux 共通の Emacs 設定。macOS の本体は Emacs Plus 32、Linux は PGTK 版の upstream master snapshot。Evil/Corfu/Magit/SLIME/nix-mode は GNU/NonGNU ELPA から初回起動時に導入し、Eglot/TRAMP/which-key は Emacs 32 同梱版を使う。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。本体はmacOSではHomebrew Cask、Linuxでは `nix-flatpak` が管理する。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
 - **`home/zsh.nix` / `bash.nix` / `starship.nix` / `fzf.nix` / `zoxide.nix`**: シェルと周辺ツールの設定。以前は chezmoi (`.zshrc` 等) で管理していたが home-manager の `programs.*` に移行済み。
@@ -202,20 +205,35 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - シェル支援: tmux, zellij, direnv, stow, chezmoi
 - ローカルLLM: llama-cpp (UI無効 overlay), lmstudio
 - 暗号/パスワード: gnupg, age, bitwarden-cli
-- 言語処理系: deno, nodejs_22, uv, jdk, gradle
+- 言語処理系: deno, nodejs_22, uv, pixi, SBCL, jdk, gradle
 - ビルド: automake, cmake, meson, pkgconf, gnumake, gcc, lld, lldb, llvm, openmp
 - 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
 - コンテナ: docker-client, docker-compose (daemon は Docker Desktop cask)
 - LaTeX: texlive (scheme-full), ghostscript, tex-fmt
 - LSP: lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
-- programs.* 設定: zsh, bash, starship, fzf, zoxide, firefox (user.js), vscode, zed-editor, espanso
+- programs.* 設定: zsh, bash, starship, fzf, zoxide, emacs, firefox (user.js), vscode, zed-editor, espanso
 
 ### Homebrew (`darwin/homebrew.nix`)
-- **Casks**: anki, bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, latexit, llama-app, logi-options+, minecraft, multipass, pearcleaner, skim, slack, tailscale-app, wireshark-app, zed, zotero
-- **Taps**: なし
+- **Casks**: anki, bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, emacs-plus-app@master, firefox, font-hackgen-nerd, google-chrome, latexit, llama-app, logi-options+, minecraft, multipass, pearcleaner, skim, slack, tailscale-app, wireshark-app, zed, zotero
+- **Taps**: d12frosted/emacs-plus
 - **Brews**: mole (gtkwave は必要になったら `randomplum/gtkwave` tap で復活させる)
 - 運用: `cleanup = "uninstall"` / `autoUpdate` / `upgrade` / `greedyCasks` すべて有効
+
+### Emacs 32
+
+- macOS: Emacs Plus の `emacs-plus-app@master` (32.0.50 nightly)。AOT native-comp、xwidgets、tree-sitter、mailutils を含む。
+- Linux: `emacs-overlay` の `emacs-git-pgtk`。native-comp、tree-sitter、xwidgets を明示的に有効化し、Wayland と TUI の両方で使える。
+- 共通設定: `~/.config/emacs/init.el`。GNU ELPA と NonGNU ELPA のみを登録し、不足パッケージを初回起動時に自動導入する。
+- TUI: Emacs 31 で入った tty child frame を 32 でも利用できる。Corfu 2.x は自動検出するため `corfu-terminal` は不要。
+
+確認用:
+
+```bash
+emacs --version
+emacs --batch --eval '(princ (native-comp-available-p))'
+emacs --batch --eval "(princ (featurep 'tty-child-frames))"
+```
 
 ### Flatpak (`linux/flatpak.nix`)
 

@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   imports = [
+    ./emacs.nix
     ./vscode.nix
     ./zed.nix
     ./zsh.nix
@@ -74,6 +75,7 @@
     nodejs_22
     uv
     pixi
+    sbcl # SLIME から使う Common Lisp 実装
 
     # ===== ビルドツール =====
     automake

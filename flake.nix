@@ -19,6 +19,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Linux でも Emacs の最新 master (現在は 32.0.50) を追従する。
+    # macOS は darwin/homebrew.nix の Emacs Plus master cask を使う。
+    emacs-overlay = {
+      url = "github:nix-community/emacs-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-stable.follows = "nixpkgs";
+    };
+
     # Flatpak の宣言管理モジュール自体を安定版へ固定する。
     # Flatpak アプリの実体は Nix store 外に置かれるため、アプリの更新方針は
     # linux/flatpak.nix 側で明示的に管理する。
@@ -120,6 +128,7 @@
       sharedNixpkgsModule = {
         nixpkgs.overlays = [
           nix-vscode-extensions.overlays.default
+          inputs.emacs-overlay.overlays.emacs
           llamaCppGitHubOverlay
           espansoPinOverlay
         ];
