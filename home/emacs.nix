@@ -18,6 +18,7 @@ let
 in
 {
   # package.el のパッケージは init.el 自身が GNU/NonGNU ELPA から管理する。
+  # Evil だけは Corfu 互換修正のため NonGNU-devel に固定する。
   xdg.configFile."emacs/early-init.el".source = ./emacs/early-init.el;
   xdg.configFile."emacs/init.el".source = ./emacs/init.el;
 

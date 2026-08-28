@@ -2,7 +2,8 @@
 
 ;;; Commentary:
 ;; Shared by the Nix-built emacs-git-nox on macOS and Linux.
-;; Third-party packages intentionally come only from GNU ELPA and NonGNU ELPA.
+;; Third-party packages intentionally come from GNU/NonGNU ELPA.  Evil alone
+;; is pinned to NonGNU-devel for its latest Corfu compatibility fixes.
 
 ;;; Code:
 
@@ -27,37 +28,61 @@
       native-comp-compiler-options nil
       native-comp-async-report-warnings-errors 'silent)
 
-;; GNU ELPA takes precedence where the same dependency exists in both archives.
-;; The requested packages are all available from these signed upstream archives,
-;; so MELPA is deliberately unnecessary.
+;; GNU ELPA takes precedence where the same dependency exists in several
+;; archives.  Evil is the sole devel package; pinning prevents every other
+;; package from being selected from NonGNU-devel.  MELPA remains unnecessary.
 (require 'package)
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/"))
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("nongnu-devel" . "https://elpa.nongnu.org/nongnu-devel/"))
       package-archive-priorities
-      '(("gnu" . 20)
-        ("nongnu" . 10))
+      '(("gnu" . 30)
+        ("nongnu" . 20)
+        ("nongnu-devel" . 10))
+      package-pinned-packages
+      '((evil . "nongnu-devel"))
       package-selected-packages
       '(evil corfu magit slime eglot tramp which-key nix-mode))
 (package-initialize)
 
+(defun my/package-archive-desc (package archive)
+  "Return the descriptor for PACKAGE in ARCHIVE, or nil if unavailable."
+  (seq-find
+   (lambda (descriptor)
+     (equal (package-desc-archive descriptor) archive))
+   (cdr (assq package package-archive-contents))))
+
 (defun my/package-install-required ()
-  "Install missing packages from GNU ELPA or NonGNU ELPA.
+  "Install missing stable packages and keep Evil on NonGNU-devel.
 Built-in packages such as Eglot, TRAMP, and which-key count as installed."
-  (let ((missing (seq-remove #'package-installed-p package-selected-packages)))
-    (when missing
-      (condition-case error-data
-          (progn
+  (condition-case error-data
+      (let* ((missing
+              (seq-remove #'package-installed-p package-selected-packages))
+             (devel-index
+              (expand-file-name "archives/nongnu-devel/archive-contents"
+                                package-user-dir)))
+        (if (or missing (not (file-readable-p devel-index)))
             (package-refresh-contents)
-            (dolist (package missing)
-              (unless (package-installed-p package)
-                (package-install package))))
-        (error
-         (display-warning
-          'emacs-init
-          (format "ELPA package bootstrap failed: %s"
-                  (error-message-string error-data))
-          :error))))))
+          (unless package-archive-contents
+            (package-read-all-archive-contents)))
+        (dolist (package missing)
+          (unless (package-installed-p package)
+            (package-install package)))
+        ;; A stable Evil already satisfies `package-installed-p', so compare
+        ;; its version explicitly with the descriptor from NonGNU-devel.
+        (let ((evil-devel (my/package-archive-desc 'evil "nongnu-devel")))
+          (unless evil-devel
+            (error "Evil is unavailable in NonGNU-devel"))
+          (unless (package-installed-p 'evil
+                                       (package-desc-version evil-devel))
+            (package-install evil-devel))))
+    (error
+     (display-warning
+      'emacs-init
+      (format "ELPA package bootstrap failed: %s"
+              (error-message-string error-data))
+      :error))))
 
 (my/package-install-required)
 (require 'use-package)
@@ -74,7 +99,9 @@ Built-in packages such as Eglot, TRAMP, and which-key count as installed."
       redisplay-skip-fontification-on-input t
       read-process-output-max (* 1024 1024)
       process-adaptive-read-buffering nil
+      auto-revert-use-notify t
       auto-revert-avoid-polling t
+      auto-revert-verbose t
       recentf-auto-cleanup 'never
       completion-cycle-threshold 3
       tab-always-indent 'complete

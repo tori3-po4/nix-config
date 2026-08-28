@@ -10,6 +10,7 @@
     ./firefox.nix
     ./fzf.nix
     ./zoxide.nix
+    ./zellij.nix
     ./espanso.nix
     ./git.nix
     ./nh.nix
@@ -54,8 +55,6 @@
     tmux
     direnv
     stow
-    zellij
-
     # ===== ターミナルエミュレーター ====
     (if stdenv.hostPlatform.isDarwin then ghostty-bin else ghostty)
 
