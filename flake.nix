@@ -20,7 +20,7 @@
     };
 
     # macOS/Linux 共通で Emacs の最新 master (現在は 32.0.50) を追従する。
-    # home/emacs.nix で no-X 版を CPU 固有最適化してビルドする。
+    # home/emacs.nix で no-X 版と Elisp Native Compilation を有効にする。
     emacs-overlay = {
       url = "github:nix-community/emacs-overlay";
       inputs.nixpkgs.follows = "nixpkgs";

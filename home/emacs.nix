@@ -1,30 +1,19 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 
 let
-  # This repository builds Emacs locally and does not share its store output.
-  # Optimise the C runtime for the CPU which performs and runs the build.
-  cpuFlags =
-    if pkgs.stdenv.hostPlatform.isAarch64 then
-      "-O2 -mcpu=native"
-    else if pkgs.stdenv.hostPlatform.isx86_64 then
-      "-O2 -march=native -mtune=native"
-    else
-      "-O2";
-
+  # Keep native-comp available, but do not eagerly native-compile every bundled
+  # Elisp file.  init.el compiles the GNU/NonGNU packages which are actually
+  # installed, so this substantially shortens each Emacs master rebuild.
   emacsTui =
     (pkgs.emacs-git-nox.override {
       withNativeCompilation = true;
       withTreeSitter = true;
     }).overrideAttrs
       (old: {
-        env = (old.env or { }) // {
-          NIX_CFLAGS_COMPILE = lib.concatStringsSep " " (
-            lib.filter (flags: flags != "") [
-              (old.env.NIX_CFLAGS_COMPILE or "")
-              cpuFlags
-            ]
-          );
-        };
+        env = builtins.removeAttrs (old.env or { }) [
+          "NATIVE_FULL_AOT"
+          "NIX_CFLAGS_COMPILE"
+        ];
       });
 in
 {
@@ -38,8 +27,8 @@ in
   home.file.".emacs.d/early-init.el".source = ./emacs/early-init.el;
   home.file.".emacs.d/init.el".source = ./emacs/init.el;
 
-  # macOS/Linux とも Emacs 32 master の no-X 版を使う。Nixpkgs の
-  # NATIVE_FULL_AOT によるフル AOT と上記の CPU 固有最適化を適用する。
+  # macOS/Linux とも Emacs 32 master の no-X 版を使う。Native
+  # Compilation と Tree-sitter は残し、フル AOT だけを無効化する。
   programs.emacs = {
     enable = true;
     package = emacsTui;

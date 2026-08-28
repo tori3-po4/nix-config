@@ -18,8 +18,9 @@
 (when (file-readable-p custom-file)
   (load custom-file nil 'nomessage))
 
-;; Match Elisp native compilation to the CPU-specific Nix build of the Emacs C
-;; runtime.  Keep `native-comp-speed' at the safe production default (-O2).
+;; Optimise only the Elisp which is native-compiled on this machine.  The Emacs
+;; C runtime keeps Nixpkgs' standard compiler settings; `native-comp-speed'
+;; remains at the safe production default (-O2).
 (defconst my/native-comp-cpu-options
   (cond
    ((string-match-p "\\`\\(?:aarch64\\|arm64\\)" system-configuration)
