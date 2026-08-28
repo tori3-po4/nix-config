@@ -9,12 +9,12 @@
 (require 'seq)
 
 ;; Keep generated state below the active XDG/legacy Emacs directory.  The
-;; versioned cache component deliberately prevents older, generically compiled
-;; .eln files from being reused after enabling per-CPU compiler options.
+;; versioned cache component deliberately prevents failed .eln artifacts from
+;; older compiler settings from being reused.
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (when (fboundp 'startup-redirect-eln-cache)
   (startup-redirect-eln-cache
-   (expand-file-name "eln-cache/native-v1/" user-emacs-directory)))
+   (expand-file-name "eln-cache/native-v2/" user-emacs-directory)))
 (when (file-readable-p custom-file)
   (load custom-file nil 'nomessage))
 
