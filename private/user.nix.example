@@ -10,17 +10,21 @@
 #   4. 誤コミット防止のため skip-worktree を設定する
 #        git update-index --skip-worktree private/user.nix
 #   5. 適用
-#        darwin-rebuild switch --flake .#default
+#        macOS: sudo darwin-rebuild switch --flake .#default --impure
+#        Linux: nix run home-manager/master -- switch --flake .#default --impure -b hmbak
 {
-  # macOS のログインユーザ名 (whoami の出力と一致させる)
+  # ログインユーザ名 (whoami の出力と一致させる)
   username = "yourname";
 
-  # macOS のホスト名 (scutil --get LocalHostName の出力と一致させると
-  # `darwin-rebuild switch --flake .` でホスト指定を省略できる)
+  # ホスト名
+  #   macOS: scutil --get LocalHostName
+  #   Linux: hostnamectl --static
   hostname = "your-host";
 
   # ターゲットアーキテクチャ
   #   Apple Silicon: "aarch64-darwin"
   #   Intel Mac:     "x86_64-darwin"
+  #   x86_64 Linux:  "x86_64-linux"
+  #   ARM64 Linux:   "aarch64-linux"
   system = "aarch64-darwin";
 }

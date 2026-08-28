@@ -80,6 +80,9 @@
         "x86_64-linux"
       ];
 
+      isDarwin = nixpkgs.lib.hasSuffix "-darwin" user.system;
+      isSupportedLinux = builtins.elem user.system linuxSystems;
+
       # macOS と同じ CPU アーキテクチャの Linux を native build の対象にする。
       # Docker/VM image は Linux の derivation なので、Darwin の pkgs から
       # cross build せず nix-darwin の Linux builder へ委譲する。
@@ -125,15 +128,25 @@
       };
 
       # 共通 nixpkgs 設定 (overlay + unfree)
+      sharedOverlays = [
+        nix-vscode-extensions.overlays.default
+        inputs.emacs-overlay.overlays.emacs
+        llamaCppGitHubOverlay
+        espansoPinOverlay
+      ];
+
       sharedNixpkgsModule = {
-        nixpkgs.overlays = [
-          nix-vscode-extensions.overlays.default
-          inputs.emacs-overlay.overlays.emacs
-          llamaCppGitHubOverlay
-          espansoPinOverlay
-        ];
+        nixpkgs.overlays = sharedOverlays;
         nixpkgs.config.allowUnfree = true;
       };
+
+      mkPkgs =
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = sharedOverlays;
+          config.allowUnfree = true;
+        };
 
       # Linuxユーザ環境で ./home に追加するプラットフォーム固有module。
       # nix-flatpak本体のmoduleと、アプリ一覧・overrideを必ず同時に読み込む。
@@ -173,6 +186,30 @@
           ];
         };
 
+      # NixOS 以外の Linux で使う standalone Home Manager 構成。
+      # 非標準の homeDirectory にも対応できるよう、実行ユーザの
+      # HOME をそのまま使う。
+      mkLinuxHome =
+        {
+          username,
+          system,
+          homeDirectory,
+        }:
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = mkPkgs system;
+          extraSpecialArgs = { inherit inputs username; };
+          modules = [ ./home ] ++ linuxHomeModules ++ [
+            {
+              home = {
+                inherit username homeDirectory;
+              };
+
+              # 初回適用後は `home-manager switch` だけで更新できるようにする。
+              programs.home-manager.enable = true;
+            }
+          ];
+        };
+
       # qcow2 の中身になる NixOS。image の生成処理とは分けておくことで、
       # images/vm.nix を通常の NixOS module として編集・評価できる。
       mkImageNixos =
@@ -190,14 +227,15 @@
       );
 
     in
+    assert isDarwin || isSupportedLinux;
     {
-      darwinConfigurations = {
+      darwinConfigurations = nixpkgs.lib.optionalAttrs isDarwin {
         ${user.hostname} = mkDarwin { inherit (user) username system; };
         default = mkDarwin { inherit (user) username system; };
       };
 
       # ---------------------------------------------------------------------
-      # 以下は Linux ホストを追加するときの足場 (現状は空)。
+      # NixOS ホストを追加するときの足場。
       #
       # NixOS そのものを管理する場合は nixosConfigurations を使う:
       #
@@ -214,26 +252,25 @@
       #       })
       #     ];
       #   };
-      #
-      # NixOS 以外の Linux (Ubuntu/Arch 等) に Nix だけ入れて home-manager を
-      # 使う場合は standalone home-manager:
-      #
-      #   homeConfigurations."<user>@<host>" = home-manager.lib.homeManagerConfiguration {
-      #     pkgs = import nixpkgs {
-      #       system = "x86_64-linux";
-      #       config.allowUnfree = true;
-      #       overlays = [ nix-vscode-extensions.overlays.default ];
-      #     };
-      #     extraSpecialArgs = { inherit inputs; username = "<user>"; };
-      #     modules = [ ./home ] ++ linuxHomeModules;
-      #   };
       # ---------------------------------------------------------------------
 
       nixosConfigurations = {
         image-aarch64 = imageNixos.aarch64-linux;
         image-x86_64 = imageNixos.x86_64-linux;
       };
-      homeConfigurations = { };
+      # Fedora など NixOS 以外の Linux では、private/user.nix の値から
+      # standalone Home Manager 構成を公開する。default は初回導入用、
+      # <user>@<host> は Home Manager の標準的な構成名として使える。
+      homeConfigurations = nixpkgs.lib.optionalAttrs isSupportedLinux {
+        "${user.username}@${user.hostname}" = mkLinuxHome {
+          inherit (user) username system;
+          homeDirectory = realHome;
+        };
+        default = mkLinuxHome {
+          inherit (user) username system;
+          homeDirectory = realHome;
+        };
+      };
 
       # Image は必ず Linux package として公開する。macOS からビルドするときも
       # `packages.<arch>-linux` を明示することで Mach-O の混入を防ぐ。

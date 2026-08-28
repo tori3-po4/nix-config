@@ -1,6 +1,6 @@
-# nix-config — macOS 環境の宣言的管理
+# nix-config — macOS / Linux 環境の宣言的管理
 
-このリポジトリは [nix-darwin](https://github.com/nix-darwin/nix-darwin) + [home-manager](https://github.com/nix-community/home-manager) を使って macOS の設定を宣言的に管理するためのものです。dotfile (シェル設定等) は別リポジトリ [chezmoi-dotfiles](https://github.com/tori3-po4/chezmoi-dotfiles) で [chezmoi](https://www.chezmoi.io/) により管理しています。
+このリポジトリは、macOS では [nix-darwin](https://github.com/nix-darwin/nix-darwin) + [home-manager](https://github.com/nix-community/home-manager)、Fedora など dnf 系 Linux では standalone Home Manager を使って環境を宣言的に管理するためのものです。dotfile (シェル設定等) は別リポジトリ [chezmoi-dotfiles](https://github.com/tori3-po4/chezmoi-dotfiles) で [chezmoi](https://www.chezmoi.io/) により管理しています。
 
 ---
 
@@ -28,7 +28,7 @@
 │  - launchd.user.agents │ llama.cpp サーバ常駐 (darwin/llm.nix)  │
 │  - bitwarden.nix       │ Bitwarden SSH agent (SSH_AUTH_SOCK)    │
 ├────────────────────────┼───────────────────────────────────────┤
-│ Nix (home-manager)     │ パッケージ + アプリ設定                │
+│ Nix (home-manager)     │ macOS/Linux共通パッケージ + アプリ設定    │
 │  - home.packages       │ CLI、LSP、VSCode/JetBrains/Ghostty本体 │
 │  - programs.*          │ zsh/bash/starship/fzf/zoxide/firefox/  │
 │                        │ espanso/emacs/vscode/zed (拡張 + 設定) │
@@ -64,7 +64,7 @@
 
 ```
 ~/nix-config/
-├── flake.nix            # 入力定義 + overlay + darwinConfigurations
+├── flake.nix            # 入力定義 + overlay + darwin/homeConfigurations
 ├── flake.lock           # ロックファイル (Nixが管理 / sudoで触ると root 所有になる)
 ├── .gitignore
 ├── README.md            # このファイル
@@ -107,7 +107,7 @@
 
 ### 各ファイルの役割
 
-- **`flake.nix`**: インプット (依存リポジトリ) と出力 `darwinConfigurations.<host>` / `darwinConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / `emacs-overlay` / llama.cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。
+- **`flake.nix`**: インプット (依存リポジトリ) と、macOS 用の `darwinConfigurations.<host>` / `darwinConfigurations.default`、Linux 用の `homeConfigurations."<user>@<host>"` / `homeConfigurations.default` を定義。username/hostname/system は `private/user.nix` から読み込まれる。overlay (`nix-vscode-extensions` / `emacs-overlay` / llama.cpp の UI 無効化 / espanso のピン留め) と `nixpkgs.config.allowUnfree = true` もここで設定。
 - **`private/user.nix`**: ホスト名・ユーザ名・アーキを保持する個人情報ファイル。`.gitignore` 対象だが `git add -N -f` で intent-to-add し、Nix flake から見えるようにする。`git update-index --skip-worktree` で誤コミットも防止。
 - **`private/user.nix.example`**: 公開可能なテンプレート。新マシンでは `cp private/user.nix.example private/user.nix` から始める。
 - **`sunshine-moonlight.md`**: Windows側SunshineとMac側MoonlightをTailscale経由で接続するセットアップ・運用手順。
@@ -129,6 +129,8 @@
 ## 3. 日常運用コマンド
 
 ### Nix側
+
+#### macOS (nix-darwin)
 
 ```bash
 # 設定変更後の反映 (sudo 必須。--impure は private/user.nix を $HOME 起点で読むため必須)
@@ -157,6 +159,34 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # 起動可能世代�
 `darwin-rebuild` や Nix store の GC は、Home Manager がコピーした `.app` の更新・削除を伴う。
 Zed 内蔵ターミナルから実行する場合は、macOS の「システム設定 → プライバシーとセキュリティ → アプリ管理」で **Zed** を許可してから、Zed を完全終了して起動し直すこと。
 Zed 本体は公式 Developer ID 署名を保持する Homebrew Cask 版なので、通常は更新後も許可が引き継がれる。
+
+#### Linux (standalone Home Manager)
+
+`sudo` は付けず、対象ユーザ自身で実行する。`--impure` は
+`private/user.nix` を実行ユーザの `HOME` から読むため必須。
+
+```bash
+# 設定変更後の反映
+home-manager switch --flake ~/nix-config#default --impure
+
+# switch せずにビルドだけ確認
+home-manager build --flake ~/nix-config#default --impure
+
+# 履歴確認
+home-manager generations
+
+# 入力を更新し、ビルド後に反映
+cd ~/nix-config
+nix flake update
+nix build .#homeConfigurations.default.activationPackage --impure --no-link
+home-manager switch --flake .#default --impure
+
+# ユーザの Nix store 参照のごみ掃除
+nix-collect-garbage -d
+```
+
+直前世代へ戻すときは `home-manager generations` に表示された
+一つ前の `/nix/store/...-home-manager-generation/activate` を実行する。
 
 ### Docker / qcow2 image
 
@@ -377,7 +407,7 @@ exit
 
 秘密情報 (SSH 鍵) は Bitwarden にあるため、旧マシンでの事前準備は不要。Bitwarden アカウントにログインできることだけ確認しておく。
 
-### Phase 0〜8: 新マシンでの作業
+### macOS (nix-darwin): Phase 0〜8
 
 ```bash
 # 0. macOS 初期セットアップ (Apple ID サインイン等は手動)
@@ -433,6 +463,87 @@ nvim
 #    設定後は Zed を完全終了して起動し直す
 ```
 
+### Fedora など dnf 系 Linux (standalone Home Manager)
+
+対象は systemd を使い、`nix` / `nix-daemon` パッケージを
+標準リポジトリまたは EPEL から導入できる Fedora / Rocky Linux /
+AlmaLinux などの `x86_64` または `aarch64` 環境。Home Manager はユーザ環境と
+ユーザ単位の Flatpak だけを管理し、OS 自体のパッケージ、SELinux、
+ファイアウォール等は引き続き dnf 側で管理する。
+
+> `linux/flatpak.nix` は `uninstallUnmanaged = true` のため、初回適用時に
+> 宣言にない **ユーザ単位** Flatpak を削除する。必要なアプリは
+> 先に `linux/flatpak.nix` へ追加する。システム単位の Flatpak には影響しない。
+
+```bash
+# 0. Nix がディストリビューションのリポジトリにあることを確認
+#    Rocky Linux / AlmaLinux / RHEL では、必要に応じて先に EPEL を有効化する
+dnf info nix nix-daemon
+
+# 1. Nix と OS側の前提パッケージを dnf で導入
+sudo dnf install -y \
+  nix nix-daemon git flatpak xdg-desktop-portal xdg-desktop-portal-gtk
+# KDE Plasma では GTK backend の代わりに、または追加で以下を使う:
+# sudo dnf install -y xdg-desktop-portal-kde
+
+# 2. multi-user daemon を有効化
+sudo systemctl enable --now nix-daemon
+# → ここで新しいログインシェルを開く
+
+# 3. Nix、daemon、flake の動作確認
+nix --version
+nix store ping
+nix shell nixpkgs#hello --command hello
+
+# 4. nix-config を取得
+#    秘密リポジトリの場合は PAT または準備済みの SSH 鍵を使う
+git clone https://github.com/<your-account>/nix-config.git ~/nix-config
+cd ~/nix-config
+
+# 5. ホスト/ユーザ情報を作成
+cp private/user.nix.example private/user.nix
+whoami
+hostnamectl --static
+uname -m
+$EDITOR private/user.nix
+# username: whoami と一致
+# hostname: hostnamectl --static と一致
+# system: uname -m=x86_64 なら "x86_64-linux"、aarch64 なら "aarch64-linux"
+
+# 6. private/user.nix を flake から参照可能にし、誤コミットを防止
+git add -N -f private/user.nix
+git update-index --skip-worktree private/user.nix
+
+# 7. 初回ビルドと適用
+#    -b hmbak は既存の競合ファイルを *.hmbak へ一度だけ退避する
+nix run home-manager/master -- switch \
+  --flake ".#default" --impure -b hmbak
+
+# 8. ログインシェルを再読み込みし、導入結果を確認
+exec "$SHELL" -l
+home-manager generations
+flatpak list --user
+systemctl --user list-timers '*flatpak*'
+
+# 9. chezmoi を初期化 (必要な場合)
+chezmoi init --apply git@github.com:tori3-po4/chezmoi-dotfiles.git
+```
+
+`dnf info nix nix-daemon` で両パッケージが見つからない
+ディストリビューションはこの手順の対象外。Fedora の構成例は
+導入後の `/usr/share/doc/nix-core/README.fedora.md` でも確認できる。
+
+初回適用で `programs.home-manager.enable = true` も有効になるため、
+2 回目以降は通常ユーザで次だけを実行すればよい。
+
+```bash
+home-manager switch --flake ~/nix-config#default --impure
+```
+
+`sudo home-manager ...` は root のホームを対象にするため使わない。
+Flatpak 本体と desktop portal は dnf、ユーザ用アプリ、Flathub remote、
+sandbox override、週次更新 timer は `linux/flatpak.nix` が管理する。
+
 ### Firefox の設定と拡張機能を別マシンへ移行
 
 この構成ではFirefoxプロファイル全体をコピーしない。宣言済みの設定は `home/firefox.nix` から再生成し、SpeedUpperはリポジトリ内のMozilla署名済みXPIから復元する。Zotero Connectorは新しいマシンでZotero公式サイトから手動導入し、それ以外のFirefox設定と拡張機能はFirefox Syncで復元する。Cookie、保存済みログイン、ログイン状態、履歴、セッション、サイトストレージは移行対象外とする。
@@ -486,12 +597,12 @@ jq -r '
 
 #### 3. 新しいLinux（Flatpak）で復元
 
-1. ディストリビューション側でFlatpak本体とdesktop portalを準備する。Flathub remote、ユーザ用アプリ、overrideは `nix-flatpak` が管理するため、個別の `flatpak install` / `flatpak override` は実行しない。
-2. `flake.nix` のコメント例に従って対象マシンの `homeConfigurations."<user>@<host>"` を追加する。LinuxのCPUに応じて `system` は `x86_64-linux` または `aarch64-linux` にし、modulesには `nix-flatpak`、`./home`、`./linux` を含める。
+1. [Fedora など dnf 系 Linux](#fedora-など-dnf-系-linux-standalone-home-manager) の手順でFlatpak本体、desktop portal、Nix、Home Manager構成を導入する。Flathub remote、ユーザ用アプリ、overrideは `nix-flatpak` が管理するため、個別の `flatpak install` / `flatpak override` は実行しない。
+2. `private/user.nix` の `system` がLinuxのCPUに合う `x86_64-linux` または `aarch64-linux` であることを確認する。`flake.nix` はその値から `homeConfigurations.default` と `homeConfigurations."<user>@<host>"` を生成する。
 3. FirefoxとZedを終了してから対象のHome Manager構成を適用する。
 
    ```bash
-   home-manager switch --flake ~/nix-config#'<user>@<host>' --impure
+   home-manager switch --flake ~/nix-config#default --impure
    ```
 
 4. `flatpak run org.mozilla.firefox` で起動する。Firefoxアカウントへログインし、Zotero ConnectorはZotero公式サイトから手動導入する。
@@ -640,6 +751,11 @@ chezmoi apply -v   # 詳細ログで状況確認
 
 - [nix-darwin manual](https://nix-darwin.github.io/nix-darwin/manual/)
 - [home-manager manual](https://nix-community.github.io/home-manager/)
+- [Home Manager: standalone flake setup](https://nix-community.github.io/home-manager/nix-flakes/standalone.html)
+- [NixOS/nix-installer](https://github.com/NixOS/nix-installer)
+- [Fedora Packages: nix](https://packages.fedoraproject.org/pkgs/nix/nix/)
+- [Fedora: Nix package tool](https://fedoraproject.org/wiki/Changes/Nix_package_tool)
+- [nix-flatpak](https://github.com/gmodena/nix-flatpak)
 - [chezmoi docs](https://www.chezmoi.io/)
 - [nix-vscode-extensions](https://github.com/nix-community/nix-vscode-extensions)
 - [MyNixOS (オプション横断検索)](https://mynixos.com/)
