@@ -18,22 +18,13 @@
 (when (file-readable-p custom-file)
   (load custom-file nil 'nomessage))
 
-;; Optimise only the Elisp which is native-compiled on this machine.  The Emacs
-;; C runtime keeps Nixpkgs' standard compiler settings; `native-comp-speed'
-;; remains at the safe production default (-O2).
-(defconst my/native-comp-cpu-options
-  (cond
-   ((string-match-p "\\`\\(?:aarch64\\|arm64\\)" system-configuration)
-    '("-mcpu=native"))
-   ((string-match-p "\\`x86_64" system-configuration)
-    '("-march=native" "-mtune=native"))
-   (t nil))
-  "Compiler options for native Elisp on the current CPU family.")
-
+;; Optimise native-compiled Elisp at GCC's safe production level (-O2).  Do not
+;; pass `-mcpu=native': Darwin's libgccjit rejects that value, and a concrete
+;; Apple CPU name would make this shared macOS/Linux configuration non-portable.
 (setq package-native-compile t
       package-quickstart t
       native-comp-speed 2
-      native-comp-compiler-options my/native-comp-cpu-options
+      native-comp-compiler-options nil
       native-comp-async-report-warnings-errors 'silent)
 
 ;; GNU ELPA takes precedence where the same dependency exists in both archives.
