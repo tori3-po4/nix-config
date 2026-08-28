@@ -1,20 +1,36 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 let
+  # Pin the actual GNU release archive, not a moving branch or release alias.
+  # nixpkgs supplies only the Darwin/Linux build recipe and dependencies.
+  emacs31Source = pkgs.fetchurl {
+    url = "mirror://gnu/emacs/emacs-31.1.tar.xz";
+    hash = "sha256-HaV5DZWAyBkytb9wBjMRRGjaezQS1p+qdn2uv5dPRYY=";
+  };
+
   # Keep native-comp available, but do not eagerly native-compile every bundled
   # Elisp file.  init.el compiles the GNU/NonGNU packages which are actually
-  # installed, so this substantially shortens each Emacs master rebuild.
+  # installed, so this substantially shortens each Emacs rebuild.
   emacsTui =
-    (pkgs.emacs-git-nox.override {
-      withNativeCompilation = true;
-      withTreeSitter = true;
-    }).overrideAttrs
-      (old: {
-        env = builtins.removeAttrs (old.env or { }) [
-          "NATIVE_FULL_AOT"
-          "NIX_CFLAGS_COMPILE"
-        ];
-      });
+    let
+      package =
+        (pkgs.emacs31-nox.override {
+          withNativeCompilation = true;
+          withTreeSitter = true;
+        }).overrideAttrs
+          (old: {
+            version = "31.1";
+            src = emacs31Source;
+            env = builtins.removeAttrs (old.env or { }) [
+              "NATIVE_FULL_AOT"
+              "NIX_CFLAGS_COMPILE"
+            ];
+          });
+    in
+    assert lib.assertMsg (
+      package.version == "31.1"
+    ) "The configured Emacs package must remain exactly at version 31.1";
+    package;
 in
 {
   # package.el のパッケージは init.el 自身が GNU/NonGNU ELPA から管理する。
@@ -28,8 +44,10 @@ in
   home.file.".emacs.d/early-init.el".source = ./emacs/early-init.el;
   home.file.".emacs.d/init.el".source = ./emacs/init.el;
 
-  # macOS/Linux とも Emacs 32 master の no-X 版を使う。Native
-  # Compilation と Tree-sitter は残し、フル AOT だけを無効化する。
+  # macOS/Linux とも正式版 Emacs 31.1 の no-X 版を使う。Native
+  # Compilation、Tree-sitter、TUI child frame は残し、フル AOT だけを
+  # 無効化する。GNU公式tarballのURL、SHA-256、バージョン検査で
+  # 31.1以外への暗黙の追従を防ぐ。
   programs.emacs = {
     enable = true;
     package = emacsTui;

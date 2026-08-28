@@ -19,14 +19,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # macOS/Linux 共通で Emacs の最新 master (現在は 32.0.50) を追従する。
-    # home/emacs.nix で no-X 版と Elisp Native Compilation を有効にする。
-    emacs-overlay = {
-      url = "github:nix-community/emacs-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixpkgs-stable.follows = "nixpkgs";
-    };
-
     # Flatpak の宣言管理モジュール自体を安定版へ固定する。
     # Flatpak アプリの実体は Nix store 外に置かれるため、アプリの更新方針は
     # linux/flatpak.nix 側で明示的に管理する。
@@ -130,7 +122,6 @@
       # 共通 nixpkgs 設定 (overlay + unfree)
       sharedOverlays = [
         nix-vscode-extensions.overlays.default
-        inputs.emacs-overlay.overlays.emacs
         llamaCppGitHubOverlay
         espansoPinOverlay
       ];
@@ -198,7 +189,11 @@
         home-manager.lib.homeManagerConfiguration {
           pkgs = mkPkgs system;
           extraSpecialArgs = { inherit inputs username; };
-          modules = [ ./home ] ++ linuxHomeModules ++ [
+          modules = [
+            ./home
+          ]
+          ++ linuxHomeModules
+          ++ [
             {
               home = {
                 inherit username homeDirectory;
