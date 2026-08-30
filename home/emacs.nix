@@ -9,8 +9,7 @@ let
   };
 
   # Keep native-comp available, but do not eagerly native-compile every bundled
-  # Elisp file.  init.el compiles the GNU/NonGNU packages which are actually
-  # installed, so this substantially shortens each Emacs rebuild.
+  # Elisp file.  Third-party packages are managed by Emacs' built-in package.el.
   emacsTui =
     let
       package =
@@ -33,15 +32,12 @@ let
     package;
 in
 {
-  # package.el のパッケージは init.el 自身が GNU/NonGNU ELPA から管理する。
-  # Evil だけは Corfu 互換修正のため NonGNU-devel に固定する。
-  xdg.configFile."emacs/early-init.el".source = ./emacs/early-init.el;
+  # Elisp packages are installed from Emacs' default GNU/NonGNU ELPA archives.
   xdg.configFile."emacs/init.el".source = ./emacs/init.el;
 
   # Emacs は ~/.emacs.d が存在すると XDG の ~/.config/emacs よりこちらを
   # 優先する。auto-save 等がディレクトリを作っても設定が外れないよう、
   # legacy 側にも同じ init.el を配置する。
-  home.file.".emacs.d/early-init.el".source = ./emacs/early-init.el;
   home.file.".emacs.d/init.el".source = ./emacs/init.el;
 
   # macOS/Linux とも正式版 Emacs 31.1 の no-X 版を使う。Native

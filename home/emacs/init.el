@@ -2,121 +2,20 @@
 
 ;;; Commentary:
 ;; Shared by the Nix-built Emacs 31.1 no-X package on macOS and Linux.
-;; Third-party packages intentionally come from GNU/NonGNU ELPA.  Evil alone
-;; is pinned to NonGNU-devel for its latest Corfu compatibility fixes.
+;; Third-party packages use Emacs' standard GNU/NonGNU ELPA configuration.
 
 ;;; Code:
 
-(require 'seq)
-
 ;; Keep generated customisations below the active XDG/legacy Emacs directory.
-;; early-init.el selects the versioned ELPA and quickstart paths before Emacs'
-;; standard package activation runs.
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(when (fboundp 'startup-redirect-eln-cache)
-  (startup-redirect-eln-cache
-   (expand-file-name "eln-cache/native-v2/" user-emacs-directory)))
 (when (file-readable-p custom-file)
   (load custom-file nil 'nomessage))
 
-;; Optimise native-compiled Elisp at GCC's safe production level (-O2).  Do not
-;; pass `-mcpu=native': Darwin's libgccjit rejects that value, and a concrete
-;; Apple CPU name would make this shared macOS/Linux configuration non-portable.
-(setopt package-native-compile t
-        native-comp-speed 2
-        native-comp-compiler-options nil
-        native-comp-async-report-warnings-errors 'silent)
-
-;; GNU ELPA takes precedence where the same dependency exists in several
-;; archives.  Evil is the sole devel package; pinning prevents every other
-;; package from being selected from NonGNU-devel.  MELPA remains unnecessary.
-(require 'package)
-(setq package-archives
-      '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-        ("nongnu-devel" . "https://elpa.nongnu.org/nongnu-devel/"))
-      package-archive-priorities
-      '(("gnu" . 30)
-        ("nongnu" . 20)
-        ("nongnu-devel" . 10))
-      package-pinned-packages
-      '((evil . "nongnu-devel"))
-      package-selected-packages
-      '(evil corfu magit slime eglot tramp which-key
-        ;; nix-mode ships optional Company and MMM integration files, but its
-        ;; ELPA metadata does not declare their dependencies.  package.el
-        ;; compiles those files unconditionally, so install both first even
-        ;; though completion itself is provided by Corfu.
-        company mmm-mode nix-mode))
-
-;; Emacs 31 reports many compatibility and style warnings while compiling
-;; third-party ELPA releases.  They are not actionable in this configuration,
-;; and package.el already promotes genuine compilation failures to errors.
-;; Keep the suppression local to package installation so warnings in our own
-;; Elisp and during normal use remain visible.
-(defvar byte-compile-log-warning-function)
-
-(defun my/package-call-with-errors-only (function &rest arguments)
-  "Call FUNCTION with ARGUMENTS and log only byte-compiler errors."
-  (require 'bytecomp)
-  (let* ((upstream-logger byte-compile-log-warning-function)
-         (byte-compile-log-warning-function
-          (lambda (string position fill level)
-            (when (eq level :error)
-              (funcall upstream-logger string position fill level)))))
-    (apply function arguments)))
-
-(defun my/package-install-cleanly (package)
-  "Install PACKAGE while suppressing non-fatal upstream compiler warnings."
-  (my/package-call-with-errors-only #'package-install package))
-
-(defun my/package-archive-desc (package archive)
-  "Return the descriptor for PACKAGE in ARCHIVE, or nil if unavailable."
-  (seq-find
-   (lambda (descriptor)
-     (equal (package-desc-archive descriptor) archive))
-   (cdr (assq package package-archive-contents))))
-
-(defun my/package-install-required ()
-  "Install missing stable packages and keep Evil on NonGNU-devel.
-Built-in packages such as Eglot, TRAMP, and which-key count as installed."
-  (condition-case error-data
-      (let* ((missing
-              (seq-remove #'package-installed-p package-selected-packages))
-             (devel-index
-              (expand-file-name "archives/nongnu-devel/archive-contents"
-                                package-user-dir)))
-        (if (or missing (not (file-readable-p devel-index)))
-            (package-refresh-contents)
-          (unless package-archive-contents
-            (package-read-all-archive-contents)))
-        (dolist (package missing)
-          (unless (package-installed-p package)
-            (my/package-install-cleanly package)))
-        ;; Repair an existing nix-mode whose optional files failed to compile
-        ;; before Company and MMM were added to the selected package set.
-        (when (and (package-installed-p 'nix-mode)
-                   (not (memq 'nix-mode missing))
-                   (seq-some (lambda (package) (memq package missing))
-                             '(company mmm-mode)))
-          (my/package-call-with-errors-only #'package-recompile 'nix-mode))
-        ;; A stable Evil already satisfies `package-installed-p', so compare
-        ;; its version explicitly with the descriptor from NonGNU-devel.
-        (let ((evil-devel (my/package-archive-desc 'evil "nongnu-devel")))
-          (unless evil-devel
-            (error "Evil is unavailable in NonGNU-devel"))
-          (unless (package-installed-p 'evil
-                                       (package-desc-version evil-devel))
-            (my/package-install-cleanly evil-devel))))
-    (error
-     (display-warning
-      'emacs-init
-      (format "ELPA package bootstrap failed: %s"
-              (error-message-string error-data))
-      :error))))
-
-(my/package-install-required)
-(require 'use-package)
+;; `package.el' automatically activates installed packages before this file is
+;; loaded.  `use-package' is built into Emacs and delegates missing package
+;; installation to package.el through its standard :ensure integration.
+(require 'use-package-ensure)
+(setopt use-package-always-ensure t)
 
 ;; Fast, quiet defaults for terminal frames and language-server processes.
 (setopt inhibit-startup-screen t
@@ -152,15 +51,6 @@ Built-in packages such as Eglot, TRAMP, and which-key count as installed."
 (show-paren-mode 1)
 (unless noninteractive
   (xterm-mouse-mode 1))
-
-;; early-init.el raises these values only for startup.  A moderate steady-state
-;; threshold avoids both excessive pauses and needlessly frequent collections.
-(defun my/restore-gc-after-startup ()
-  "Restore conservative garbage collection values after startup."
-  (setq gc-cons-threshold (* 32 1024 1024)
-        gc-cons-percentage 0.1))
-
-(add-hook 'emacs-startup-hook #'my/restore-gc-after-startup)
 
 ;; Modus Vivendi starts from an accessibility-oriented dark palette.  Explicit
 ;; face overrides keep syntax, links, selections, and mode lines readable on
@@ -222,27 +112,14 @@ Built-in packages such as Eglot, TRAMP, and which-key count as installed."
         evil-want-C-i-jump nil
         evil-undo-system 'undo-redo)
 
-;; Older Evil 1.15 builds can leave this internal variable unbound with the
-;; newer global minor-mode implementation.  NonGNU-devel fixes the dependency;
-;; this harmless declaration also keeps bootstrap/fallback states usable.
-(defvar evil-mode-buffers nil)
-
 (use-package evil
-  :if (package-installed-p 'evil)
   :functions evil-mode
   :config
   (evil-mode 1))
 
 ;; Emacs 31+ implements child frames on text terminals.  Corfu 2.x detects
 ;; `tty-child-frames' itself, so Emacs 31.1 needs no `corfu-terminal' fallback.
-;; Development snapshots have had regressions where an autoloaded minor-mode
-;; function is present before its mode variable is defined.  Declaring the
-;; variable and loading Corfu before enabling its global mode prevents a
-;; transient `void-variable corfu-mode' from breaking the rest of init.el.
-(defvar corfu-mode nil)
-
 (use-package corfu
-  :if (package-installed-p 'corfu)
   :demand t
   :functions (global-corfu-mode corfu-history-mode corfu-popupinfo-mode)
   :custom
@@ -261,20 +138,25 @@ Built-in packages such as Eglot, TRAMP, and which-key count as installed."
   (corfu-popupinfo-mode 1))
 
 (use-package magit
-  :if (package-installed-p 'magit)
   :commands (magit-status magit-dispatch)
   :bind (("C-x g" . magit-status)))
 
 (use-package slime
-  :if (package-installed-p 'slime)
   :commands slime
   :init
   (setq inferior-lisp-program (or (executable-find "sbcl") "sbcl")
         slime-contribs '(slime-fancy)))
 
-;; Keep Nix editing and its language server usable in this repository.
+;; nix-mode compiles optional Company and MMM integration modules without
+;; declaring those dependencies in its ELPA metadata.  Install them first; they
+;; remain unloaded unless another package requests them.
+(use-package company
+  :defer t)
+
+(use-package mmm-mode
+  :defer t)
+
 (use-package nix-mode
-  :if (package-installed-p 'nix-mode)
   :mode "\\.nix\\'")
 
 (use-package eglot
