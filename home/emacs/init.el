@@ -36,6 +36,7 @@
         completion-cycle-threshold 3
         tab-always-indent 'complete
         display-line-numbers-width-start t)
+(setq-default truncate-lines t)
 (menu-bar-mode -1)
 (when (fboundp 'tool-bar-mode)
   (tool-bar-mode -1))
@@ -51,6 +52,30 @@
 (show-paren-mode 1)
 (unless noninteractive
   (xterm-mouse-mode 1))
+
+;; `function-key-map' is consulted only when an event would make the current
+;; key sequence undefined.  Discard mouse events in that case so an accidental
+;; click or scroll between a prefix such as C-x and its suffix does not cancel
+;; the prefix.  Mouse events with ordinary bindings continue to work normally.
+(defun tori-ignore-mouse-during-prefix (_prompt)
+  "Ignore a mouse event that interrupts an unfinished key prefix."
+  (let* ((event-type (if (consp last-input-event)
+                         (car last-input-event)
+                       last-input-event))
+         (event-name (and (symbolp event-type) (symbol-name event-type))))
+    (if (or (mouse-event-p last-input-event)
+            ;; Also recognise wheel and modified mouse events, which
+            ;; `mouse-event-p' does not classify as mouse input.
+            (and event-name
+                 (string-match-p
+                  (concat "\\(?:\\`\\|-\\)"
+                          "\\(?:mouse\\(?:-[0-9]+\\|-movement\\)"
+                          "\\|wheel-\\(?:up\\|down\\|left\\|right\\)\\)\\'")
+                  event-name)))
+        []
+      (vector last-input-event))))
+
+(define-key function-key-map [t] #'tori-ignore-mouse-during-prefix)
 
 ;; Modus Vivendi starts from an accessibility-oriented dark palette.  Explicit
 ;; face overrides keep syntax, links, selections, and mode lines readable on
