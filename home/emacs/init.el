@@ -11,6 +11,14 @@
 (when (file-readable-p custom-file)
   (load custom-file nil 'nomessage))
 
+;; Keep crash-recovery files without scattering `#file#' entries next to the
+;; files being edited.
+(let ((auto-save-dir
+       (expand-file-name "auto-save/" user-emacs-directory)))
+  (make-directory auto-save-dir t)
+  (setq auto-save-file-name-transforms
+        `((".*" ,auto-save-dir t))))
+
 ;; `package.el' automatically activates installed packages before this file is
 ;; loaded.  `use-package' is built into Emacs and delegates missing package
 ;; installation to package.el through its standard :ensure integration.
