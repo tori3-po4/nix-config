@@ -11,6 +11,15 @@
 (when (file-readable-p custom-file)
   (load custom-file nil 'nomessage))
 
+;;make emacs able to find lsp
+(when (eq system-type 'darwin)
+  (let ((nix-bin (format "/etc/profiles/per-user/%s/bin" (user-login-name))))
+    (when (file-directory-p nix-bin)
+      (add-to-list 'exec-path nix-bin)
+      (setenv "PATH"
+	      (concat nix-bin path-separator (getenv "PATH"))))))
+
+
 ;; Keep crash-recovery files without scattering `#file#' entries next to the
 ;; files being edited.
 (let ((auto-save-dir
