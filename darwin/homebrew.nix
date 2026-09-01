@@ -41,6 +41,10 @@
       "skim"
       "slack"
       "tailscale-app"
+      {
+        name = "tor-browser";
+        args.language = "ja";
+      }
       # 公式 Developer ID 署名を維持し、macOS の TCC 権限を更新後も引き継ぐ。
       "zed"
       "zotero"
