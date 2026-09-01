@@ -8,12 +8,16 @@ let
     hash = "sha256-HaV5DZWAyBkytb9wBjMRRGjaezQS1p+qdn2uv5dPRYY=";
   };
 
+  # Use the native Cocoa GUI on macOS and the PGTK GUI on Linux.  Both builds
+  # continue to work in a terminal with `emacs -nw`.
+  #
   # Keep native-comp available, but do not eagerly native-compile every bundled
   # Elisp file.  Third-party packages are managed by Emacs' built-in package.el.
-  emacsTui =
+  emacsGui =
     let
+      guiPackage = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.emacs31 else pkgs.emacs31-pgtk;
       package =
-        (pkgs.emacs31-nox.override {
+        (guiPackage.override {
           withNativeCompilation = true;
           withTreeSitter = true;
         }).overrideAttrs
@@ -29,6 +33,9 @@ let
     assert lib.assertMsg (
       package.version == "31.1"
     ) "The configured Emacs package must remain exactly at version 31.1";
+    assert lib.assertMsg (builtins.elem (
+      if pkgs.stdenv.hostPlatform.isDarwin then "--with-ns" else "--with-pgtk"
+    ) (package.configureFlags or [ ])) "Emacs must be built with the platform-native GUI backend";
     package;
 in
 {
@@ -40,12 +47,12 @@ in
   # legacy 側にも同じ init.el を配置する。
   home.file.".emacs.d/init.el".source = ./emacs/init.el;
 
-  # macOS/Linux とも正式版 Emacs 31.1 の no-X 版を使う。Native
-  # Compilation、Tree-sitter、TUI child frame は残し、フル AOT だけを
-  # 無効化する。GNU公式tarballのURL、SHA-256、バージョン検査で
-  # 31.1以外への暗黙の追従を防ぐ。
+  # 正式版 Emacs 31.1 を、macOS は Cocoa/NS、Linux は PGTK の GUI 付きで
+  # ビルドする。Native Compilation、Tree-sitter、TUI child frame は残し、
+  # フル AOT だけを無効化する。GNU公式tarballのURL、SHA-256、
+  # バージョン検査で31.1以外への暗黙の追従を防ぐ。
   programs.emacs = {
     enable = true;
-    package = emacsTui;
+    package = emacsGui;
   };
 }

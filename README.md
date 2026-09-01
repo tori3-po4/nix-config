@@ -117,7 +117,7 @@
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
 - **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と Nix管理するGUI本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Firefox/Zed本体はプラットフォーム側で管理。
-- **`home/emacs.nix` / `home/emacs/init.el`**: GNU公式tarballのURLとSHA-256で厳密固定したmacOS/Linux共通 Emacs 31.1 no-X/TUI設定。nixpkgsはビルド定義と依存関係にのみ使い、`emacs-overlay`には依存しない。Native Compilation、Tree-sitter、TUI child frameを有効にする。EvilだけはCorfu互換修正を取り込むためNonGNU-develに固定し、Corfu/Magit/SLIME/nix-modeはGNU/NonGNU ELPAの安定版、Eglot/TRAMP/which-keyはEmacs 31.1同梱版を使う。
+- **`home/emacs.nix` / `home/emacs/init.el`**: GNU公式tarballのURLとSHA-256で厳密固定したmacOS/Linux共通 Emacs 31.1設定。macOSはCocoa/NS版、LinuxはPGTK版をNixでビルドし、GUIとTUI (`emacs -nw`) の両方で利用する。nixpkgsはビルド定義と依存関係にのみ使い、`emacs-overlay`には依存しない。Native Compilation、Tree-sitter、TUI child frameを有効にする。EvilだけはCorfu互換修正を取り込むためNonGNU-develに固定し、Corfu/Magit/SLIME/nix-modeはGNU/NonGNU ELPAの安定版、Eglot/TRAMP/which-keyはEmacs 31.1同梱版を使う。
 - **`home/zellij.nix`**: 通常は locked mode で入力を Emacs/Evil へ通し、Emacs/Evil で未割当の `F12` でのみ Zellij 操作モードを出入りする。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。本体はmacOSではHomebrew Cask、Linuxでは `nix-flatpak` が管理する。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
@@ -254,8 +254,8 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 
 ### Emacs 31.1
 
-- macOS/Linux: GNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で厳密に固定し、nixpkgsの `emacs31-nox` ビルド定義でコンパイルする。`emacs-overlay` は使わない。
-- Native Compilation と Tree-sitter を有効にし、フルAOTのみ無効化。no-X版のためGUI依存を持たず、TUIで共通利用する。
+- macOS/Linux: GNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で厳密に固定し、nixpkgsのビルド定義でコンパイルする。macOSは `emacs31` のCocoa/NS GUI、Linuxは `emacs31-pgtk` のWayland/X11対応GUIを使い、`emacs-overlay` やFlatpakには依存しない。
+- Native Compilation と Tree-sitter を有効にし、フルAOTのみ無効化。GUIに加えて `emacs -nw` によるTUI利用も維持する。
 - 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA / NonGNU ELPA の安定版を基本とし、Evil だけを NonGNU-devel に固定。不足パッケージと Evil の devel 更新を起動時に自動導入する。
 - ELPA本体とquickstartはEmacsメジャー別に保存し、32で生成したbyte-codeを31から読まない。
 - TUI: Emacs 31標準の tty child frame をCorfu 2.xが自動検出するため `corfu-terminal` は不要。
@@ -267,6 +267,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 emacs --version
 emacs --batch --eval '(princ (native-comp-available-p))'
 emacs --batch --eval "(princ (featurep 'tty-child-frames))"
+emacs --batch --eval '(princ system-configuration-options)'
 ```
 
 ### Flatpak (`linux/flatpak.nix`)
