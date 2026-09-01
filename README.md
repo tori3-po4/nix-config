@@ -117,7 +117,7 @@
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
 - **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と Nix管理するGUI本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Firefox/Zed本体はプラットフォーム側で管理。
-- **`home/emacs.nix` / `home/emacs/init.el`**: GNU公式tarballのURLとSHA-256で厳密固定したmacOS/Linux共通 Emacs 31.1設定。macOSはCocoa/NS版、LinuxはPGTK版をNixでビルドし、GUIとTUI (`emacs -nw`) の両方で利用する。nixpkgsはビルド定義と依存関係にのみ使い、`emacs-overlay`には依存しない。Native Compilation、Tree-sitter、TUI child frameを有効にする。EvilだけはCorfu互換修正を取り込むためNonGNU-develに固定し、Corfu/Magit/SLIME/nix-modeはGNU/NonGNU ELPAの安定版、Eglot/TRAMP/which-keyはEmacs 31.1同梱版を使う。
+- **`home/emacs.nix` / `home/emacs/init.el`**: GNU公式tarballのURLとSHA-256で厳密固定したmacOS/Linux共通 Emacs 31.1設定。macOSはCocoa/NS版、LinuxはPGTK版をNixでビルドし、GUIとTUI (`emacs -nw`) の両方で利用する。nixpkgsはビルド定義と依存関係にのみ使い、`emacs-overlay`には依存しない。Native Compilation、Tree-sitter、TUI child frameを有効にする。EvilだけはEmacs 31.1での `void-variable evil-mode-buffers` を避けるためNonGNU-develに固定し、Corfu/Magit/SLIME/nix-modeはGNU/NonGNU ELPAの安定版、Eglot/TRAMP/which-keyはEmacs 31.1同梱版を使う。
 - **`home/zellij.nix`**: 通常は locked mode で入力を Emacs/Evil へ通し、Emacs/Evil で未割当の `F12` でのみ Zellij 操作モードを出入りする。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。本体はmacOSではHomebrew Cask、Linuxでは `nix-flatpak` が管理する。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
@@ -256,7 +256,9 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 
 - macOS/Linux: GNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で厳密に固定し、nixpkgsのビルド定義でコンパイルする。macOSは `emacs31` のCocoa/NS GUI、Linuxは `emacs31-pgtk` のWayland/X11対応GUIを使い、`emacs-overlay` やFlatpakには依存しない。
 - Native Compilation と Tree-sitter を有効にし、フルAOTのみ無効化。GUIに加えて `emacs -nw` によるTUI利用も維持する。
-- 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA / NonGNU ELPA の安定版を基本とし、Evil だけを NonGNU-devel に固定。不足パッケージと Evil の devel 更新を起動時に自動導入する。
+- 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA / NonGNU ELPA の安定版を優先し、Evil だけを NonGNU-devel に固定。不足パッケージを起動時に自動導入し、既存の Evil が修正確認済みの `1.15.0.0.20260728.297` より古ければ開発版へ更新する。修正済みの版が入っていれば、この確認のための通信は行わない。
+- 配色: `modus-themes` を `use-package` で GNU ELPA から導入し、Zed の `Gruvbox Light Soft` に近い暖色系のライトプリセット `modus-operandi-tinted` を使う。face と ANSI 色はテーマ標準に任せる。
+- Git変更表示: GNU ELPA の `diff-hl` で追加・変更・削除の印を行の左側の余白に表示する。GUI/TUIの両方に対応し、未保存の編集とMagitでの操作にも追従する。
 - ELPA本体とquickstartはEmacsメジャー別に保存し、32で生成したbyte-codeを31から読まない。
 - TUI: Emacs 31標準の tty child frame をCorfu 2.xが自動検出するため `corfu-terminal` は不要。
 - Zellij: locked mode を既定とし、`F12` 以外のキー入力を Emacs に通す。`F12` で Zellij の normal/locked mode を切り替える。

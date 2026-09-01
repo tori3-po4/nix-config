@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 ;; Shared by Homebrew Emacs Plus on macOS and Nix-built Emacs 31.1 PGTK on Linux.
-;; Third-party packages use Emacs' standard GNU/NonGNU ELPA configuration.
+;; Third-party packages use GNU/NonGNU ELPA, with Evil pinned to NonGNU-devel.
 
 ;;; Code:
 
@@ -31,6 +31,12 @@
 ;; `package.el' automatically activates installed packages before this file is
 ;; loaded.  `use-package' is built into Emacs and delegates missing package
 ;; installation to package.el through its standard :ensure integration.
+(require 'package)
+(add-to-list 'package-archives
+             '("nongnu-devel" . "https://elpa.nongnu.org/nongnu-devel/") t)
+;; Prefer stable packages unless an individual package explicitly pins devel.
+(setopt package-archive-priorities
+        '(("gnu" . 30) ("nongnu" . 20) ("nongnu-devel" . 10)))
 (require 'use-package-ensure)
 (setopt use-package-always-ensure t)
 
@@ -94,60 +100,15 @@
 
 (define-key function-key-map [t] #'tori-ignore-mouse-during-prefix)
 
-;; Modus Vivendi starts from an accessibility-oriented dark palette.  Explicit
-;; face overrides keep syntax, links, selections, and mode lines readable on
-;; both 256-colour and true-colour terminals; notably, nothing important uses
-;; the low-luminance dark blue which many terminal palettes render illegibly.
-(mapc #'disable-theme custom-enabled-themes)
-(load-theme 'modus-vivendi t)
-(custom-set-faces
- '(default ((t (:background "#101010" :foreground "#f2f2f2"))))
- '(cursor ((t (:background "#ffffff"))))
- '(shadow ((t (:foreground "#b4b4b4"))))
- '(region ((t (:extend t :background "#5a5a5a" :foreground "#ffffff"))))
- '(secondary-selection
-   ((t (:extend t :background "#3a3a3a" :foreground "#ffffff"))))
- '(highlight ((t (:background "#3a3a3a" :foreground "#ffffff"))))
- '(match ((t (:background "#00d3d0" :foreground "#000000" :weight bold))))
- '(minibuffer-prompt ((t (:foreground "#6ae4b9" :weight bold))))
- '(link ((t (:foreground "#00d3d0" :underline t))))
- '(link-visited ((t (:foreground "#f78fe7" :underline t))))
- '(button ((t (:foreground "#00d3d0" :underline t))))
- '(font-lock-builtin-face ((t (:foreground "#f0ce7d"))))
- '(font-lock-comment-face ((t (:foreground "#b4b4b4" :slant italic))))
- '(font-lock-comment-delimiter-face ((t (:foreground "#989898"))))
- '(font-lock-constant-face ((t (:foreground "#00d3d0"))))
- '(font-lock-doc-face ((t (:foreground "#d2b580"))))
- '(font-lock-function-name-face ((t (:foreground "#feacd0" :weight bold))))
- '(font-lock-keyword-face ((t (:foreground "#ff9f80" :weight bold))))
- '(font-lock-negation-char-face ((t (:foreground "#ff5f59" :weight bold))))
- '(font-lock-preprocessor-face ((t (:foreground "#f0ce7d"))))
- '(font-lock-string-face ((t (:foreground "#a8e6a3"))))
- '(font-lock-type-face ((t (:foreground "#6ae4b9"))))
- '(font-lock-variable-name-face ((t (:foreground "#fbd6f4"))))
- '(font-lock-warning-face ((t (:foreground "#ff5f59" :weight bold))))
- '(error ((t (:foreground "#ff5f59" :weight bold))))
- '(warning ((t (:foreground "#ff9f80" :weight bold))))
- '(success ((t (:foreground "#6ae4b9" :weight bold))))
- '(isearch ((t (:background "#f0ce7d" :foreground "#000000" :weight bold))))
- '(lazy-highlight ((t (:background "#00d3d0" :foreground "#000000"))))
- '(show-paren-match ((t (:background "#6ae4b9" :foreground "#000000" :weight bold))))
- '(show-paren-mismatch ((t (:background "#ff5f59" :foreground "#000000" :weight bold))))
- '(line-number ((t (:background "#1e1e1e" :foreground "#989898"))))
- '(line-number-current-line
-   ((t (:background "#303030" :foreground "#ffffff" :weight bold))))
- '(mode-line ((t (:background "#f0ce7d" :foreground "#000000" :box nil :weight bold))))
- '(mode-line-inactive ((t (:background "#303030" :foreground "#b4b4b4" :box nil))))
- '(header-line ((t (:background "#303030" :foreground "#f2f2f2" :box nil))))
- '(vertical-border ((t (:foreground "#5a5a5a"))))
- '(trailing-whitespace ((t (:background "#ff5f59")))))
-
-;; Programs using ANSI colour 34 often request an unreadably dark blue.  Map
-;; that slot to a light blue and keep every other standard colour high contrast.
-(with-eval-after-load 'ansi-color
-  (setopt ansi-color-names-vector
-          ["#1e1e1e" "#ff5f59" "#6ae4b9" "#f0ce7d"
-           "#79a8ff" "#f78fe7" "#00d3d0" "#f2f2f2"]))
+;; This warm light preset resembles Zed's Gruvbox Light Soft.  Let the theme
+;; control faces and ANSI colours, and update it independently through GNU ELPA.
+(use-package modus-themes
+  :ensure t
+  :pin gnu
+  :demand t
+  :config
+  (mapc #'disable-theme custom-enabled-themes)
+  (load-theme 'modus-operandi-tinted t))
 
 ;; Evil must see these variables before it is loaded.
 (setopt evil-want-C-u-scroll t
@@ -155,7 +116,21 @@
         evil-undo-system 'undo-redo)
 
 (use-package evil
+  :pin nongnu-devel
   :functions evil-mode
+  :init
+  ;; Stable Evil 1.15.0 references the obsolete `evil-mode-buffers' variable.
+  ;; :ensure alone accepts an installed stable version, so upgrade it before
+  ;; loading Evil.  This known-good devel version is a minimum, not a lock.
+  (unless (package-installed-p 'evil '(1 15 0 0 20260728 297))
+    (package-refresh-contents)
+    (let ((evil-devel (package-get-descriptor 'evil 'archive)))
+      (unless (and evil-devel
+                   (equal (package-desc-archive evil-devel) "nongnu-devel")
+                   (not (version-list-< (package-desc-version evil-devel)
+                                       '(1 15 0 0 20260728 297))))
+        (error "A compatible Evil build is unavailable from NonGNU-devel"))
+      (package-install evil-devel)))
   :config
   (evil-mode 1))
 
@@ -182,6 +157,18 @@
 (use-package magit
   :commands (magit-status magit-dispatch)
   :bind (("C-x g" . magit-status)))
+
+;; Show Git changes beside each line in both GUI and terminal frames.
+(use-package diff-hl
+  :ensure t
+  :pin gnu
+  :demand t
+  :hook (magit-post-refresh . diff-hl-magit-post-refresh)
+  :config
+  (diff-hl-margin-mode 1)
+  (global-diff-hl-mode 1)
+  ;; Include edits that have not been saved to disk yet.
+  (diff-hl-flydiff-mode 1))
 
 (use-package slime
   :commands slime

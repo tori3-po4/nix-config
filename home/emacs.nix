@@ -38,7 +38,7 @@ let
     package;
 in
 {
-  # Elisp packages are installed from Emacs' default GNU/NonGNU ELPA archives.
+  # Elisp packages use GNU/NonGNU ELPA; init.el pins Evil to NonGNU-devel.
   xdg.configFile."emacs/init.el".source = ./emacs/init.el;
 
   # Emacs は ~/.emacs.d が存在すると XDG の ~/.config/emacs よりこちらを
