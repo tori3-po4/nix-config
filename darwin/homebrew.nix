@@ -14,6 +14,10 @@
     greedyCasks = true;
 
     taps = [
+      {
+        name = "d12frosted/emacs-plus";
+        trusted = true;
+      }
       # "randomplum/gtkwave"
     ];
 
@@ -27,6 +31,9 @@
       "anki"
       "blender"
       "discord"
+      # macOS 26向けのイベント処理対策を含むCocoa版Emacs。
+      # Emacs本体はHomebrew、init.elはHome Managerで管理する。
+      "emacs-plus-app"
       "font-hackgen-nerd"
       # Mozilla 公式 DMG の本体だけを Cask 管理し、プロファイルは Home Manager で維持する。
       {

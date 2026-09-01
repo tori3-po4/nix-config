@@ -1,7 +1,7 @@
 ;;; init.el --- Shared Emacs 31.1 configuration -*- lexical-binding: t; -*-
 
 ;;; Commentary:
-;; Shared by the Nix-built Emacs 31.1 no-X package on macOS and Linux.
+;; Shared by Homebrew Emacs Plus on macOS and Nix-built Emacs 31.1 PGTK on Linux.
 ;; Third-party packages use Emacs' standard GNU/NonGNU ELPA configuration.
 
 ;;; Code:
