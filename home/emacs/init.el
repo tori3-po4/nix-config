@@ -58,7 +58,8 @@
         recentf-auto-cleanup 'never
         completion-cycle-threshold 3
         tab-always-indent 'complete
-        display-line-numbers-width-start t)
+        display-line-numbers-width-start t
+	tab-bar-show t )
 (setq-default truncate-lines t)
 (menu-bar-mode 1)
 (when (fboundp 'tool-bar-mode)
@@ -75,6 +76,7 @@
 (show-paren-mode 1)
 (unless noninteractive
   (xterm-mouse-mode 1))
+(tab-bar-mode 1)
 
 
 ;; This warm light preset resembles Zed's Gruvbox Light Soft.  Let the theme
