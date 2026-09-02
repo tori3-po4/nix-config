@@ -159,6 +159,11 @@
   :bind (("C-x g" . magit-status)))
 
 ;; Show Git changes beside each line in both GUI and terminal frames.
+;; GNU ELPA retires old .tar files.  Refresh before the first installation;
+;; :ensure otherwise reuses a cached version even when its download is gone.
+(unless (package-installed-p 'diff-hl)
+  (package-refresh-contents))
+
 (use-package diff-hl
   :ensure t
   :pin gnu
@@ -216,7 +221,11 @@
   :custom
   (which-key-idle-delay 0.4)
   :config
-  (which-key-mode 1))
+  (which-key-mode 1)
+  ;; Space displays the current bindings immediately in Evil's command states.
+  (with-eval-after-load 'evil
+    (evil-define-key '(normal visual) 'global
+      (kbd "SPC") #'which-key-show-top-level)))
 
 (provide 'init)
 ;;; init.el ends here
