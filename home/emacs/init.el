@@ -30,6 +30,12 @@
   (setq auto-save-file-name-transforms
         `((".*" ,auto-save-dir t))))
 
+(let ((backup-dir
+       (expand-file-name "backup/" user-emacs-directory)))
+  (make-directory backup-dir t)
+  (setq backup-directory-alist
+        `((".*" . ,backup-dir))))
+
 ;; `package.el' automatically activates installed packages before this file is
 ;; loaded.  `use-package' is built into Emacs and delegates missing package
 ;; installation to package.el through its standard :ensure integration.
