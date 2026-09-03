@@ -208,7 +208,7 @@
 
 (use-package eat
   :pin nongnu
-  :command eat
+  :commands eat
   :init
   ;; EATのキー入力をevilが横取りしないようにする。
   (with-eval-after-load 'evil
