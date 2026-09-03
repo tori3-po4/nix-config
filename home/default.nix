@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   imports = [
     ./emacs.nix
@@ -40,7 +40,8 @@
     eza
     zoxide
     coreutils
-    ncurses # clear/tput/tic/infocmp use the same ncurses as Nix's zsh.
+    # Keep Nix terminal tools while preferring Ghostty's own terminfo.
+    (lib.lowPrio ncurses)
 
     # ===== Git周辺 =====
     git
