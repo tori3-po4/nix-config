@@ -40,6 +40,7 @@
     eza
     zoxide
     coreutils
+    ncurses # clear/tput/tic/infocmp use the same ncurses as Nix's zsh.
 
     # ===== Git周辺 =====
     git

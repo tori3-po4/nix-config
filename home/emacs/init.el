@@ -19,6 +19,8 @@
       (setenv "PATH"
 	      (concat nix-bin path-separator (getenv "PATH"))))))
 
+;; Use the Nix zsh on PATH for interactive shells, including Eat.
+(setq explicit-shell-file-name (executable-find "zsh"))
 
 ;; Keep crash-recovery files without scattering `#file#' entries next to the
 ;; files being edited.
@@ -212,7 +214,7 @@
   :init
   ;; EATのキー入力をevilが横取りしないようにする。
   (with-eval-after-load 'evil
-    (evil-set-initial-state 'eat-mode 'emacs))) 
+    (evil-set-initial-state 'eat-mode 'emacs)))
 
 (provide 'init)
 ;;; init.el ends here
