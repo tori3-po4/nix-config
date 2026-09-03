@@ -30,6 +30,11 @@
         eval "$(uvx --generate-shell-completion zsh)"
       fi
 
+      # eat補完
+      if [-n "$EAT_SHELL_INTEGRATION_DIR"]; then
+         source "$EAT_SHELL_INTEGRATION_DIR/zsh"
+      fi
+
 
       # Ctrl-G: fzf-file-widget をディレクトリ候補で呼び出す(パス挿入のみ)
       # (macOS の Option キー干渉回避もかねる)

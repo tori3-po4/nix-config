@@ -206,5 +206,13 @@
     (evil-define-key '(normal visual) 'global
       (kbd "SPC") #'which-key-show-top-level)))
 
+(use-package eat
+  :pin nongnu
+  :command eat
+  :init
+  ;; EATのキー入力をevilが横取りしないようにする。
+  (with-eval-after-load 'evil
+    (evil-set-initial-state 'eat-mode 'emacs))) 
+
 (provide 'init)
 ;;; init.el ends here

@@ -30,6 +30,12 @@
       [[ ! -r "$HOME/.opam/opam-init/init.sh" ]] || \
         source "$HOME/.opam/opam-init/init.sh" > /dev/null 2> /dev/null
 
+
+      # eat統合
+      if [ -n "$EAT_SHELL_INTEGRATION_DIR" ]; then
+         source "$EAT_SHELL_INTEGRATION_DIR/bash"
+      fi
+
       # Ctrl-G: fzf-file-widget をディレクトリ候補で呼び出す(パス挿入のみ)
       # (macOS の Option キー干渉回避もかねる)
       fzf-dir-insert-widget() {
