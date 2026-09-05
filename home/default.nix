@@ -11,7 +11,6 @@
     ./fzf.nix
     ./zoxide.nix
     ./zellij.nix
-    ./espanso.nix
     ./git.nix
     ./nh.nix
   ];

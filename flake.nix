@@ -24,12 +24,6 @@
     # linux/flatpak.nix 側で明示的に管理する。
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
 
-    # espanso が LLVM/clang 21 系に上がった nixpkgs-unstable でリンクエラーになる
-    # (aarch64-darwin, exit code 133)。上流で修正されるまで、ビルドが通っていた
-    # リビジョンにピン留めして espanso だけここから取る。修正後はこの input と
-    # espansoPinOverlay を削除すること。
-    nixpkgs-espanso.url = "github:NixOS/nixpkgs/3d46470bb3030020f7e1361f33514854f5bfa86d";
-
     # llama.cpp 本体は GitHub から取得し、ビルド定義と依存関係は現在の
     # nixpkgs を使う。上流の Nix 定義は削除済みの Darwin SDK 互換属性を
     # 参照しているため、flake としては評価しない。
@@ -113,17 +107,11 @@
           ];
         });
       };
-
-      # espanso を旧 nixpkgs にピン留め (inputs の nixpkgs-espanso コメント参照)
-      espansoPinOverlay = final: prev: {
-        espanso = inputs.nixpkgs-espanso.legacyPackages.${prev.stdenv.hostPlatform.system}.espanso;
-      };
-
+ 
       # 共通 nixpkgs 設定 (overlay + unfree)
       sharedOverlays = [
         nix-vscode-extensions.overlays.default
         llamaCppGitHubOverlay
-        espansoPinOverlay
       ];
 
       sharedNixpkgsModule = {
