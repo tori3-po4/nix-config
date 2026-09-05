@@ -216,6 +216,7 @@
 
 (use-package which-key
   :ensure nil
+  :demand t
   :bind (("M-SPC" . which-key-show-top-level))
   :custom
   (which-key-idle-delay 0.4)
