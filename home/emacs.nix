@@ -40,11 +40,13 @@ in
 {
   # Elisp packages use GNU/NonGNU ELPA; init.el pins Evil to NonGNU-devel.
   xdg.configFile."emacs/init.el".source = ./emacs/init.el;
-
+  xdg.configFile."emacs/early-init.el".source = ./emacs/early-init.el;
+  
   # Emacs は ~/.emacs.d が存在すると XDG の ~/.config/emacs よりこちらを
   # 優先する。auto-save 等がディレクトリを作っても設定が外れないよう、
   # legacy 側にも同じ init.el を配置する。
   home.file.".emacs.d/init.el".source = ./emacs/init.el;
+  home.file.".emacs.d/early-init.el".source = ./emacs/early-init.el;
 
   # macOSの本体はnix-darwin管理のHomebrew Emacs Plusに任せる。Linuxでは
   # GNU公式Emacs 31.1をPGTK付きでビルドし、Native Compilation、Tree-sitter、
