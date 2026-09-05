@@ -9,7 +9,6 @@
     ./firefox.nix
     ./fzf.nix
     ./zoxide.nix
-    ./zellij.nix
     ./git.nix
     ./nh.nix
   ];
