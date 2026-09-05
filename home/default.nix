@@ -3,7 +3,6 @@
   imports = [
     ./emacs.nix
     ./vscode.nix
-    ./zed.nix
     ./zsh.nix
     ./bash.nix
     ./starship.nix

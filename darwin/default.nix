@@ -7,7 +7,6 @@
     ./jetbrains-wrapper-fix.nix
     ./bitwarden.nix
     ./linux-builder.nix
-    ./llama-cpp.nix
   ];
 
   system.stateVersion = 5;
