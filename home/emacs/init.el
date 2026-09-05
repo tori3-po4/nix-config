@@ -86,6 +86,17 @@
   (xterm-mouse-mode 1))
 (tab-bar-mode 1)
 
+;;define command to search web by google
+(require 'xwidget)
+(require 'url-util)
+
+(defun google (query)
+  "googleでqueryを検索してxwidgetで表示する"
+  (interactive (list (read-string "Google検索: ")))
+  (xwidget-webkit-browse-url
+   (concat "https://www.google.com/search?q="
+           (url-hexify-string query))))
+
 
 ;; This warm light preset resembles Zed's Gruvbox Light Soft.  Let the theme
 ;; control faces and ANSI colours, and update it independently through GNU ELPA.
