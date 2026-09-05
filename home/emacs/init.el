@@ -205,15 +205,11 @@
 
 (use-package which-key
   :ensure nil
+  :bind (("M-SPC" . which-key-show-top-level))
   :custom
   (which-key-idle-delay 0.4)
   :config
-  (which-key-mode 1)
-  ;; Space displays the current bindings immediately in Evil's command states.
-  (with-eval-after-load 'evil
-    (evil-define-key '(normal visual) 'global
-      (kbd "SPC") #'which-key-show-top-level)))
-
+  (which-key-mode 1))
 (use-package eat
   :pin nongnu
   :commands eat
