@@ -153,6 +153,10 @@
   (corfu-history-mode 1)
   (corfu-popupinfo-mode 1))
 
+(use-package vertico
+  :init
+  (vertico-mode 1))
+
 (use-package magit
   :commands (magit-status magit-dispatch)
   :bind (("C-x g" . magit-status)))
@@ -211,6 +215,7 @@
           python-mode python-ts-mode
           rust-ts-mode
           js-mode js-ts-mode typescript-ts-mode tsx-ts-mode
+	  html-mode mhtml-mode html-ts-mode css-mode css-ts-mode
           sh-mode bash-ts-mode
           nix-mode nix-ts-mode)
          . eglot-ensure)
