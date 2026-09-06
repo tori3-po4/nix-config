@@ -254,6 +254,11 @@
   :custom
   (eat-minimum-latency 0.05)
   (eat-maximum-latency 0.15)
+  ;; Eat 0.9.4 redraws the whole frame on every cursor blink.  A TUI's
+  ;; blinking cursor can persist after it exits back to the shell.
+  (eat-very-visible-cursor-type '(box nil nil))
+  (eat-very-visible-vertical-bar-cursor-type '(bar nil nil))
+  (eat-very-visible-horizontal-bar-cursor-type '(hbar nil nil))
   :init
   ;; EATのキー入力をevilが横取りしないようにする。
   (with-eval-after-load 'evil
