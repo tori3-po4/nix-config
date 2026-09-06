@@ -71,6 +71,7 @@
     # ===== 言語処理系 =====
     deno
     nodejs_26
+    pnpm
     uv
     pixi
     sbcl # SLIME から使う Common Lisp 実装
