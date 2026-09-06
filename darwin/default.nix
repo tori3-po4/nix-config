@@ -6,7 +6,6 @@
     ./symbolic-hotkeys.nix
     ./jetbrains-wrapper-fix.nix
     ./bitwarden.nix
-    ./linux-builder.nix
   ];
 
   system.stateVersion = 5;

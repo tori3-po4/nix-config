@@ -67,7 +67,6 @@
 ├── flake.lock           # ロックファイル (Nixが管理 / sudoで触ると root 所有になる)
 ├── .gitignore
 ├── README.md            # このファイル
-├── image-build.md       # Docker / qcow2 image のビルド手順
 ├── sunshine-moonlight.md # WindowsゲームをMacへストリーミングする手順
 ├── nix-macos-guide.md   # Nix + macOS 全般の移行/構築ガイド
 ├── private/             # ホスト/ユーザ固有情報 (公開リポジトリで隠蔽するための隔離先)
@@ -78,15 +77,11 @@
 │   ├── homebrew.nix     # Caskとmoleの宣言
 │   ├── defaults.nix     # system.defaults (Dock, Finder, トラックパッド等)
 │   ├── llm.nix          # llama.cpp サーバの launchd 常駐 (router mode, :8080)
-│   ├── linux-builder.nix # macOS から Linux image を作る builder VM
 │   ├── bitwarden.nix    # Bitwarden SSH agent を SSH_AUTH_SOCK に設定
 │   └── jetbrains-wrapper-fix.nix  # JetBrains CLI ランチャーの日本語CWD問題対策 overlay
 ├── linux/               # Linuxユーザ環境固有の宣言
 │   ├── default.nix      # linux/* を importするエントリポイント
 │   └── flatpak.nix      # Flatpakアプリ、更新方針、sandbox override
-├── images/              # Linux image の宣言
-│   ├── docker.nix       # Docker load 用 nix-hello image
-│   └── vm.nix           # systemd-repart ベースの NixOS VM image
 └── home/                # home-manager (yourname 用)
     ├── default.nix      # home.packages 一覧 + 各モジュール import
     ├── emacs.nix        # macOS/Linux Emacs 31.1 + 共通 init.el
@@ -186,12 +181,6 @@ nix-collect-garbage -d
 
 直前世代へ戻すときは `home-manager generations` に表示された
 一つ前の `/nix/store/...-home-manager-generation/activate` を実行する。
-
-### Docker / qcow2 image
-
-macOS では nix-darwin の Linux builder を介し、Linux binary だけを含む image を
-生成します。初回設定、アーキテクチャ別コマンド、image のカスタマイズ方法は
-[image-build.md](./image-build.md) を参照してください。
 
 ### dotfile の更新
 

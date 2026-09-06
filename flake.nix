@@ -61,19 +61,6 @@
       isDarwin = nixpkgs.lib.hasSuffix "-darwin" user.system;
       isSupportedLinux = builtins.elem user.system linuxSystems;
 
-      # macOS と同じ CPU アーキテクチャの Linux を native build の対象にする。
-      # Docker/VM image は Linux の derivation なので、Darwin の pkgs から
-      # cross build せず nix-darwin の Linux builder へ委譲する。
-      linuxSystemFor =
-        system:
-        if system == "aarch64-darwin" then
-          "aarch64-linux"
-        else if system == "x86_64-darwin" then
-          "x86_64-linux"
-        else
-          throw "Unsupported Darwin system for the Linux builder: ${system}";
-
-
       # 共通 nixpkgs 設定 (overlay + unfree)
       sharedOverlays = [
         nix-vscode-extensions.overlays.default
@@ -120,7 +107,6 @@
           inherit system;
           specialArgs = {
             inherit inputs username;
-            linuxSystem = linuxSystemFor system;
           };
           modules = [
             ./darwin
@@ -158,22 +144,6 @@
           ];
         };
 
-      # qcow2 の中身になる NixOS。image の生成処理とは分けておくことで、
-      # images/vm.nix を通常の NixOS module として編集・評価できる。
-      mkImageNixos =
-        system:
-        nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [ ./images/vm.nix ];
-        };
-
-      imageNixos = builtins.listToAttrs (
-        map (system: {
-          name = system;
-          value = mkImageNixos system;
-        }) linuxSystems
-      );
-
     in
     assert isDarwin || isSupportedLinux;
     {
@@ -202,10 +172,6 @@
       #   };
       # ---------------------------------------------------------------------
 
-      nixosConfigurations = {
-        image-aarch64 = imageNixos.aarch64-linux;
-        image-x86_64 = imageNixos.x86_64-linux;
-      };
       # Fedora など NixOS 以外の Linux では、private/user.nix の値から
       # standalone Home Manager 構成を公開する。default は初回導入用、
       # <user>@<host> は Home Manager の標準的な構成名として使える。
@@ -220,34 +186,5 @@
         };
       };
 
-      # Image は必ず Linux package として公開する。macOS からビルドするときも
-      # `packages.<arch>-linux` を明示することで Mach-O の混入を防ぐ。
-      packages = builtins.listToAttrs (
-        map (
-          system:
-          let
-            pkgs = import nixpkgs { inherit system; };
-            nixos = imageNixos.${system};
-          in
-          {
-            name = system;
-            value = {
-              docker-image = pkgs.callPackage ./images/docker.nix { };
-              vm-raw = nixos.config.system.build.image;
-
-              # systemd-repart で作った raw image を変換するだけなので、
-              # Linux builder 内で nested KVM を利用できない Mac でも動く。
-              qcow2 = pkgs.runCommand "nix-vm-${system}-qcow2" { nativeBuildInputs = [ pkgs.qemu-utils ]; } ''
-                mkdir -p "$out"
-                qemu-img convert \
-                  -f raw \
-                  -O qcow2 \
-                  ${nixos.config.system.build.image}/${nixos.config.image.filePath} \
-                  "$out/nix-vm-${system}.qcow2"
-              '';
-            };
-          }
-        ) linuxSystems
-      );
     };
 }
