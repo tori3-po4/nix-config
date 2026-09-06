@@ -38,7 +38,7 @@ let
     package;
 in
 {
-  # Elisp packages use GNU/NonGNU ELPA; init.el pins Evil to NonGNU-devel.
+  # init.el manages ELPA/MELPA packages and downloads tree-sitter grammars.
   xdg.configFile."emacs/init.el".source = ./emacs/init.el;
   xdg.configFile."emacs/early-init.el".source = ./emacs/early-init.el;
   

@@ -111,7 +111,7 @@
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
 - **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と Nix管理するGUI本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Firefox/Zed本体はプラットフォーム側で管理。
-- **`home/emacs.nix` / `home/emacs/init.el`**: GNU公式tarballのURLとSHA-256で厳密固定したmacOS/Linux共通 Emacs 31.1設定。macOSはCocoa/NS版、LinuxはPGTK版をNixでビルドし、GUIとTUI (`emacs -nw`) の両方で利用する。nixpkgsはビルド定義と依存関係にのみ使い、`emacs-overlay`には依存しない。Native Compilation、Tree-sitter、TUI child frameを有効にする。EvilだけはEmacs 31.1での `void-variable evil-mode-buffers` を避けるためNonGNU-develに固定し、Corfu/Magit/SLIME/nix-modeはGNU/NonGNU ELPAの安定版、Eglot/TRAMP/which-keyはEmacs 31.1同梱版を使う。
+- **`home/emacs.nix` / `home/emacs/init.el`**: macOSのHomebrew Emacs PlusとLinuxのNix製Emacs 31.1 PGTKで共通の設定。GUIとTUI (`emacs -nw`) の両方で利用する。Corfu/Magit/SLIME/nix-mode/web-mode等はGNU/NonGNU ELPA、EvilはNonGNU-devel、lsp-mode/lsp-pyrightはMELPAから導入する。LSPサーバーはNix、tree-sitter文法のダウンロード・コンパイルはEmacsが管理する。
 - **`home/zellij.nix`**: 通常は locked mode で入力を Emacs/Evil へ通し、Emacs/Evil で未割当の `F12` でのみ Zellij 操作モードを出入りする。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。本体はmacOSではHomebrew Cask、Linuxでは `nix-flatpak` が管理する。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
@@ -215,7 +215,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
 - コンテナ: docker-client, docker-compose (daemon は Docker Desktop cask)
 - LaTeX: texlive (scheme-full), ghostscript, tex-fmt
-- LSP: lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
+- LSP: lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
 - programs.* 設定: zsh, bash, starship, fzf, zoxide, emacs, firefox (user.js), vscode, zed-editor, espanso
 
@@ -227,9 +227,12 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 
 ### Emacs 31.1
 
-- macOS/Linux: GNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で厳密に固定し、nixpkgsのビルド定義でコンパイルする。macOSは `emacs31` のCocoa/NS GUI、Linuxは `emacs31-pgtk` のWayland/X11対応GUIを使い、`emacs-overlay` やFlatpakには依存しない。
+- macOSはHomebrewのEmacs Plus、LinuxはGNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で固定した `emacs31-pgtk` を使う。
 - Native Compilation と Tree-sitter を有効にし、フルAOTのみ無効化。GUIに加えて `emacs -nw` によるTUI利用も維持する。
 - 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA / NonGNU ELPA の安定版を優先し、Evil だけを NonGNU-devel に固定。不足パッケージを起動時に自動導入し、既存の Evil が修正確認済みの `1.15.0.0.20260728.297` より古ければ開発版へ更新する。修正済みの版が入っていれば、この確認のための通信は行わない。
+- LSP: Eglotから `lsp-mode` に統一。`lsp-mode` / `lsp-pyright` はMELPAから導入し、補完は既存のCorfu、診断はFlymakeを使う。PythonはPyright、Nixはnixdを維持する。
+- Astro / Tailwind: `.astro` はNonGNU ELPAの `web-mode` で開き、Astro LSPとTailwind LSPを併用する。web-modeはAstro構文を、lsp-modeは `.astro` の言語IDを標準で認識する。Tailwindクライアントはlsp-mode同梱の [add-on機能](https://emacs-lsp.github.io/lsp-mode/page/lsp-tailwindcss/) を使う。TS/TSX、JS、HTML、CSSでもTailwindを併用できる。
+- Tree-sitter: Emacs 31標準の `treesit-enabled-modes` と `treesit-auto-install-grammar` を使い、TS/TSX・CSS等の対応ファイルを初めて開いたときに必要な文法を自動取得・コンパイルする。保存先は利用中のEmacs設定ディレクトリ内の `tree-sitter/`。Astroファイル自体はweb-modeの構文解析を使うため、Astro専用文法や `treesit-auto` 等の追加管理パッケージは不要。手動で再導入する場合は `M-x treesit-install-language-grammar` を使う。
 - 配色: `modus-themes` を `use-package` で GNU ELPA から導入し、Zed の `Gruvbox Light Soft` に近い暖色系のライトプリセット `modus-operandi-tinted` を使う。face と ANSI 色はテーマ標準に任せる。
 - Git変更表示: GNU ELPA の `diff-hl` で追加・変更・削除の印を行の左側の余白に表示する。GUI/TUIの両方に対応し、未保存の編集とMagitでの操作にも追従する。
 - ELPA本体とquickstartはEmacsメジャー別に保存し、32で生成したbyte-codeを31から読まない。
@@ -237,6 +240,8 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - Zellij: locked mode を既定とし、`F12` 以外のキー入力を Emacs に通す。`F12` で Zellij の normal/locked mode を切り替える。
 
 確認用:
+
+Nix設定を通常の手順で適用してEmacsを再起動し、依存関係をインストール済みのAstroプロジェクトで `.astro` を開く。Astro LSPはプロジェクトルートの `node_modules/typescript/lib` を参照するので、JavaScript版SDKを含む `typescript` をプロジェクトの開発依存へ追加しておく（TypeScript 5.9.3で検証済み）。初回のLSP起動時はプロジェクトルートを選び、`M-x lsp-describe-session` で `astro-ls` と `tailwindcss` の両方を確認する。Tailwind v3は `tailwind.config.*`、v4は `package.json` の `tailwindcss` 依存を検出する。v4ではプロジェクトのCSSに `@import "tailwindcss";` が必要。
 
 ```bash
 emacs --version
