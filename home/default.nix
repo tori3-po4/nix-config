@@ -11,6 +11,7 @@
     ./zoxide.nix
     ./git.nix
     ./nh.nix
+    ./dotfiles.nix
   ];
 
   home.stateVersion = "24.11";
@@ -99,7 +100,7 @@
     yt-dlp
     gnupg
 
-    # ===== dotfile管理 =====
+    # ===== Neovim external 管理 (その他の dotfile は Home Manager) =====
     chezmoi
     age
 

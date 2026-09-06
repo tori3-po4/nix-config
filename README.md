@@ -1,6 +1,6 @@
 # nix-config — macOS / Linux 環境の宣言的管理
 
-このリポジトリは、macOS では [nix-darwin](https://github.com/nix-darwin/nix-darwin) + [home-manager](https://github.com/nix-community/home-manager)、Fedora など dnf 系 Linux では standalone Home Manager を使って環境を宣言的に管理するためのものです。dotfile (シェル設定等) は別リポジトリ [chezmoi-dotfiles](https://github.com/tori3-po4/chezmoi-dotfiles) で [chezmoi](https://www.chezmoi.io/) により管理しています。
+このリポジトリは、macOS では [nix-darwin](https://github.com/nix-darwin/nix-darwin) + [home-manager](https://github.com/nix-community/home-manager)、Fedora など dnf 系 Linux では standalone Home Manager を使って環境を宣言的に管理するためのものです。dotfile は Home Manager で管理しています。SSH設定とNeovim設定は移行対象外とし、従来の配置・管理を維持します。chezmoi はこの2つのために残しています。
 
 ---
 
@@ -37,10 +37,9 @@
 │  - packages            │ Firefox/Zed/Chrome/Anki等             │
 │  - overrides           │ Home Manager設定へのアクセス権限      │
 ├────────────────────────┼───────────────────────────────────────┤
-│ chezmoi                │ dotfile (試行錯誤するもの)             │
-│  - dot_gitconfig 等    │ git / tmux / latexmk                   │
+│ Home Manager          │ git / tmux / latexmk / ghostty         │
+│ chezmoi                │ SSH・Neovimのみ (移行対象外)            │
 │  - dot_ssh             │ SSH config のみ (鍵は Bitwarden 管理)  │
-│  - dot_config/*        │ ghostty, cagent, gtk-3.0               │
 │  - .chezmoiexternal    │ NvChad 設定 (別リポジトリ)             │
 ├────────────────────────┼───────────────────────────────────────┤
 │ Homebrew (Cask中心)    │ GUI Cask + mole                        │
@@ -194,27 +193,12 @@ macOS では nix-darwin の Linux builder を介し、Linux binary だけを含�
 生成します。初回設定、アーキテクチャ別コマンド、image のカスタマイズ方法は
 [image-build.md](./image-build.md) を参照してください。
 
-### chezmoi 側
+### dotfile の更新
 
-```bash
-# 既存ファイルを取り込み (新規追加時)
-chezmoi add ~/.zshrc
-
-# 編集 (chezmoi のソースを vim/emacs で開く)
-chezmoi edit ~/.zshrc
-
-# プレビュー
-chezmoi diff
-
-# 適用
-chezmoi apply
-
-# ソースリポジトリへ移動
-chezmoi cd
-git status
-git push
-exit
-```
+`home/dotfiles/` の設定を編集して、通常の Nix / Home Manager の switch で反映します。
+Git設定は `home/git.nix`、Ghostty・tmux・latexmkrcの配置は `home/dotfiles.nix` で宣言しています。
+SSH・Neovimは移行対象外です。Neovimだけをchezmoiで更新する場合は
+`chezmoi apply ~/.config/nvim` と対象を指定します。
 
 ### Homebrew 側 (cask は基本 nix-darwin 経由)
 
@@ -281,14 +265,11 @@ emacs --batch --eval '(princ system-configuration-options)'
 - Firefox/Zedはoverrideを通じて `home/firefox.nix` / `home/zed.nix` の設定を利用
 - WiresharkはFlathub版にパケットキャプチャ機能がないため対象外
 
-### chezmoi (`~/.local/share/chezmoi/`)
-- `dot_gitconfig`, `dot_tmux.conf`, `dot_latexmkrc`
-- `dot_config/{cagent,ghostty,private_gtk-3.0}/`
-- `dot_vscode/argv.json`
-- `dot_ssh/config`: SSH config のみ (秘密鍵は Bitwarden SSH agent 管理。`darwin/bitwarden.nix` 参照)
-- `.chezmoiexternal.toml`: `.config/nvim` を別リポジトリから clone
-- ※ age 暗号化はオフ (シークレットは Bitwarden / ローカルファイルで管理)
-- ※ シェル設定 (`.zshrc` 等) は home-manager の `programs.zsh/bash` に移行済み
+### dotfile (`home/dotfiles/`)
+
+- `gitconfig`: ユーザー名・メール・デフォルトブランチ。既存のcredential helper無効化も維持
+- `tmux.conf`, `latexmkrc`, `ghostty.conf`: 元の設定内容をそのまま配置
+- SSH・Neovimは移行対象外。秘密鍵は引き続きBitwarden SSH agent管理
 
 ### システム設定 (`darwin/defaults.nix`)
 - Dock: autohide=off, mineffect=genie, tilesize=60, mru-spaces=off, show-recents=off
@@ -305,50 +286,39 @@ emacs --batch --eval '(princ system-configuration-options)'
 
 ## 5. chezmoi の使い方
 
-### 基本概念
-
-- **Source dir** (`~/.local/share/chezmoi/`): chezmoi が管理するファイルの「ひな形」を置く場所。git管理。
-- **Target dir** (`~/`): 実際にファイルを配置する場所 (=ホームディレクトリ)。
-- **接頭辞**: `dot_` → `.` に変換。`private_` → 権限 600。`encrypted_` → 暗号化。`empty_` → 空ファイル可。
-- **テンプレート**: `*.tmpl` 拡張子。Goテンプレート構文でマシン別差分を吸収。
-
-### シークレットの扱い
-
-chezmoi の age 暗号化は**現在オフ**にしている。秘密情報は chezmoi に置かず、以下で管理する:
-
-- **SSH 秘密鍵**: Bitwarden の SSH agent (`darwin/bitwarden.nix` で `SSH_AUTH_SOCK` を Bitwarden に向けている)。chezmoi 管理は `~/.ssh/config` のみ。
-- **API キー等**: Nix / chezmoi 管理外の通常ファイルとしてローカルに置く。
-
-### 既存ファイルを取り込む
+SSH・Neovimのみ従来の管理を残しています。SSHの実ファイルにはchezmoiソースと
+異なるローカル設定があるため、対象を指定せずに `chezmoi apply` を実行すると
+その差分が失われる可能性があります。Neovim更新は対象を限定します。
 
 ```bash
-chezmoi add ~/.gitconfig                  # 通常
-chezmoi chattr +template ~/.gitconfig     # テンプレート化
+chezmoi apply ~/.config/nvim
 ```
 
-### 編集 → 反映 → push
+### Home Managerへの切り替え
 
-```bash
-chezmoi edit ~/.zshrc       # source dir の dot_zshrc を $EDITOR で開く
-chezmoi diff                # 何が変わるか確認
-chezmoi apply               # ホームへ反映 (既存ファイルは自動 backup)
-chezmoi cd                  # source dir へ移動
-git add . && git commit -m "..." && git push
-exit
+移行済みのファイルは、chezmoiソースの `.chezmoiignore` に以下を追記して
+二重管理を避けます。新マシンでも古いchezmoiリポジトリを利用するときは必要です。
+
+```text
+.gitconfig
+.tmux.conf
+.latexmkrc
+.config/ghostty
 ```
 
-### .chezmoiexternal.toml
+既存の通常ファイルは初回switch時に退避します。macOSは既存設定の `.hmbak` を使い、
+standalone Home Managerでは `home-manager switch -b hmbak --flake ~/nix-config#default --impure`
+を使います。同名のバックアップがある場合は先に内容を確認して別名へ退避してください。
+新規ファイルをGitのflakeから参照するには、適用前に `git add home` で追跡対象にします。
 
-`~/.config/nvim/` は別リポジトリで管理しているため、chezmoi では「外部リポジトリ参照」として宣言:
+設定は `home/dotfiles/` を編集してswitchします。Nixが配置するファイルは通常読み取り専用です。
 
-```toml
-[".config/nvim"]
-    type = "git-repo"
-    url = "git@github.com:tori3-po4/tori-NV-settings.git"
-    refreshPeriod = "168h"
-```
+SSH秘密鍵はBitwarden、APIキー等はNix管理外のローカルファイルで管理します。
 
-`chezmoi apply` 時に未存在なら clone、`refreshPeriod` 経過時は pull。
+### Neovimの外部リポジトリ
+
+`.chezmoiexternal.toml` は変更しません。`~/.config/nvim` のリポジトリと
+未コミットの `lazy-lock.json` もそのまま残します。
 
 ---
 
@@ -449,8 +419,10 @@ git update-index --skip-worktree private/user.nix
 # 4c. 適用 (default ホストを使うと hostname を意識しなくて済む。--impure 必須)
 sudo nix run nix-darwin -- switch --flake ".#default" --impure
 
-# 5. chezmoi 初期化 (dotfile 一式 + nvim 設定を一発展開)
-chezmoi init --apply git@github.com:tori3-po4/chezmoi-dotfiles.git
+# 5. chezmoi 初期化 (Neovim用。SSH設定は別途確認)
+chezmoi init git@github.com:tori3-po4/chezmoi-dotfiles.git
+# 第5節の除外設定を追加してから、必要なNeovim設定だけを配置
+chezmoi apply ~/.config/nvim
 # → SSH 鍵 (Bitwarden agent) で clone → ホームに展開 → external の nvim 設定も clone
 
 # 6. シェル再読込
@@ -530,7 +502,9 @@ flatpak list --user
 systemctl --user list-timers '*flatpak*'
 
 # 9. chezmoi を初期化 (必要な場合)
-chezmoi init --apply git@github.com:tori3-po4/chezmoi-dotfiles.git
+chezmoi init git@github.com:tori3-po4/chezmoi-dotfiles.git
+# 第5節の除外設定を追加してから、必要なNeovim設定だけを配置
+chezmoi apply ~/.config/nvim
 ```
 
 `dnf info nix nix-daemon` で両パッケージが見つからない

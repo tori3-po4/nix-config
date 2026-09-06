@@ -1,0 +1,10 @@
+$latex         = 'platex  -synctex=1 -halt-on-error %O %S';
+$uplatex       = 'uplatex -synctex=1 -halt-on-error %O %S';
+$lualatex      = 'lualatex -synctex=1 -halt-on-error %O %S';
+$bibtex        = 'pbibtex %O %S';
+$biber         = 'biber --bblencoding=utf8 -u -U --output_safechars %O %S';
+$dvipdf        = 'dvipdfmx %O -o %D %S';
+$makeindex     = 'mendex %O -o %D %S';
+$pdf_mode      = 4;
+
+@generated_exts = (@generated_exts, 'synctex.gz', 'nav', 'snm', 'vrb');
