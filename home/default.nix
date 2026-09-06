@@ -59,7 +59,6 @@
     (if stdenv.hostPlatform.isDarwin then ghostty-bin else ghostty)
 
     # ===== ローカルLLM =====
-    llama-cpp
     lmstudio
 
     # ===== ゲーム / リモートプレイ ====
@@ -71,7 +70,7 @@
 
     # ===== 言語処理系 =====
     deno
-    nodejs_22
+    nodejs_26
     uv
     pixi
     sbcl # SLIME から使う Common Lisp 実装
