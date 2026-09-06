@@ -215,7 +215,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
 - コンテナ: docker-client, docker-compose (daemon は Docker Desktop cask)
 - LaTeX: texlive (scheme-full), ghostscript, tex-fmt
-- LSP: lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
+- LSP: rassumfrassum (多重化), lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
 - programs.* 設定: zsh, bash, starship, fzf, zoxide, emacs, firefox (user.js), vscode, zed-editor, espanso
 
@@ -230,7 +230,8 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - macOSはHomebrewのEmacs Plus、LinuxはGNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で固定した `emacs31-pgtk` を使う。
 - Native Compilation と Tree-sitter を有効にし、フルAOTのみ無効化。GUIに加えて `emacs -nw` によるTUI利用も維持する。
 - 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA / NonGNU ELPA の安定版を優先し、Evil だけを NonGNU-devel に固定。不足パッケージを起動時に自動導入し、既存の Evil が修正確認済みの `1.15.0.0.20260728.297` より古ければ開発版へ更新する。修正済みの版が入っていれば、この確認のための通信は行わない。
-- LSP: Emacs同梱のEglotを使い、補完は既存のCorfu、診断はFlymakeへ統合する。C/C++、Python、Rust、JS/TS/TSX、シェル、Nixで自動起動し、Pythonは `pyright-langserver --stdio`、Nixは `nixd` を明示する。`eglot-autoshutdown = t`、`eglot-sync-connect = nil` を維持する。
+- LSP: Emacs同梱のEglotを使い、補完は既存のCorfu、診断はFlymakeへ統合する。C/C++、Python、Rust、JS/TS/TSX、シェル、Nixで自動起動し、Pythonは `rass -- pyright-langserver --stdio -- ruff server` でPyrightとRuffを同じバッファで併用する。Nixは `nixd` を明示する。`eglot-autoshutdown = t`、`eglot-sync-connect = nil` を維持する。
+- 複数LSP: [rassumfrassum](https://github.com/joaotavora/rassumfrassum) の `rass` をNixで導入する。他の言語でも併用する場合は、`eglot-server-programs` にPythonと同じ形式で、各サーバーのコマンドを `"--"` で区切って指定する。独自のラッパー関数やプリセットファイルは使わない。
 - Web編集: `.astro` は引き続きNonGNU ELPAの `web-mode` で開く。Astro / Next.js / Tailwindの開発支援はVS Codeを使うため、web-modeではEglotを自動起動しない。lsp-mode、lsp-pyright、Astro/Tailwind向けlsp-mode設定、専用の `typescript-sdk` リンクは不要。Nixの `typescript` は `tsc` コマンド用に残す。
 - Tree-sitter: Emacs 31標準の `treesit-enabled-modes` と `treesit-auto-install-grammar` を使い、TS/TSX・CSS等の対応ファイルを初めて開いたときに必要な文法を自動取得・コンパイルする。保存先は利用中のEmacs設定ディレクトリ内の `tree-sitter/`。Astroファイル自体はweb-modeの構文解析を使うため、Astro専用文法や `treesit-auto` 等の追加管理パッケージは不要。手動で再導入する場合は `M-x treesit-install-language-grammar` を使う。
 - 配色: `modus-themes` を `use-package` で GNU ELPA から導入し、Zed の `Gruvbox Light Soft` に近い暖色系のライトプリセット `modus-operandi-tinted` を使う。face と ANSI 色はテーマ標準に任せる。

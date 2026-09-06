@@ -123,6 +123,7 @@
     bitwarden-cli
 
     # ===== LSP servers (Nvim/Emacs共通) =====
+    rassumfrassum # Eglotで複数のLSPを併用するためのrassコマンド
     lua-language-server
     nil
     pyright

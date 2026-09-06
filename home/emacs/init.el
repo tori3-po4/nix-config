@@ -218,8 +218,11 @@
   (eglot-sync-connect nil)
   :config
   ;; Eglot supplies completion-at-point and Flymake integration for Corfu.
+  ;; Keep Pyright and add Ruff in the same buffer via the LSP multiplexer.
   (add-to-list 'eglot-server-programs
-               '((python-mode python-ts-mode) . ("pyright-langserver" "--stdio")))
+               '((python-mode python-ts-mode)
+                 . ("rass" "--" "pyright-langserver" "--stdio"
+                    "--" "ruff" "server")))
   (add-to-list 'eglot-server-programs
                '((nix-mode nix-ts-mode) . ("nixd"))))
 
