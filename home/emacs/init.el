@@ -11,9 +11,10 @@
 (when (file-readable-p custom-file)
   (load custom-file nil 'nomessage))
 
-;;make emacs able to find lsp
+;; Let GUI Emacs find Nix itself as well as user-installed language servers.
 (when (eq system-type 'darwin)
-  (let ((nix-bin (format "/etc/profiles/per-user/%s/bin" (user-login-name))))
+  (dolist (nix-bin (list "/run/current-system/sw/bin"
+                       (format "/etc/profiles/per-user/%s/bin" (user-login-name))))
     (when (file-directory-p nix-bin)
       (add-to-list 'exec-path nix-bin)
       (setenv "PATH"
