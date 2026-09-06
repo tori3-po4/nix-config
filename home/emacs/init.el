@@ -97,6 +97,7 @@
    (concat "https://www.google.com/search?q="
            (url-hexify-string query))))
 
+(global-set-key (kbd "C-c u") #'universal-argument)
 
 ;; This warm light preset resembles Zed's Gruvbox Light Soft.  Let the theme
 ;; control faces and ANSI colours, and update it independently through GNU ELPA.
@@ -225,6 +226,12 @@
                     "--" "ruff" "server")))
   (add-to-list 'eglot-server-programs
                '((nix-mode nix-ts-mode) . ("nixd"))))
+
+(defun lsp ()
+  "Run `eglot' with a universal prefix argument, as with C-u M-x eglot."
+  (interactive)
+  (let ((current-prefix-arg '(4)))
+    (call-interactively #'eglot)))
 
 (use-package tramp
   :ensure nil
