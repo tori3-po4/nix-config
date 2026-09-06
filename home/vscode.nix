@@ -39,6 +39,7 @@
           bradlc.vscode-tailwindcss
         ])
         ++ [
+          pkgs.vscode-marketplace-release.dbaeumer.vscode-eslint
           # cpptools 本体は nix-vscode-extensions 側で darwin から削除されているため、
           # nixpkgs 同梱版 (allowUnfree) を使う
           pkgs.vscode-extensions.ms-vscode.cpptools

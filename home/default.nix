@@ -71,6 +71,7 @@
     # ===== 言語処理系 =====
     deno
     nodejs_26
+    typescript # tsc コマンド
     pnpm
     uv
     pixi

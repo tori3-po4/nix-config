@@ -111,7 +111,7 @@
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
 - **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と Nix管理するGUI本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Firefox/Zed本体はプラットフォーム側で管理。
-- **`home/emacs.nix` / `home/emacs/init.el`**: macOSのHomebrew Emacs PlusとLinuxのNix製Emacs 31.1 PGTKで共通の設定。GUIとTUI (`emacs -nw`) の両方で利用する。Corfu/Magit/SLIME/nix-mode/web-mode等はGNU/NonGNU ELPA、EvilはNonGNU-devel、lsp-mode/lsp-pyrightはMELPAから導入する。LSPサーバーはNix、tree-sitter文法のダウンロード・コンパイルはEmacsが管理する。
+- **`home/emacs.nix` / `home/emacs/init.el`**: macOSのHomebrew Emacs PlusとLinuxのNix製Emacs 31.1 PGTKで共通の設定。GUIとTUI (`emacs -nw`) の両方で利用する。Corfu/Magit/SLIME/nix-mode/web-mode等はGNU/NonGNU ELPA、EvilはNonGNU-devel、EglotはEmacs同梱版を使う。MELPAへの依存はない。LSPサーバーはNix、tree-sitter文法のダウンロード・コンパイルはEmacsが管理する。
 - **`home/zellij.nix`**: 通常は locked mode で入力を Emacs/Evil へ通し、Emacs/Evil で未割当の `F12` でのみ Zellij 操作モードを出入りする。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。本体はmacOSではHomebrew Cask、Linuxでは `nix-flatpak` が管理する。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
@@ -230,8 +230,8 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - macOSはHomebrewのEmacs Plus、LinuxはGNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で固定した `emacs31-pgtk` を使う。
 - Native Compilation と Tree-sitter を有効にし、フルAOTのみ無効化。GUIに加えて `emacs -nw` によるTUI利用も維持する。
 - 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA / NonGNU ELPA の安定版を優先し、Evil だけを NonGNU-devel に固定。不足パッケージを起動時に自動導入し、既存の Evil が修正確認済みの `1.15.0.0.20260728.297` より古ければ開発版へ更新する。修正済みの版が入っていれば、この確認のための通信は行わない。
-- LSP: Eglotから `lsp-mode` に統一。`lsp-mode` / `lsp-pyright` はMELPAから導入し、補完は既存のCorfu、診断はFlymakeを使う。PythonはPyright、Nixはnixdを維持する。
-- Astro / Tailwind: `.astro` はNonGNU ELPAの `web-mode` で開き、Astro LSPとTailwind LSPを併用する。web-modeはAstro構文を、lsp-modeは `.astro` の言語IDを標準で認識する。Tailwindクライアントはlsp-mode同梱の [add-on機能](https://emacs-lsp.github.io/lsp-mode/page/lsp-tailwindcss/) を使う。TS/TSX、JS、HTML、CSSでもTailwindを併用できる。
+- LSP: Emacs同梱のEglotを使い、補完は既存のCorfu、診断はFlymakeへ統合する。C/C++、Python、Rust、JS/TS/TSX、シェル、Nixで自動起動し、Pythonは `pyright-langserver --stdio`、Nixは `nixd` を明示する。`eglot-autoshutdown = t`、`eglot-sync-connect = nil` を維持する。
+- Web編集: `.astro` は引き続きNonGNU ELPAの `web-mode` で開く。Astro / Next.js / Tailwindの開発支援はVS Codeを使うため、web-modeではEglotを自動起動しない。lsp-mode、lsp-pyright、Astro/Tailwind向けlsp-mode設定、専用の `typescript-sdk` リンクは不要。Nixの `typescript` は `tsc` コマンド用に残す。
 - Tree-sitter: Emacs 31標準の `treesit-enabled-modes` と `treesit-auto-install-grammar` を使い、TS/TSX・CSS等の対応ファイルを初めて開いたときに必要な文法を自動取得・コンパイルする。保存先は利用中のEmacs設定ディレクトリ内の `tree-sitter/`。Astroファイル自体はweb-modeの構文解析を使うため、Astro専用文法や `treesit-auto` 等の追加管理パッケージは不要。手動で再導入する場合は `M-x treesit-install-language-grammar` を使う。
 - 配色: `modus-themes` を `use-package` で GNU ELPA から導入し、Zed の `Gruvbox Light Soft` に近い暖色系のライトプリセット `modus-operandi-tinted` を使う。face と ANSI 色はテーマ標準に任せる。
 - Git変更表示: GNU ELPA の `diff-hl` で追加・変更・削除の印を行の左側の余白に表示する。GUI/TUIの両方に対応し、未保存の編集とMagitでの操作にも追従する。
@@ -241,7 +241,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 
 確認用:
 
-Nix設定を通常の手順で適用してEmacsを再起動し、依存関係をインストール済みのAstroプロジェクトで `.astro` を開く。Astro LSPはプロジェクトルートの `node_modules/typescript/lib` を参照するので、JavaScript版SDKを含む `typescript` をプロジェクトの開発依存へ追加しておく（TypeScript 5.9.3で検証済み）。初回のLSP起動時はプロジェクトルートを選び、`M-x lsp-describe-session` で `astro-ls` と `tailwindcss` の両方を確認する。Tailwind v3は `tailwind.config.*`、v4は `package.json` の `tailwindcss` 依存を検出する。v4ではプロジェクトのCSSに `@import "tailwindcss";` が必要。
+Nix設定を通常の手順で適用してEmacsを再起動し、PythonやNixのプロジェクトを開く。`M-x eglot` / `M-x eglot-events-buffer` で接続先を確認する。`.astro` はweb-modeで開けることを確認する。以前インストールしたlsp-mode関連パッケージはディスク上に残っていてもこの設定では読み込まれない。起動中の旧設定やLSPプロセスを残さないため、設定の再評価だけでなくEmacsを再起動する。
 
 ```bash
 emacs --version
@@ -249,6 +249,43 @@ emacs --batch --eval '(princ (native-comp-available-p))'
 emacs --batch --eval "(princ (featurep 'tty-child-frames))"
 emacs --batch --eval '(princ system-configuration-options)'
 ```
+
+### VS Code: Astro / Next.js / Tailwind の確認（2026-09-06）
+
+`home/vscode.nix`、`home/vscode-settings.json` と実機の既定プロファイルを確認した。確認時点の `code --list-extensions --show-versions` は宣言した25拡張と一致し、実機のUser設定もJSONとして一致した。その後、ESLint安定版をNixの宣言に追加した（計26拡張、通常のNix switchで反映）。その他は以下の検証結果と追加案の段階。対象プロジェクトは指定されていないため、プロジェクト依存・Workspace設定・実際の補完/診断動作は未検証。
+
+| 用途 | 現状 | 判断・最小案 |
+| --- | --- | --- |
+| Astro | `astro-build.astro-vscode@2.0.12` 導入済み | 公式拡張の選択は適切。ただし同梱CHANGELOGの先頭が `2.0.0-next.12`、Prettier依存が2系の旧プレリリースなので、まず安定版へ切り替える。 |
+| Next.js / React / TSX | VS Code標準のJS/TS支援を利用 | 補完・型診断・基本整形・デバッグは標準機能で揃う。Next.js専用拡張は必須ではない。Next.jsのTSプラグインにはWorkspace版TypeScriptの選択が必要。 |
+| Tailwind | `bradlc.vscode-tailwindcss@0.15.10` 導入済み | v3/v4に対応。`class`、`className`、`class:list` は既定の対象。文字列内の自動補完設定は未設定。 |
+| ESLint | `pkgs.vscode-marketplace-release.dbaeumer.vscode-eslint` を宣言に追加（3.0.34） | プロジェクトのESLint設定に従って編集中のlint診断・修正を提供。型診断とは別の機能。 |
+| Prettier | `esbenp.prettier-vscode` 未導入、`editor.formatOnSave = true` | Astro公式拡張は整形機能を含み、JS/TSも標準整形がある。統一したPrettier整形やTailwindクラスの自動整列が必要な場合だけ追加。Nixの `prettier` CLIだけではVS Codeの整形プロバイダーにならない。 |
+
+根拠: [Astro公式のエディタ設定](https://docs.astro.build/en/editor-setup/)、[VS CodeのTypeScript機能](https://code.visualstudio.com/docs/languages/typescript)、[Next.jsのIDEプラグイン](https://nextjs.org/docs/app/api-reference/config/typescript#ide-plugin)、[Tailwind CSS IntelliSense公式説明](https://github.com/tailwindlabs/tailwindcss-intellisense)、[ESLint拡張](https://github.com/microsoft/vscode-eslint)、[Prettier拡張](https://github.com/prettier/prettier-vscode)。
+
+**Astroの版選択を直す最小案**: 現在の `pkgs.vscode-marketplace` は[プレリリースを優先する](https://github.com/nix-community/nix-vscode-extensions#vscode-marketplace-and-open-vsx)。このlockではAstroの `2.0.12` が選ばれる一方、`pkgs.vscode-marketplace-release.astro-build.astro-vscode.version` は `2.16.17` と評価できた。既存リストの `astro-build.astro-vscode` を外し、後続の `++ [ ... ]` 内に次を置けば、他拡張の選択やlockを変えずに修正できる。拡張の自動更新は無効、拡張ディレクトリも宣言管理なのでNix側で変更する。
+
+```nix
+pkgs.vscode-marketplace-release.astro-build.astro-vscode
+# Prettierで整形を統一する場合のみ（現在のlockでは12.4.0）:
+pkgs.vscode-marketplace-release.esbenp.prettier-vscode
+```
+
+**拡張を増やさずに補える設定**: 各Webプロジェクトの `.vscode/settings.json` に、必要な項目を追加する。Tailwind専用CSSの関連付けはプロジェクト内に限定する。
+
+```json
+{
+  "editor.quickSuggestions": { "strings": "on" },
+  "files.associations": { "*.css": "tailwindcss" },
+  "[astro]": { "editor.defaultFormatter": "astro-build.astro-vscode" }
+}
+```
+
+- Next.js: `tsconfig.json` の `compilerOptions.plugins` に `{ "name": "next" }` があることを確認し、TS/TSXファイルを開いて `TypeScript: Select TypeScript Version` → `Use Workspace Version` を選ぶ。Nixで導入したグローバル `tsc` とは別に、プロジェクトの依存と設定を使う。
+- Tailwind: プロジェクトに `tailwindcss` を導入し、v4では `@import "tailwindcss";` を含む `.css`、v3では `tailwind.config.*` 等を用意する。`cn()` / `clsx()` / `cva()` 内でも補完したい場合は、使用する関数だけ `"tailwindCSS.classFunctions": ["cn", "clsx", "cva"]` に指定する。この設定は導入済み0.15.10にも存在する。検出に失敗するときは `Tailwind CSS: Show Output` を確認し、複数ルートの場合にだけCSS/設定ファイルの明示を検討する。
+- ESLint: 拡張だけでなく、Next.jsではプロジェクトの `eslint` / `eslint-config-next` とESLint設定、Astroでは必要に応じて `eslint-plugin-astro` とその設定を用意する。保存時修正を望む場合は `"editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" }` を設定する。[Next.jsのESLint設定](https://nextjs.org/docs/app/api-reference/config/eslint)、[Astro用ESLintプラグイン](https://ota-meshi.github.io/eslint-plugin-astro/user-guide/)。
+- Tailwindクラスの自動整列: 追加のVS Code拡張を多数入れる必要はなく、プロジェクトのPrettier 3と `prettier-plugin-tailwindcss` で対応する。Astroも整形するなら `prettier-plugin-astro` を加え、Tailwindプラグインを最後に置く。Tailwind v4ではPrettier設定に `tailwindStylesheet` を指定する。Prettier拡張を使う場合はJS/TS/TSX/Astro等の対象言語ごとに既定フォーマッターを `esbenp.prettier-vscode` へ変更する。[Tailwind公式Prettierプラグイン](https://github.com/tailwindlabs/prettier-plugin-tailwindcss)。
 
 ### Flatpak (`linux/flatpak.nix`)
 

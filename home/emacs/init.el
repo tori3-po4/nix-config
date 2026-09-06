@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 ;; Shared by Homebrew Emacs Plus on macOS and Nix-built Emacs 31.1 PGTK on Linux.
-;; Prefer GNU/NonGNU ELPA; use MELPA for LSP and NonGNU-devel for Evil.
+;; Third-party packages use GNU/NonGNU ELPA, with Evil pinned to NonGNU-devel.
 
 ;;; Code:
 
@@ -42,11 +42,9 @@
 (require 'package)
 (add-to-list 'package-archives
              '("nongnu-devel" . "https://elpa.nongnu.org/nongnu-devel/") t)
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/") t)
 ;; Prefer stable packages unless an individual package explicitly pins devel.
 (setopt package-archive-priorities
-        '(("gnu" . 30) ("nongnu" . 20) ("nongnu-devel" . 10) ("melpa" . 0)))
+        '(("gnu" . 30) ("nongnu" . 20) ("nongnu-devel" . 10)))
 (require 'use-package-ensure)
 (setopt use-package-always-ensure t)
 
@@ -205,43 +203,25 @@
   :pin nongnu
   :mode "\\.astro\\'")
 
-(use-package lsp-mode
-  :pin melpa
-  :commands (lsp lsp-deferred)
+(use-package eglot
+  :ensure nil ; Built into Emacs.
+  :commands (eglot eglot-ensure)
   :hook ((c-mode c++-mode c-ts-mode c++-ts-mode
           python-mode python-ts-mode
           rust-ts-mode
           js-mode js-ts-mode typescript-ts-mode tsx-ts-mode
-          html-mode html-ts-mode mhtml-mode mhtml-ts-mode
-          css-mode css-ts-mode web-mode
           sh-mode bash-ts-mode
           nix-mode nix-ts-mode)
-         . lsp-deferred)
+         . eglot-ensure)
   :custom
-  (lsp-completion-provider :capf) ; Keep Corfu as the completion UI.
-  (lsp-diagnostics-provider :flymake)
-  (lsp-enable-snippet nil) ; No separate snippet expansion package.
-  (lsp-disabled-clients '(nix-nil rnix-lsp))) ; Keep using nixd.
-
-(use-package lsp-pyright
-  :pin melpa
-  :after lsp-mode
-  :custom
-  (lsp-pyright-langserver-command "pyright"))
-
-(use-package lsp-tailwindcss
-  :ensure nil ; Included in lsp-mode.
-  :after lsp-mode
-  :custom
-  (lsp-tailwindcss-add-on-mode t)
-  (lsp-tailwindcss-server-path (executable-find "tailwindcss-language-server"))
-  (lsp-tailwindcss-major-modes
-   '(web-mode html-mode html-ts-mode mhtml-mode mhtml-ts-mode
-     css-mode css-ts-mode js-mode js-ts-mode typescript-ts-mode tsx-ts-mode))
+  (eglot-autoshutdown t)
+  (eglot-sync-connect nil)
   :config
-  ;; Tailwind registers completion dynamically.  The bundled Company workaround
-  ;; expects static capabilities and fails on nil; Corfu does not need it.
-  (advice-add 'lsp-tailwindcss--company-dash-hack :override #'ignore))
+  ;; Eglot supplies completion-at-point and Flymake integration for Corfu.
+  (add-to-list 'eglot-server-programs
+               '((python-mode python-ts-mode) . ("pyright-langserver" "--stdio")))
+  (add-to-list 'eglot-server-programs
+               '((nix-mode nix-ts-mode) . ("nixd"))))
 
 (use-package tramp
   :ensure nil
