@@ -127,6 +127,9 @@
     pyright
     rust-analyzer
     typescript-language-server
+    astro-language-server
+    tailwindcss-language-server
+    rassumfrassum # EglotからAstro/ESLint/Tailwindを併用
     texlab
     clang-tools # clangd, clang-format
     marksman

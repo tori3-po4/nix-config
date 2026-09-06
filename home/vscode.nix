@@ -15,7 +15,6 @@
         (with pkgs.vscode-marketplace; [
           github.github-vscode-theme
           james-yu.latex-workshop
-          jnoortheen.nix-ide
           ms-azuretools.vscode-containers
           ms-ceintl.vscode-language-pack-ja
           ms-python.debugpy
@@ -36,6 +35,8 @@
           rust-lang.rust-analyzer
           vscjava.vscode-java-pack
           redhat.java
+          astro-build.astro-vscode
+          bradlc.vscode-tailwindcss
         ])
         ++ [
           # cpptools 本体は nix-vscode-extensions 側で darwin から削除されているため、
