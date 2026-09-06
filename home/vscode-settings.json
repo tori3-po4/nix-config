@@ -135,7 +135,7 @@
     "editor.formatOnType": true,
     "editor.wordBasedSuggestions": "off"
   },
-  "workbench.colorTheme": "Solarized light",
+  "workbench.colorTheme": "Solarized Light",
   "workbench.browser.showInTitleBar": false,
   "workbench.sideBar.location": "right",
   "workbench.activityBar.location": "default",
