@@ -3,11 +3,15 @@
   "latex-workshop.latex.recipes": [
     {
       "name": "platex -> dvipdfmx",
-      "tools": ["latexmk-platex"]
+      "tools": [
+        "latexmk-platex"
+      ]
     },
     {
       "name": "lualatex",
-      "tools": ["latexmk-lualatex"]
+      "tools": [
+        "latexmk-lualatex"
+      ]
     }
   ],
   "latex-workshop.latex.tools": [
@@ -112,16 +116,16 @@
   "workbench.editor.empty.hint": "hidden",
   "terminal.integrated.fontFamily": "HackGen Console NF",
   "terminal.integrated.customGlyphs": false,
-  "terminal.integrated.fontSize": 16,
-  "scm.inputFontSize": 16,
-  "debug.console.fontSize": 16,
+  "terminal.integrated.fontSize": 12,
+  "scm.inputFontSize": 12,
+  "debug.console.fontSize": 12,
   "containers.containerClient": "com.microsoft.visualstudio.containers.docker",
   "telemetry.editStats.enabled": false,
   "window.zoomPerWindow": false,
   "window.autoDetectHighContrast": false,
   "git.confirmSync": false,
   "git.openRepositoryInParentFolders": "never",
-  "editor.fontSize": 16,
+  "editor.fontSize": 12,
   "editor.folding": false,
   "diffEditor.maxComputationTime": 0,
   "claudeCode.preferredLocation": "panel",
