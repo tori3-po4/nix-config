@@ -252,8 +252,8 @@
   :pin nongnu
   :commands eat
   :custom
-  (eat-minimum-latency 0.03)
-  (eat-maximum-latency 0.1)
+  (eat-minimum-latency 0.05)
+  (eat-maximum-latency 0.15)
   :init
   ;; EATのキー入力をevilが横取りしないようにする。
   (with-eval-after-load 'evil
