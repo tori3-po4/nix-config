@@ -1,7 +1,9 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   programs.zsh = {
     enable = true;
+    # 将来の既定値変更後も ~/.zshrc などをホーム直下に配置する。
+    dotDir = config.home.homeDirectory;
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting = {
