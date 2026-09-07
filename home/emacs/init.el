@@ -239,6 +239,18 @@
   (let ((current-prefix-arg '(4)))
     (call-interactively #'eglot)))
 
+(defun lsp-nix (directory command)
+  "Start Eglot with COMMAND in DIRECTORY's Nix development environment."
+  (interactive "DNix development directory: \nsLSP command: ")
+  (require 'eglot)
+  (let ((eglot-server-programs
+         (cons (cons major-mode
+                     (list "nix" "develop" (expand-file-name directory)
+                           "-c" "/bin/sh" "-c" (concat "exec " command)))
+               eglot-server-programs))
+        (current-prefix-arg nil))
+    (call-interactively #'eglot)))
+
 (use-package tramp
   :ensure nil
   :defer t
