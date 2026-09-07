@@ -52,6 +52,7 @@
         name = "tor-browser";
         args.language = "ja";
       }
+      "thunderbird"
       "zotero"
       "wireshark-app"
       "latexit"
