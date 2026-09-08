@@ -141,8 +141,8 @@
   :functions (global-corfu-mode corfu-history-mode corfu-popupinfo-mode)
   :custom
   (corfu-auto t)
-  (corfu-auto-delay 0.15)
-  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.07)
+  (corfu-auto-prefix 1)
   (corfu-cycle t)
   ;; Evil's Ex prompt has its own specialised completion-at-point functions.
   ;; Corfu auto-completion in that minibuffer corrupts Evil's text properties.
