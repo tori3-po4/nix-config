@@ -15,6 +15,15 @@ in
   # ネイティブ版Firefoxが共通で認識する従来の標準パスを使う。
   programs.firefox.configPath = firefoxConfigPath;
 
+  # Fedora実機のinstalls.iniで確認したFlathub版FirefoxのインストールID。
+  # Profile0.Defaultだけではインストールごとの起動先を指定できない。
+  # 読み取り専用のprofiles.iniへFirefox自身が追記する必要がないよう宣言する。
+  home.file."${firefoxConfigPath}/profiles.ini".text = lib.mkAfter ''
+    [InstallCF146F38BCAB2D21]
+    Default=${config.programs.firefox.profiles.default.path}
+    Locked=1
+  '';
+
   # nix-flatpak の Home Manager module と組み合わせ、ユーザ単位で管理する。
   # アプリ固有の設定内容は home/ に残し、ここでは本体・更新・sandbox の
   # Linux 固有設定だけを宣言する。

@@ -627,6 +627,14 @@ LinuxではHome ManagerのFirefoxモジュールが通常のFirefoxと同じ場�
 
 Home Managerの管理ファイルは `/nix/store` へのシンボリックリンクになるため、`linux/flatpak.nix` がFirefoxの標準プロファイルへ読み書き、Nix storeへ読み取り専用の権限を与える。ZedはFlatpak内の `XDG_CONFIG_HOME` をHome Managerの `~/.config` へ揃える。Home Manager自身は `~/.var/app` 以下を直接管理せず、Cookie、ログイン状態、履歴、拡張機能内部データなどの可変状態はFlatpak側に残す。
 
+#### Firefoxが「Your profile cannot be loaded」で起動しない場合
+
+`--profile "$HOME/.mozilla/firefox/default"` を付けると起動できる場合、通常起動時のプロファイル選択を確認する。Firefoxは `profiles.ini` の `[Install<インストールID>]` でインストールごとの起動先を選ぶ。`installs.ini` はバックアップ用なので、こちらだけの変更では直らないことがある。
+
+`linux/flatpak.nix` はFedora実機で確認したFlathub版のID `CF146F38BCAB2D21` に対して `Default=default` を宣言する。Firefoxを終了してから `home-manager switch --flake ~/nix-config#default --impure` で反映し、`flatpak run org.mozilla.firefox` で通常起動を確認する。異なる配布元・インストール先ではIDが異なる可能性があるため、このIDをそのまま流用しない。
+
+仕様: [Mozilla Profiles Service Changes](https://firefox-source-docs.mozilla.org/toolkit/profile/changes.html#profile-per-install)。既存のプロファイルフォルダを削除する必要はない。
+
 ### 鍵が使えない場合のフォールバック
 
 - **Bitwarden にログインできない**: SSH 鍵が取り出せない。新規 SSH 鍵を生成して GitHub の公開鍵を差し替える。
