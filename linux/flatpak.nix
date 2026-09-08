@@ -40,7 +40,6 @@ in
     packages = [
       "com.bitwarden.desktop"
       "com.google.Chrome"
-      "dev.zed.Zed"
       "net.ankiweb.Anki"
       "org.mozilla.firefox"
       "org.zotero.Zotero"
