@@ -15,12 +15,6 @@ in
   # ネイティブ版Firefoxが共通で認識する従来の標準パスを使う。
   programs.firefox.configPath = firefoxConfigPath;
 
-  home.file."${firefoxConfigPath}/profiles.ini".text = lib.mkAfter ''
-  [InstallCF146F38BCAB@D21]
-  Default=default
-  Locked=1
-  '';
-
   # Fedora実機のinstalls.iniで確認したFlathub版FirefoxのインストールID。
   # Profile0.Defaultだけではインストールごとの起動先を指定できない。
   # 読み取り専用のprofiles.iniへFirefox自身が追記する必要がないよう宣言する。
