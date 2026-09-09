@@ -141,8 +141,12 @@
   :functions (global-corfu-mode corfu-history-mode corfu-popupinfo-mode)
   :custom
   (corfu-auto t)
-  (corfu-auto-delay 0.07)
-  (corfu-auto-prefix 1)
+  ;; Avoid requesting large candidate sets after every single character.
+  ;; Manual completion (M-TAB) remains available before this threshold.
+  (corfu-auto-delay 0.15)
+  (corfu-auto-prefix 2)
+  ;; Member access such as person. should not wait for two more characters.
+  (corfu-auto-trigger ".")
   (corfu-cycle t)
   ;; Evil's Ex prompt has its own specialised completion-at-point functions.
   ;; Corfu auto-completion in that minibuffer corrupts Evil's text properties.
@@ -223,6 +227,9 @@
   :custom
   (eglot-autoshutdown t)
   (eglot-sync-connect nil)
+  ;; Large Tailwind responses are expensive to retain in the event buffer.
+  ;; Re-enable this temporarily when diagnosing server communication.
+  (eglot-events-buffer-config '(:size 0 :format full))
   :config
   ;; Eglot supplies completion-at-point and Flymake integration for Corfu.
   ;; Keep Pyright and add Ruff in the same buffer via the LSP multiplexer.
