@@ -9,32 +9,16 @@
       (expand-file-name "lsp-bridge/multiserver" user-emacs-directory)
       lsp-bridge-python-lsp-server "pyright"
       lsp-bridge-python-multi-lsp-server "pyright_ruff"
-      lsp-bridge-nix-lsp-server "nixd"
       lsp-bridge-log-level 'warning
-      lsp-bridge-enable-debug nil
       lsp-bridge-enable-search-words nil
       acm-enable-search-file-words nil
       acm-enable-ctags nil
       acm-enable-tabnine nil
-      acm-enable-copilot nil
-      acm-enable-codeium nil
       acm-enable-capf t
-      acm-enable-icon nil
-      acm-enable-preview nil
-      acm-backend-lsp-candidates-max-number 100)
+      acm-enable-icon nil)
 (add-to-list 'lsp-bridge-completion-in-string-file-types "astro")
 (add-to-list 'lsp-bridge-multi-lang-server-extension-list
              '(("astro") . "astro_tailwindcss_eslint"))
-
-(defun my/lsp-bridge-popup-p ()
-  "Show automatic completion after two characters or a member-access dot."
-  (let* ((acm-input-bound-style "ascii")
-         (bounds (acm-get-input-prefix-bound)))
-    (or lsp-bridge-manual-complete-flag
-        (>= (length (acm-get-input-prefix)) 2)
-        (eq (char-before) ?.)
-        (and bounds (eq (char-before (car bounds)) ?.)))))
-(add-to-list 'lsp-bridge-completion-popup-predicates #'my/lsp-bridge-popup-p)
 
 ;; Eglot/Company/Corfu must not compete with ACM for completion or keymaps.
 (defun my/lsp-bridge-buffer-setup ()
