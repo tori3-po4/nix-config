@@ -1,6 +1,7 @@
 { lib, pkgs, ... }:
 
 let
+  bridge = import ./emacs/bridge-runtime.nix { inherit pkgs; };
   # Pin the actual GNU release archive, not a moving branch or release alias.
   # nixpkgs supplies the Linux PGTK build recipe and dependencies.
   emacs31Source = pkgs.fetchurl {
@@ -38,7 +39,14 @@ let
     package;
 in
 {
-  # Elisp packages use GNU/NonGNU ELPA; init.el pins Evil to NonGNU-devel.
+  # lsp-bridge source and Python dependencies are pinned by Nix.
+  xdg.configFile."emacs/bridge-config.el".source = ./emacs/bridge-config.el;
+  home.file.".emacs.d/bridge-config.el".source = ./emacs/bridge-config.el;
+  xdg.configFile."emacs/lsp-bridge-runtime.el".source = bridge.runtime;
+  home.file.".emacs.d/lsp-bridge-runtime.el".source = bridge.runtime;
+  xdg.configFile."emacs/lsp-bridge".source = ./emacs/lsp-bridge;
+  home.file.".emacs.d/lsp-bridge".source = ./emacs/lsp-bridge;
+  # Other Elisp packages use GNU/NonGNU ELPA; Evil uses NonGNU-devel.
   xdg.configFile."emacs/init.el".source = ./emacs/init.el;
   xdg.configFile."emacs/early-init.el".source = ./emacs/early-init.el;
   

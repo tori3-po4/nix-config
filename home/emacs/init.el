@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 ;; Shared by Homebrew Emacs Plus on macOS and Nix-built Emacs 31.1 PGTK on Linux.
-;; Third-party packages use GNU/NonGNU ELPA, with Evil pinned to NonGNU-devel.
+;; lsp-bridge is pinned by Nix; other packages use GNU/NonGNU ELPA.
 
 ;;; Code:
 
@@ -134,29 +134,12 @@
   :config
   (evil-mode 1))
 
-;; Emacs 31+ implements child frames on text terminals.  Corfu 2.x detects
-;; `tty-child-frames' itself, so Emacs 31.1 needs no `corfu-terminal' fallback.
-(use-package corfu
-  :demand t
-  :functions (global-corfu-mode corfu-history-mode corfu-popupinfo-mode)
-  :custom
-  (corfu-auto t)
-  ;; Avoid requesting large candidate sets after every single character.
-  ;; Manual completion (M-TAB) remains available before this threshold.
-  (corfu-auto-delay 0.15)
-  (corfu-auto-prefix 2)
-  ;; Member access such as person. should not wait for two more characters.
-  (corfu-auto-trigger ".")
-  (corfu-cycle t)
-  ;; Evil's Ex prompt has its own specialised completion-at-point functions.
-  ;; Corfu auto-completion in that minibuffer corrupts Evil's text properties.
-  (global-corfu-minibuffer nil)
-  (corfu-preselect 'prompt)
-  (corfu-preview-current 'insert)
+(use-package markdown-mode
+  :defer t)
+
+(use-package yasnippet
   :config
-  (global-corfu-mode 1)
-  (corfu-history-mode 1)
-  (corfu-popupinfo-mode 1))
+  (yas-global-mode 1))
 
 (use-package vertico
   :init
@@ -213,50 +196,7 @@
   :pin nongnu
   :mode "\\.astro\\'")
 
-(use-package eglot
-  :ensure nil ; Built into Emacs.
-  :commands (eglot eglot-ensure)
-  :hook ((c-mode c++-mode c-ts-mode c++-ts-mode
-          python-mode python-ts-mode
-          rust-ts-mode
-          js-mode js-ts-mode typescript-ts-mode tsx-ts-mode
-	  html-mode mhtml-mode html-ts-mode css-mode css-ts-mode
-          sh-mode bash-ts-mode
-          nix-mode nix-ts-mode)
-         . eglot-ensure)
-  :custom
-  (eglot-autoshutdown t)
-  (eglot-sync-connect nil)
-  ;; Large Tailwind responses are expensive to retain in the event buffer.
-  ;; Re-enable this temporarily when diagnosing server communication.
-  (eglot-events-buffer-config '(:size 0 :format full))
-  :config
-  ;; Eglot supplies completion-at-point and Flymake integration for Corfu.
-  ;; Keep Pyright and add Ruff in the same buffer via the LSP multiplexer.
-  (add-to-list 'eglot-server-programs
-               '((python-mode python-ts-mode)
-                 . ("rass" "--" "pyright-langserver" "--stdio"
-                    "--" "ruff" "server")))
-  (add-to-list 'eglot-server-programs
-               '((nix-mode nix-ts-mode) . ("nixd"))))
-
-(defun lsp ()
-  "Run `eglot' with a universal prefix argument, as with C-u M-x eglot."
-  (interactive)
-  (let ((current-prefix-arg '(4)))
-    (call-interactively #'eglot)))
-
-(defun lsp-nix (directory command)
-  "Start Eglot with COMMAND in DIRECTORY's Nix development environment."
-  (interactive "DNix development directory: \nsLSP command: ")
-  (require 'eglot)
-  (let ((eglot-server-programs
-         (cons (cons major-mode
-                     (list "nix" "develop" (expand-file-name directory)
-                           "-c" "/bin/sh" "-c" (concat "exec " command)))
-               eglot-server-programs))
-        (current-prefix-arg nil))
-    (call-interactively #'eglot)))
+(load (expand-file-name "bridge-config.el" user-emacs-directory) nil 'nomessage)
 
 (use-package tramp
   :ensure nil

@@ -1,0 +1,35 @@
+{
+  "name": "vscode-eslint-language-server",
+  "languageIds": {
+    "tsx": "typescriptreact",
+    "ts": "typescript",
+    "mts": "typescript",
+    "js": "javascript",
+    "jsx": "javascriptreact",
+    "astro": "astro"
+  },
+  "command": [
+    "vscode-eslint-language-server",
+    "--stdio"
+  ],
+  "settings": {
+    "validate": "on",
+    "format": false,
+    "options": {},
+    "run": "onType",
+    "codeAction": {
+      "disableRuleComment": {
+        "enable": true,
+        "location": "separateLine",
+        "commentStyle": "line"
+      },
+      "showDocumentation": {
+        "enable": true
+      }
+    },
+    "useFlatConfig": true,
+    "workingDirectory": {
+      "mode": "auto"
+    }
+  }
+}

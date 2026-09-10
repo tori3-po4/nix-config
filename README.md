@@ -85,7 +85,7 @@
 └── home/                # home-manager (yourname 用)
     ├── default.nix      # home.packages 一覧 + 各モジュール import
     ├── emacs.nix        # macOS/Linux Emacs 31.1 + 共通 init.el
-    ├── emacs/init.el    # GNU/NonGNU ELPA、Evil(devel)/Corfu/Magit等の設定
+    ├── emacs/init.el    # ELPAパッケージとlsp-bridge/ACMの設定を読み込む
     ├── zellij.nix       # Emacsと干渉しない locked-mode キー設定
     ├── vscode.nix       # programs.vscode (拡張 + 設定 + スニペット)
     ├── vscode-settings.json  # VSCode の userSettings (JSON)
@@ -111,7 +111,7 @@
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
 - **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と Nix管理するGUI本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Firefox/Zed本体はプラットフォーム側で管理。
-- **`home/emacs.nix` / `home/emacs/init.el`**: macOSのHomebrew Emacs PlusとLinuxのNix製Emacs 31.1 PGTKで共通の設定。GUIとTUI (`emacs -nw`) の両方で利用する。Corfu/Magit/SLIME/nix-mode/web-mode等はGNU/NonGNU ELPA、EvilはNonGNU-devel、EglotはEmacs同梱版を使う。MELPAへの依存はない。LSPサーバーはNix、tree-sitter文法のダウンロード・コンパイルはEmacsが管理する。
+- **`home/emacs.nix` / `home/emacs/`**: macOSのHomebrew Emacs PlusとLinuxのNix製Emacs 31.1 PGTKで共通の設定。GUIとTUI (`emacs -nw`) の両方で利用する。LSPと補完はlsp-bridge/ACM。ソースのコミットと専用Python環境をNixで固定し、上流の推奨どおりlsp-bridgeはbyte/native compileせず読み込む。Magit/SLIME/nix-mode/web-mode/markdown-mode/YASnippet等はGNU/NonGNU ELPA、EvilはNonGNU-develを使い、MELPAへの依存はない。LSPサーバーはNix、tree-sitter文法のダウンロード・コンパイルはEmacsが管理する。
 - **`home/zellij.nix`**: 通常は locked mode で入力を Emacs/Evil へ通し、Emacs/Evil で未割当の `F12` でのみ Zellij 操作モードを出入りする。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
 - **`home/zed.nix`**: `programs.zed-editor` (`package = null`) で拡張、LaTeX/CMake task、debug、エディタ設定を宣言管理。本体はmacOSではHomebrew Cask、Linuxでは `nix-flatpak` が管理する。見た目・キーマップ・整形動作は VSCode に合わせ、C++ スニペットは両エディタで共有。
@@ -215,7 +215,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
 - コンテナ: docker-client, docker-compose (daemon は Docker Desktop cask)
 - LaTeX: texlive (scheme-full), ghostscript, tex-fmt
-- LSP: rassumfrassum (多重化), lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
+- LSP: lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
 - programs.* 設定: zsh, bash, starship, fzf, zoxide, emacs, firefox (user.js), vscode, zed-editor, espanso
 
@@ -230,20 +230,24 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - macOSはHomebrewのEmacs Plus、LinuxはGNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で固定した `emacs31-pgtk` を使う。
 - Native Compilation と Tree-sitter を有効にし、フルAOTのみ無効化。GUIに加えて `emacs -nw` によるTUI利用も維持する。
 - 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA / NonGNU ELPA の安定版を優先し、Evil だけを NonGNU-devel に固定。不足パッケージを起動時に自動導入し、既存の Evil が修正確認済みの `1.15.0.0.20260728.297` より古ければ開発版へ更新する。修正済みの版が入っていれば、この確認のための通信は行わない。
-- LSP: Emacs同梱のEglotを使い、補完は既存のCorfu、診断はFlymakeへ統合する。C/C++、Python、Rust、JS/TS/TSX、シェル、Nixで自動起動し、Pythonは `rass -- pyright-langserver --stdio -- ruff server` でPyrightとRuffを同じバッファで併用する。Nixは `nixd` を明示する。`eglot-autoshutdown = t`、`eglot-sync-connect = nil` を維持し、`eglot-events-buffer-config = (:size 0 :format full)` で通信ログを無効化する。既存のプロセス読取量1MiBと `process-adaptive-read-buffering = nil` も維持する。
-- 自動補完: Corfuは通常2文字入力し、入力が0.15秒止まったら表示する。`.` の直後はメンバー補完をすぐ開始する（`corfu-auto-trigger = "."`）。`M-TAB` の手動補完は開始文字数を待たずに使える。これは要求頻度の調整であり、1回の応答サイズや絞り込み処理自体を高速化する設定ではない。
-- 複数LSP: [rassumfrassum](https://github.com/joaotavora/rassumfrassum) の `rass` をNixで導入する。他の言語でも併用する場合は、`eglot-server-programs` にPythonと同じ形式で、各サーバーのコマンドを `"--"` で区切って指定する。独自のラッパー関数やプリセットファイルは使わない。
-- Web編集: `.astro` は引き続きNonGNU ELPAの `web-mode` で開く。web-mode全体ではEglotを自動起動せず、Astroプロジェクトの `.dir-locals.el` でAstro・Tailwind・ESLintをrass経由で起動する。lsp-mode、lsp-pyright、Astro/Tailwind向けlsp-mode設定、専用の `typescript-sdk` リンクは不要。Nixの `typescript` は `tsc` コマンド用に残す。
+- LSP: [lsp-bridge](https://github.com/manateelazycat/lsp-bridge)を使い、補完をACM、診断をlsp-bridgeの表示へ統合する。`home/emacs/bridge-runtime.nix` がソースのコミットとPython依存を固定し、`bridge-config.el` がサーバー・キー・補完元を設定する。C/C++、Python、Rust、JS/TS/TSX、HTML/CSS、シェル、Nix等で自動起動する。Pythonは上流の `pyright_ruff` 設定でPyrightとRuffを併用し、Nixは `nixd` を使う。通常ログはwarning以上とし、プロセス読取量1MiBを維持する。
+- 自動補完: 通常2文字から、メンバー参照の `.` 直後は文字数を待たずACMを表示する。`M-TAB` で手動表示する。LSP候補をPython側で絞り込み、Emacsへの転送はサーバーごと最大100件にする。絞り込み前の全候補はPython側で扱うので、入力を続ければ候補が更新される。単語拾い・ctags・AI補完は無効、LSP・パス・YASnippet・Emacs Lisp補完を利用する。Common Lisp/SLIMEではCAPFをACMにつなぎ、ミニバッファはVerticoを維持する。
+- 複数LSP: lsp-bridge内蔵のmultiserverを利用し、rassは不要。追加・変更は `home/emacs/lsp-bridge/multiserver/` と `langserver/` のJSONで行う。Corfu/Company/Eglot/lsp-modeの自動起動は使わず、LSPバッファのFlymakeも止めて診断の重複を避ける。
+- Web編集: `.astro` はNonGNU ELPAの `web-mode` で開き、Astro・Tailwind・ESLintを直接併用する。クラス属性内の補完も有効。Astroにはプロジェクトの `./node_modules/typescript/lib` を渡すため、対象プロジェクトのTypeScript依存をインストールしておく。ESLintはAstroとflat configに対応させる。既存の `.dir-locals.el` にEglotやlsp-modeの起動用 `eval` がある場合は削除する。
+- コマンド: `M-x lsp` で接続、`M-.` / `M-,` で定義へ移動／戻る。`C-c l` に続けて `d` 定義、`r` 名前変更、`a` コードアクション、`f` 整形、`e` 診断一覧、`h` 説明、`R` 再起動。Evilのnormal stateでは `gd` 定義、`gr` 参照、`K` 説明。ACMでは `C-n` / `C-p` で選択、`TAB` / `RET` で確定、`C-g` で閉じる。
+- Nix開発環境: `M-x lsp-nix` でflakeのあるディレクトリを選ぶ。`nix develop … --command` を通して専用Pythonを起動し、shellHookと開発環境のPATHをサーバーに引き継ぐ。PythonバックエンドはEmacs内で共有されるため、**開いている全LSPバッファの環境が切り替わる**。通常環境へ戻すには `M-x lsp-host`。異なるdevShellを同時に使う場合はEmacsプロセスを分ける。
 - Tree-sitter: Emacs 31標準の `treesit-enabled-modes` と `treesit-auto-install-grammar` を使い、TS/TSX・CSS等の対応ファイルを初めて開いたときに必要な文法を自動取得・コンパイルする。保存先は利用中のEmacs設定ディレクトリ内の `tree-sitter/`。Astroファイル自体はweb-modeの構文解析を使うため、Astro専用文法や `treesit-auto` 等の追加管理パッケージは不要。手動で再導入する場合は `M-x treesit-install-language-grammar` を使う。
 - 配色: `modus-themes` を `use-package` で GNU ELPA から導入し、Zed の `Gruvbox Light Soft` に近い暖色系のライトプリセット `modus-operandi-tinted` を使う。face と ANSI 色はテーマ標準に任せる。
 - Git変更表示: GNU ELPA の `diff-hl` で追加・変更・削除の印を行の左側の余白に表示する。GUI/TUIの両方に対応し、未保存の編集とMagitでの操作にも追従する。
 - ELPA本体とquickstartはEmacsメジャー別に保存し、32で生成したbyte-codeを31から読まない。
-- TUI: Emacs 31標準の tty child frame をCorfu 2.xが自動検出するため `corfu-terminal` は不要。
+- TUI: Emacs 31のtty child frameに対応するlsp-bridge/ACMのソースを固定して使う。
 - Zellij: locked mode を既定とし、`F12` 以外のキー入力を Emacs に通す。`F12` で Zellij の normal/locked mode を切り替える。
 
 確認用:
 
-Nix設定を通常の手順で適用してEmacsを再起動し、PythonやNixのプロジェクトを開く。`M-x eglot` で接続する。通信調査が必要なときだけ `eglot-events-buffer-config` の `:size` を2000000に戻してEmacsを再起動し、`M-x eglot-events-buffer` を使う。`.astro` はweb-modeで開けることを確認する。以前インストールしたlsp-mode関連パッケージはディスク上に残っていてもこの設定では読み込まれない。起動中の旧設定やLSPプロセスを残さないため、設定の再評価だけでなくEmacsを再起動する。
+Nix設定を通常の手順で適用し、Emacsを再起動してPython、Nix、Astroのプロジェクトを開く。必要なら `M-x lsp` で接続する。調査時だけ `lsp-bridge-log-level` を `debug` にして `M-x lsp-bridge-restart-process` を実行し、`*lsp-bridge*` バッファを確認する。以前導入したEglot/lsp-mode/Corfu関連パッケージがディスクに残っていても、この設定では起動しない。旧プロセスを残さないため、設定の再評価だけでなくEmacsを再起動する。
+
+コミット前の新規ファイルも含めて適用する場合は、通常の適用コマンドのflake参照を `path:/絶対パス/nix-config#既存の構成名` にする。通常のGit参照を使う場合は、新規設定ファイルもGitの管理対象に含めておく。
 
 ```bash
 emacs --version

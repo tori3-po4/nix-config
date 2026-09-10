@@ -1,0 +1,14 @@
+{
+  "name": "astro-ls",
+  "languageId": "astro",
+  "command": [
+    "astro-ls",
+    "--stdio"
+  ],
+  "settings": {},
+  "initializationOptions": {
+    "typescript": {
+      "tsdk": "./node_modules/typescript/lib"
+    }
+  }
+}

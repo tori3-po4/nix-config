@@ -1,0 +1,26 @@
+{
+  "default": "astro-ls",
+  "completion": [
+    "tailwindcss",
+    "astro-ls"
+  ],
+  "completion_item_resolve": [
+    "tailwindcss",
+    "astro-ls"
+  ],
+  "diagnostics": [
+    "astro-ls",
+    "tailwindcss",
+    "vscode-eslint-language-server"
+  ],
+  "code_action": [
+    "astro-ls",
+    "tailwindcss",
+    "vscode-eslint-language-server"
+  ],
+  "execute_command": [
+    "astro-ls",
+    "tailwindcss",
+    "vscode-eslint-language-server"
+  ]
+}
