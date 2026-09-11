@@ -38,7 +38,7 @@ let
     package;
 in
 {
-  # Elisp packages use GNU/NonGNU ELPA; init.el pins Evil to NonGNU-devel.
+  # Prefer GNU/NonGNU ELPA; init.el pins Evil to NonGNU-devel and LSP to MELPA.
   xdg.configFile."emacs/init.el".source = ./emacs/init.el;
   xdg.configFile."emacs/early-init.el".source = ./emacs/early-init.el;
   

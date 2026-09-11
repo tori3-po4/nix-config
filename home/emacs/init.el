@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 ;; Shared by Homebrew Emacs Plus on macOS and Nix-built Emacs 31.1 PGTK on Linux.
-;; Third-party packages use GNU/NonGNU ELPA, with Evil pinned to NonGNU-devel.
+;; Prefer GNU/NonGNU ELPA; Evil uses NonGNU-devel, LSP packages use MELPA.
 
 ;;; Code:
 
@@ -43,9 +43,10 @@
 (require 'package)
 (add-to-list 'package-archives
              '("nongnu-devel" . "https://elpa.nongnu.org/nongnu-devel/") t)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 ;; Prefer stable packages unless an individual package explicitly pins devel.
 (setopt package-archive-priorities
-        '(("gnu" . 30) ("nongnu" . 20) ("nongnu-devel" . 10)))
+        '(("gnu" . 30) ("nongnu" . 20) ("nongnu-devel" . 10) ("melpa" . 0)))
 (require 'use-package-ensure)
 (setopt use-package-always-ensure t)
 
@@ -213,9 +214,10 @@
   :pin nongnu
   :mode "\\.astro\\'")
 
-(use-package eglot
-  :ensure nil ; Built into Emacs.
-  :commands (eglot eglot-ensure)
+(use-package lsp-mode
+  :pin melpa
+  :demand t
+  :commands (lsp lsp-deferred)
   :hook ((c-mode c++-mode c-ts-mode c++-ts-mode
           python-mode python-ts-mode
           rust-ts-mode
@@ -223,40 +225,114 @@
 	  html-mode mhtml-mode html-ts-mode css-mode css-ts-mode
           sh-mode bash-ts-mode
           nix-mode nix-ts-mode)
-         . eglot-ensure)
+         . lsp-deferred)
   :custom
-  (eglot-autoshutdown t)
-  (eglot-sync-connect nil)
-  ;; Large Tailwind responses are expensive to retain in the event buffer.
-  ;; Re-enable this temporarily when diagnosing server communication.
-  (eglot-events-buffer-config '(:size 0 :format full))
+  (lsp-completion-provider :capf)
+  (lsp-completion-no-cache nil)
+  (lsp-completion-use-last-result t)
+  (lsp-diagnostics-provider :flymake)
+  (lsp-log-io nil)
+  (lsp-auto-guess-root t)
+  ;; Keep the existing nixd choice, including automatically registered TRAMP clients.
+  (lsp-disabled-clients '(rnix-lsp nix-nil rnix-lsp-tramp nix-nil-tramp))
   :config
-  ;; Eglot supplies completion-at-point and Flymake integration for Corfu.
-  ;; Keep Pyright and add Ruff in the same buffer via the LSP multiplexer.
-  (add-to-list 'eglot-server-programs
-               '((python-mode python-ts-mode)
-                 . ("rass" "--" "pyright-langserver" "--stdio"
-                    "--" "ruff" "server")))
-  (add-to-list 'eglot-server-programs
-               '((nix-mode nix-ts-mode) . ("nixd"))))
+  (unless (and lsp-use-plists
+               (equal (lsp-make-position :line 0 :character 0)
+                      '(:line 0 :character 0)))
+    (error "Rebuild lsp-mode with LSP_USE_PLISTS=true; see early-init.el"))
+  ;; Match the extension before web-mode's generic HTML language ID.
+  (add-to-list 'lsp-language-id-configuration '("\\.astro\\'" . "astro")))
 
-(defun lsp ()
-  "Run `eglot' with a universal prefix argument, as with C-u M-x eglot."
-  (interactive)
-  (let ((current-prefix-arg '(4)))
-    (call-interactively #'eglot)))
+(use-package lsp-pyright
+  :pin melpa
+  :demand t)
+
+(use-package lsp-ruff
+  :ensure nil ; Included in lsp-mode; Ruff is an add-on to Pyright.
+  :demand t)
+
+(defun my-lsp-astro-maybe ()
+  "Start Astro and applicable add-on servers for an Astro web-mode buffer."
+  (when (and buffer-file-name (string-match-p "\\.astro\\'" buffer-file-name))
+    (lsp-deferred)))
+
+(use-package lsp-astro
+  :ensure nil
+  :demand t
+  :hook (web-mode . my-lsp-astro-maybe)
+  :config
+  (defun my-lsp-astro-server-sdk-path (options)
+    "Use a server-local TypeScript SDK path in OPTIONS, including over TRAMP."
+    (when-let* ((typescript (plist-get options :typescript))
+                (sdk (plist-get typescript :tsdk)))
+      (plist-put typescript :tsdk (file-local-name sdk)))
+    options)
+  (advice-add 'lsp-astro--get-initialization-options :filter-return
+              #'my-lsp-astro-server-sdk-path))
+
+(use-package lsp-tailwindcss
+  :ensure nil
+  :demand t
+  :config
+  (defun my-lsp-tailwindcss-v4-activation (original &rest args)
+    "Recognize Tailwind v4 before the first workspace has been registered."
+    (or (apply original args)
+        (and buffer-file-name
+             (apply #'provided-mode-derived-p major-mode lsp-tailwindcss-major-modes)
+             (lsp-tailwindcss--version-v4-p))))
+  (advice-add 'lsp-tailwindcss--activate-p :around
+              #'my-lsp-tailwindcss-v4-activation)
+  ;; Invoke the Nix executable directly, using its own Node interpreter.
+  (let ((client (gethash 'tailwindcss lsp-clients)))
+    (setf (lsp--client-new-connection client)
+          (lsp-stdio-connection '("tailwindcss-language-server" "--stdio")))
+    ;; Also refresh the automatically generated TRAMP client.
+    (lsp-register-client client))
+  (defun my-lsp-tailwindcss-dash-when-supported (original workspace)
+    "Run ORIGINAL only when WORKSPACE advertises completion at initialization."
+    ;; Tailwind 0.14.29 registers completion dynamically. The stock workaround
+    ;; otherwise fails on its initial capabilities, before didOpen is sent.
+    (when (plist-get (lsp--workspace-server-capabilities workspace) :completionProvider)
+      (funcall original workspace)))
+  (advice-add 'lsp-tailwindcss--company-dash-hack :around
+              #'my-lsp-tailwindcss-dash-when-supported))
+
+(use-package lsp-eslint
+  :ensure nil
+  :demand t
+  :custom
+  (lsp-eslint-server-command '("vscode-eslint-language-server" "--stdio"))
+  (lsp-eslint-trace-server "off")
+  :config
+  (add-to-list 'lsp-eslint-validate "astro")
+  ;; Preserve the built-in JS/TS activation rules and add Astro.
+  (let* ((client (gethash 'eslint lsp-clients))
+         (activate (lsp--client-activation-fn client)))
+    (setf (lsp--client-activation-fn client)
+          (lambda (filename mode)
+            (and lsp-eslint-enable
+                 (or (and filename (string-match-p "\\.astro\\'" filename))
+                     (funcall activate filename mode)))))
+    (lsp-register-client client)))
 
 (defun lsp-nix (directory command)
-  "Start Eglot with COMMAND in DIRECTORY's Nix development environment."
+  "Start COMMAND with lsp-mode in DIRECTORY's Nix development environment."
   (interactive "DNix development directory: \nsLSP command: ")
-  (require 'eglot)
-  (let ((eglot-server-programs
-         (cons (cons major-mode
-                     (list "nix" "develop" (expand-file-name directory)
-                           "-c" "/bin/sh" "-c" (concat "exec " command)))
-               eglot-server-programs))
-        (current-prefix-arg nil))
-    (call-interactively #'eglot)))
+  (let* ((directory (expand-file-name directory))
+         (server-id (intern (concat "nix-develop-"
+                                    (secure-hash 'sha256
+                                                 (format "%S" (list major-mode directory command)))))))
+    (lsp-register-client
+     (make-lsp-client
+      :new-connection (lsp-stdio-connection
+                       (list "nix" "develop" (file-local-name directory)
+                             "-c" "/bin/sh" "-c" (concat "exec " command)))
+      :major-modes (list major-mode)
+      :remote? (and (file-remote-p directory) t)
+      :server-id server-id))
+    (when (bound-and-true-p lsp-mode) (lsp-disconnect))
+    (setq-local lsp-enabled-clients (list server-id))
+    (lsp)))
 
 (use-package tramp
   :ensure nil

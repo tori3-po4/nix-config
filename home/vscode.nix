@@ -4,7 +4,12 @@ let
   # C-x の実際の割り当てと M-SPC のヘルプを同じ定義から生成する。
   binding = key: name: command: { inherit key name command; };
   controlXBindings = [
-    (binding "ctrl+f" "ファイルを開く" "whichkey.openFile")
+    (binding "ctrl+f" "ファイルを開く" (
+      if pkgs.stdenv.hostPlatform.isDarwin then
+        "workbench.action.files.openFileFolder"
+      else
+        "workbench.action.files.openFile"
+    ))
     (binding "ctrl+s" "保存" "workbench.action.files.save")
     (binding "ctrl+w" "名前を付けて保存" "workbench.action.files.saveAs")
     (binding "s" "すべて保存" "workbench.action.files.saveAll")
