@@ -214,6 +214,10 @@
   :pin nongnu
   :mode "\\.astro\\'")
 
+(use-package yasnippet
+  ;; LSP completion items may contain snippets, including HTML attributes.
+  :hook (lsp-mode . yas-minor-mode))
+
 (use-package lsp-mode
   :pin melpa
   :demand t
@@ -227,7 +231,8 @@
           nix-mode nix-ts-mode)
          . lsp-deferred)
   :custom
-  (lsp-completion-provider :capf)
+  ;; Keep the LSP CAPF for Corfu without automatically starting Company.
+  (lsp-completion-provider :none)
   (lsp-completion-no-cache nil)
   (lsp-completion-use-last-result t)
   (lsp-diagnostics-provider :flymake)
