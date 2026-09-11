@@ -245,12 +245,38 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 
 Nix設定を通常の手順で適用してEmacsを再起動し、PythonやNixのプロジェクトを開く。`M-x eglot` で接続する。通信調査が必要なときだけ `eglot-events-buffer-config` の `:size` を2000000に戻してEmacsを再起動し、`M-x eglot-events-buffer` を使う。`.astro` はweb-modeで開けることを確認する。以前インストールしたlsp-mode関連パッケージはディスク上に残っていてもこの設定では読み込まれない。起動中の旧設定やLSPプロセスを残さないため、設定の再評価だけでなくEmacsを再起動する。
 
+Astro・Tailwind・ESLint の実サーバーを使う補完／GC計測は [ベンチマーク手順](home/emacs/benchmarks/README.md) を参照。イベントログ有効／無効の比較結果と生データは [2026-09-11 の検証記録](home/emacs/benchmarks/results/2026-09-11/REPORT.md) に保存する。
+続く [候補量比較](home/emacs/benchmarks/results/2026-09-11-volume/REPORT.md) では、Emacs に送る前に一致候補だけへ絞ると Tailwind 補完の中央値が約36〜45%短縮した。候補一覧は維持できたが、送信前の秒単位の待ち時間は残った。実験用コードは通常設定に組み込んでいない。
+
 ```bash
 emacs --version
 emacs --batch --eval '(princ (native-comp-available-p))'
 emacs --batch --eval "(princ (featurep 'tty-child-frames))"
 emacs --batch --eval '(princ system-configuration-options)'
 ```
+
+### VS Code: Emacs / Evil 風のキー操作
+
+`home/vscode.nix` と `home/vscode-settings.json` で VSCodeVim と WhichKey を管理する。文字編集は Normal / Insert / Visual のモードを使い、ファイル・バッファ・ウィンドウ操作には Emacs のキーを追加している。
+
+| 操作 | キー |
+|---|---|
+| 移動・挿入・範囲選択 | `h/j/k/l`、`i/a/o`、`v/V/C-v` |
+| 削除・コピー・貼り付け・繰り返し | `d/y/p`、`.`、`ciw` などのテキストオブジェクト |
+| Undo / Redo、半画面スクロール | `u` / `C-r`、`C-u` / `C-d` |
+| ファイルを開く・保存・別名保存 | `C-x C-f` / `C-x C-s` / `C-x C-w` |
+| バッファを切り替える・閉じる | `C-x b` / `C-x k` |
+| 上下・左右に分割 | `C-x 2` / `C-x 3` |
+| 分割を一つにまとめる・次の分割へ | `C-x 1` / `C-x o` |
+| Git の変更を VS Code の SCM で表示 | `C-x g` |
+| コマンドパレット・キー案内 | `M-x` / `M-SPC` |
+| メニューや補完を閉じる・編集時に Normal へ戻る | `C-g` |
+
+`C` は Control、`M` は Alt（macOS では Option）。`M-SPC` でキー案内を開き、`C-x` で追加した操作の一覧に進める。案内は400 ms後に表示される。直接 `C-x C-s` などを押す場合は通常の VS Code キーバインドとして実行する。
+
+現在の Evil 設定に合わせ、`C-u` は Normal で上スクロール、`Tab` は補完・インデントに使う。Insert 中は `C-b` / `C-f` で左右移動できる。Vim のコピーはシステムクリップボードと共有する。統合ターミナルはシェル側のキー操作を使い、既存の `Shift+Enter`（ESC + CR）も維持する。
+
+通常の Nix 設定適用後に VS Code を再起動する。macOS の文字キー長押しによる移動は `darwin/defaults.nix` の VS Code 専用 `ApplePressAndHoldEnabled = false` で有効にする。
 
 ### VS Code: Astro / Next.js / Tailwind の確認（2026-09-06）
 

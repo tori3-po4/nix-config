@@ -1,5 +1,13 @@
 {
   "editor.fontFamily": "HackGen Console NF",
+  "vim.useCtrlKeys": true,
+  "vim.useSystemClipboard": true,
+  "vim.startInInsertMode": false,
+  "vim.handleKeys": {
+    "<C-x>": false,
+    "<C-g>": false,
+    "<C-i>": false
+  },
   "latex-workshop.latex.recipes": [
     {
       "name": "platex -> dvipdfmx",

@@ -102,6 +102,10 @@ in
     };
 
     CustomUserPreferences = {
+      "com.microsoft.VSCode" = {
+        # Vim/Evil の h/j/k/l を長押しで繰り返す。
+        ApplePressAndHoldEnabled = false;
+      };
       NSGlobalDomain = {
         AppleMiniaturizeOnDoubleClick = 0;
         # 内蔵キーボードは物理 Caps Lock と物理 Control を入れ替えている
