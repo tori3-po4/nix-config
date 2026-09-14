@@ -87,6 +87,7 @@
 (unless noninteractive
   (xterm-mouse-mode 1))
 (tab-bar-mode 1)
+(electric-pair-mode 1)
 
 ;;define command to search web by google
 (require 'xwidget)
