@@ -76,7 +76,8 @@
     uv
     pixi
     sbcl # SLIME から使う Common Lisp 実装
-
+    lake # lean用のバージョン管理ツール
+    
     # ===== ビルドツール =====
     automake
     cmake

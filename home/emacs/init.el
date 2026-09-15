@@ -340,6 +340,12 @@
     (setq-local lsp-enabled-clients (list server-id))
     (lsp)))
 
+(use-package lean4-mode
+  :command lean4-mode
+  :vc (:url  "https://github.com/leanprover-community/lean4-mode.git"  
+       :rev :last-release
+	    ))
+
 (use-package tramp
   :ensure nil
   :defer t
