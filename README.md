@@ -210,7 +210,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - シェル支援: tmux, zellij, direnv, stow, chezmoi
 - ローカルLLM: llama-cpp (UI無効 overlay), lmstudio
 - 暗号/パスワード: gnupg, age, bitwarden-cli
-- 言語処理系: deno, nodejs_22, uv, pixi, SBCL, jdk, gradle
+- 言語処理系: deno, nodejs_22, uv, pixi, SBCL, elan (Lean 4), jdk, gradle
 - ビルド: automake, cmake, meson, pkgconf, gnumake, gcc, lld, lldb, llvm, openmp
 - 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
 - コンテナ: docker-client, docker-compose (daemon は Docker Desktop cask)
@@ -254,6 +254,54 @@ emacs --batch --eval '(princ (native-comp-available-p))'
 emacs --batch --eval "(princ (featurep 'tty-child-frames))"
 emacs --batch --eval '(princ system-configuration-options)'
 ```
+
+### Lean 4 / Emacs
+
+`home/default.nix` で `elan` を導入し、Lean本体とビルドツールLakeの版を管理する。
+`lean` / `lake` コマンドはelanが提供するため、別の `lake` パッケージは追加しない。
+Lean本体はNix storeの外の `~/.elan/toolchains` に取得される。
+
+初回はNix設定を適用してから、新しいターミナルで安定版のLeanを取得する。
+macOSでは次を実行する（Linuxの適用方法は上記のHome Manager手順を参照）。
+
+```bash
+sudo darwin-rebuild switch --flake ~/nix-config --impure
+elan default leanprover/lean4:stable
+lean --version
+lake --version
+```
+
+新しいプログラミング用プロジェクトの作成と実行:
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+lake new lean-playground exe
+cd lean-playground
+lake build
+lake exe lean-playground
+```
+
+生成された `lean-toolchain` はGitに含め、プロジェクトで使うLeanの具体的な版を固定する。
+既存プロジェクトでは、そのファイルに指定された版をelanが自動で取得・選択する。
+
+Emacsを再起動し、`C-x C-f` でプロジェクト内の `Main.lean` を開く。
+`lean4-mode` はEmacs標準の `package-vc` でGitHubから導入し、`.lean` に自動適用する。
+初回の取得にはネットワーク接続が必要。
+`lsp-deferred` で自動接続し、既存のlsp-mode / Corfu / Flymake設定で補完・診断を使える。
+LSPが接続されていなければ `M-x lsp` を実行する。
+
+| 操作 | キー / コマンド |
+|------|----------------|
+| 証明のゴール・エラー表示 | `C-c C-i` (`lean4-toggle-info`) |
+| Lakeでビルド | `C-c C-p C-l` (`lean4-lake-build`) |
+| importした依存を再読み込み | `C-c C-d` |
+| Leanの版を確認 | `M-x lean4-show-version` |
+
+例えば `Main.lean` に `#eval (List.range 5).map (fun n => n * n)` を追加すると、
+評価結果は `[0, 1, 4, 9, 16]` になる。
+
+参考: [Elan公式マニュアル](https://lean-lang.org/doc/reference/latest/Build-Tools-and-Distribution/Managing-Toolchains-with-Elan/)、[lean4-modeの導入・操作](https://github.com/leanprover-community/lean4-mode)。
 
 ### VS Code: Emacs / Evil 風のキー操作
 

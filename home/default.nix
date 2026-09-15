@@ -76,8 +76,8 @@
     uv
     pixi
     sbcl # SLIME から使う Common Lisp 実装
-    lake # lean用のバージョン管理ツール
-    
+    elan # Leanのバージョン管理。lean/lakeはプロジェクトのlean-toolchainに従う。
+
     # ===== ビルドツール =====
     automake
     cmake
