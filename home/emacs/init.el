@@ -102,6 +102,9 @@
 
 (global-set-key (kbd "C-c u") #'universal-argument)
 
+(global-set-key (kbd "s-v") #'clipboard-yank)
+
+
 ;; This warm light preset resembles Zed's Gruvbox Light Soft.  Let the theme
 ;; control faces and ANSI colours, and update it independently through GNU ELPA.
 (use-package modus-themes
