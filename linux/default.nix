@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs ,... }:
 let
   bitwardenSshAuthSock =
     "${config.home.homeDirectory}/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock";
@@ -26,6 +26,10 @@ in
   systemd.user.services.emacs.Service.Environment = [
     "SSH_AUTH_SOCK=${bitwardenSshAuthSock}"
   ];
+
+  #fontの設定を追加した
+  fonts.fontconfig.enable = true;
+  home.packages = [ pkgs.hackgen-nf-font ];
 
   # デスクトップセッションが別のSSHエージェントを設定した場合も、
   # 対話シェルではBitwardenを使う。sessionVariablesの再読み込みに依存しない。
