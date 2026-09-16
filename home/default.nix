@@ -52,6 +52,9 @@
       tmux
       direnv
 
+      # ===== coding agent =====
+      (if pkgs.stdenv.hostPlatform.isLinux then codex else null)
+
       # ===== ドキュメント =====
       pandoc
 
