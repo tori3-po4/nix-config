@@ -629,6 +629,115 @@ home-manager switch --flake ~/nix-config#default --impure
 Flatpak 本体と desktop portal は dnf、ユーザ用アプリ、Flathub remote、
 sandbox override、週次更新 timer は `linux/flatpak.nix` が管理する。
 
+#### Nix 版 GUI の GPU 連携（Ghostty / Mesa / NVIDIA）
+
+Fedora のカーネル側 GPU ドライバーは OS 側で管理する。Nix 版 GUI が使う
+描画ライブラリは Home Manager の GPU 連携で用意する。この設定は Fedora の
+ドライバーをインストール・置換するものではない。
+
+2026-09-16 の Ghostty 1.3.1 の調査では、HackGen Console NF の読み込みには成功したが、
+`Failed to create EGL display` が発生した。動的リンクのログでは
+`libEGL_mesa.so.0` を Nix 内で探索して見つけられず、`/run/opengl-driver` も
+存在しなかった。GPU は RTX 2060 SUPER、使用中のカーネルドライバーは `nouveau`。
+X11 / Wayland の両方で再現した。以下はその解消に向けた設定手順であり、
+この調査時点では適用後の起動成功までは未検証。
+
+**Mesa を使う場合（nouveau など）**
+
+`linux/default.nix` の設定本体（`imports` と同じ階層）へ追加する。
+
+```nix
+targets.genericLinux.enable = true;
+targets.genericLinux.gpu.enable = true;
+```
+
+この Home Manager では、`genericLinux.enable = true` かつ nixGL 未設定なら
+`gpu.enable` も既定で有効になる。上記では意図を明示している。
+GPU 連携と既存の nixGL 設定は併用しない。
+
+```bash
+home-manager switch --flake ~/nix-config#default --impure
+sudo "$HOME/.nix-profile/bin/non-nixos-gpu-setup"
+```
+
+セットアップは `/etc/tmpfiles.d/non-nixos-gpu.conf` を登録し、
+`/run/opengl-driver` を Nix の GPU ライブラリ群へリンクする。
+再起動時にもリンクが復元され、対象の Nix store パスは GC から保護される。
+Fedora の `/usr/lib64` 全体を `LD_LIBRARY_PATH` に追加する手順ではない。
+
+**NVIDIA 専用ドライバーを使う場合**
+
+まず OS 側で NVIDIA ドライバーを導入して再起動し、`nvidia-smi` が正常に
+動くことを確認する。上の Mesa 用設定を、次の設定に置き換える。
+プレースホルダーは実際の値へ置き換えること。
+
+```nix
+targets.genericLinux = {
+  enable = true;
+  gpu = {
+    enable = true;
+    nvidia = {
+      enable = true;
+      version = "<OS側で動作中のドライバーバージョン>";
+      sha256 = "<対応する配布ファイルのsha256-SRIハッシュ>";
+    };
+  };
+};
+```
+
+`version` は **OS 側で動作中のドライバーと完全一致**させる。
+`nvidia-smi` の「CUDA Version」ではなく「Driver Version」を使う。
+ハッシュは同じバージョンの NVIDIA 配布ファイルから取得する。
+現在の x86_64 ホストでの例（`.run` ファイルは実行しない）：
+
+```bash
+nvidia-smi --query-gpu=driver_version --format=csv,noheader
+# 上で確認した値を入力
+read -r -p 'NVIDIA driver version: ' nvidia_version
+nix store prefetch-file --json \
+  "https://download.nvidia.com/XFree86/Linux-x86_64/${nvidia_version}/NVIDIA-Linux-x86_64-${nvidia_version}.run"
+```
+
+出力の `hash` を `sha256` に設定する。aarch64 では URL 内の
+`Linux-x86_64` を両方とも `Linux-aarch64` に変更する。
+その後、Mesa の場合と同じ `home-manager switch` と
+`sudo "$HOME/.nix-profile/bin/non-nixos-gpu-setup"` を実行する。
+OS 側の NVIDIA ドライバーを更新したら、Nix 側のバージョン・ハッシュも更新し、
+再適用・再セットアップする。通常の Nix 更新でも GPU ライブラリが変わり、
+Home Manager が再セットアップを案内した場合は、そのコマンドを再実行する。
+
+**確認と切り分け**
+
+```bash
+readlink -f /run/opengl-driver
+ls /run/opengl-driver/share/glvnd/egl_vendor.d/
+fc-match "HackGen Console NF"
+ghostty +validate-config
+ghostty --gtk-single-instance=false
+```
+
+フォント認識と GPU 描画の成功は別々に確認する。
+アプリ一覧からの起動で `app-com.mitchellh.ghostty.service` が見つからない場合も
+GPU とは別問題。今回の調査ではそのログも確認しており、ユーザー systemd への
+サービス登録を別途確認する必要がある。上の直接起動はその経路を切り分けるためのもの。
+
+**設定の根拠・一次資料**
+
+まず [Home Manager 公式マニュアル：GPU on non-NixOS systems](https://nix-community.github.io/home-manager/usage/gpu-non-nixos.html) を参照する。
+「When sudo is available: fixing the host OS」に GPU 連携の有効化と
+`non-nixos-gpu-setup` の手順、「Nvidia drivers」にバージョン・ハッシュの取得と
+`targets.genericLinux.gpu.nvidia` の設定例、OS 側とのバージョン一致条件が記載されている。
+以下の実装リンクは、使用中の固定バージョンとの照合用。
+
+本リポジトリの `flake.lock` が固定する Home Manager revision は
+`3c3ede6ad886a6d9b0938ef19112523118fe62c2`。そのローカルソースで以下の実装を確認した。
+リンクは同じ revision に固定しているため、将来の master の変更と区別できる。
+
+- [GPU オプションと適用時の案内](https://github.com/nix-community/home-manager/blob/3c3ede6ad886a6d9b0938ef19112523118fe62c2/modules/targets/generic-linux/gpu/default.nix)：`gpu.enable`、NVIDIA のバージョン一致条件、ハッシュ取得例、セットアップの必要条件。
+- [GPU ライブラリ構成](https://github.com/nix-community/home-manager/blob/3c3ede6ad886a6d9b0938ef19112523118fe62c2/modules/targets/generic-linux/gpu/gpu-libs-env.nix)：Mesa / libglvnd と、NVIDIA 有効時に追加するライブラリ。
+- [セットアップスクリプト](https://github.com/nix-community/home-manager/blob/3c3ede6ad886a6d9b0938ef19112523118fe62c2/modules/targets/generic-linux/gpu/setup/non-nixos-gpu-setup)と [tmpfiles 設定](https://github.com/nix-community/home-manager/blob/3c3ede6ad886a6d9b0938ef19112523118fe62c2/modules/targets/generic-linux/gpu/setup/non-nixos-gpu.conf)：管理者権限が必要な変更と `/run/opengl-driver` の生成。
+- [Ghostty 公式：GTK OpenGL Context Errors](https://ghostty.org/docs/help/gtk-opengl-context)：GTK / OpenGL の初期化失敗と、ライブラリ・ドライバーの不整合についての説明。Home Manager の具体的な設定の出典は上記モジュール。
+
 ### Firefox の設定と拡張機能を別マシンへ移行
 
 この構成ではFirefoxプロファイル全体をコピーしない。宣言済みの設定は `home/firefox.nix` から再生成し、SpeedUpperはリポジトリ内のMozilla署名済みXPIから復元する。Zotero Connectorは新しいマシンでZotero公式サイトから手動導入し、それ以外のFirefox設定と拡張機能はFirefox Syncで復元する。Cookie、保存済みログイン、ログイン状態、履歴、セッション、サイトストレージは移行対象外とする。
