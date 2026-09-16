@@ -215,7 +215,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - 言語処理系: deno, nodejs_22, uv, pixi, SBCL, elan (Lean 4), jdk, gradle
 - ビルド: automake, cmake, meson, pkgconf, gnumake, gcc, lld, lldb, llvm, openmp
 - 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
-- コンテナ: docker-client, docker-compose (daemon は Docker Desktop cask)
+- コンテナ (macOS): docker-client, docker-compose (daemon は Docker Desktop cask)。Linux のコンテナ基盤は dnf 側で管理
 - LaTeX: texlive (scheme-full), ghostscript, tex-fmt
 - LSP: rassumfrassum (多重化), lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
@@ -230,6 +230,51 @@ Ghostty は macOS 専用とし、Linux には本体・設定ファイル・起�
 
 通常の `home-manager switch --flake ~/nix-config#default --impure` で反映する。
 Flatpak 本体は dnf、残りの Flatpak アプリの追加と週次更新は nix-flatpak が担当する。
+
+### Linux で Nix 外から導入したソフト
+
+以下は Nix / Home Manager の管理外で別途導入している。
+
+- Tailscale
+- [gnome-shell-extension-appindicator](https://github.com/ubuntu/gnome-shell-extension-appindicator)
+
+RDPの待受ポートは **3389/TCP**。firewalldの許可対象は **3389/TCP・UDP**。
+
+### Linux GPU と CUDA の管理方針
+
+Linux では **GPU / CUDA 一式を OS 側の SDK として dnf で管理し、汎用の開発ツールと個人の設定を Nix / Home Manager で管理する**。
+普段使う CUDA 環境はホストごとに用意し、Home Manager のグローバル環境には汎用開発ツールを配置する方針とする。
+
+| 対象 | 管理場所 | 理由 |
+|---|---|---|
+| NVIDIA カーネルドライバー | dnf | OS のカーネルと連携するため |
+| ドライバーの `libcuda.so.1` | OS 側のドライバーを基準に管理 | カーネル側ドライバーと整合させるため |
+| Docker / Podman・NVIDIA Container Toolkit | dnf | ホストのサービスやデバイスと連携するため |
+| CUDA Toolkit（NVCC・CUDA ヘッダ） | dnf（対応する NVIDIA リポジトリ等） | ホスト共通の CUDA SDK として用意するため |
+| CUDA ランタイムの `libcudart` | dnf | OS 側の CUDA Toolkit と揃えるため |
+| cuBLAS・cuDNN 等の必要な CUDA 関連ライブラリ | dnf | CUDA SDK と同じ管理系統で依存関係を揃えるため |
+| GCC / G++・Clang / clangd・CMake / Ninja 等の汎用開発ツール | Nix | 必要な版とツール構成を宣言し、別マシンへ持ち運ぶため |
+| エディタ・LSP 設定・ドットファイル | Nix / Home Manager | 個人の開発環境を再現するため。SSH・Neovim 設定は既存方針どおり chezmoi |
+
+**設計の意図**: 持ち運びたい個人の開発環境と、各ホストで用意する GPU / CUDA 基盤の境界を明確にする。
+CUDA Toolkit・ヘッダ・ランタイム・関連ライブラリを dnf 側へまとめ、Nix で分かれている CUDA の構成要素から SDK の配置を組み立てる手間を抑える。
+汎用開発ツールは既存の Nix 管理を活かし、CUDA のためだけにすべてを OS 側へ入れ直さない。
+これは「ランタイムはすべて dnf」という分類ではなく、標準の CUDA SDK を一式で OS 側へ置く方針である。Nix 製ツール自身の実行時依存ライブラリは Nix に任せる。
+
+**管理境界をまたぐ設定と運用**:
+
+- **コンパイラの選択**: NVCC が対応する GCC / G++ の版を Nix 側で選ぶ。CUDA のドライバー要件と、NVCC のホストコンパイラ要件は別に確認する。CMake では `CMAKE_CUDA_COMPILER` と `CMAKE_CUDA_HOST_COMPILER` を初回構成時に明示し、通常の C++ 用の `CMAKE_CXX_COMPILER` も同じ対応版 G++ に揃える。Nix のラッパーやライブラリ検索先も含め、実ビルドで確認する。
+- **clangd の連携**: Nix 版 clangd に `compile_commands.json` を渡し、必要に応じて `.clangd` で OS 側 CUDA の場所（`--cuda-path`）、標準ヘッダの検索先、NVCC 固有の引数を調整する。CUDA ファイルでの LSP 起動もエディタ側で設定する。dnf で SDK を導入しても、この連携がすべて自動設定されるわけではない。
+- **プロジェクト固有の条件**: ソース一覧、マクロ、言語規格、GPU アーキテクチャは CMake 等で管理し、コンパイル情報を生成する。手元の RTX 2060 SUPER は Compute Capability 7.5 のため、対象にする場合の CMake 指定は `CMAKE_CUDA_ARCHITECTURES=75`、clangd 側は `--cuda-gpu-arch=sm_75` とする。
+- **移行と更新**: `flake.lock` が固定するのは Nix 側の環境であり、dnf 側の CUDA までは固定しない。各ホストで導入時に使用したリポジトリ・パッケージと、動作確認したドライバー / CUDA / GCC / clangd の版を記録する。更新時は CMake のコンパイル情報を再生成し、ビルド・clangd の解析・GPU 実行を個別に確認する。
+- **Nix パッケージの依存関係**: Nix 製の CUDA 対応アプリが dnf の CUDA ライブラリを自動利用するわけではない。そのパッケージが宣言する Nix 側の CUDA 依存は許容する。この方針は、自分で開発・ビルドする際の標準 CUDA 環境を対象とする。
+- **別バージョンが必要な場合**: CUDA の版までプロジェクト単位で再現する必要が出た場合は、そのプロジェクトに専用の Nix `devShell` またはコンテナ環境を用意する。
+
+既存の「Nix 版 GUI の GPU 連携」（[Linux のセットアップ手順](#fedora-など-dnf-系-linux-standalone-home-manager) 内）は併用する。Home Manager が Nix アプリ向けにドライバーライブラリを用意する場合も、NVIDIA の版は OS 側に合わせる。これは CUDA Toolkit の管理を Nix へ移すものではない。
+
+この節は管理方針であり、CUDA 一式の導入済み・動作確認済みを示すものではない。実際の導入と検証は各ホストで行う。
+
+参考: [NVIDIA CUDA の構成と互換性](https://docs.nvidia.com/deploy/cuda-compatibility/why-cuda-compatibility.html)、[CUDA の導入・ホストコンパイラ要件](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/)、[CMake のホストコンパイラ指定](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_HOST_COMPILER.html)、[clangd の CUDA 対応](https://clangd.llvm.org/faq#does-clangd-support-cuda)。
 
 ### Homebrew (`darwin/homebrew.nix`)
 - **Casks**: anki, bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, latexit, llama-app, logi-options+, minecraft, multipass, pearcleaner, skim, slack, tailscale-app, wireshark-app, zed, zotero
@@ -565,6 +610,8 @@ nvim
 AlmaLinux などの `x86_64` または `aarch64` 環境。Home Manager はユーザ環境と
 ユーザ単位の Flatpak だけを管理し、OS 自体のパッケージ、SELinux、
 ファイアウォール等は引き続き dnf 側で管理する。
+
+GPU / CUDA を使うホストでは、[Linux GPU と CUDA の管理方針](#linux-gpu-と-cuda-の管理方針) に従ってドライバー・CUDA SDK・必要なコンテナ基盤を dnf 側で別途用意する。以下の Home Manager セットアップだけでは、これらは導入されない。
 
 > `linux/flatpak.nix` は `uninstallUnmanaged = true` のため、初回適用時に
 > 宣言にない **ユーザ単位** Flatpak を削除する。必要なアプリは
