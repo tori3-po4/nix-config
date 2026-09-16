@@ -49,9 +49,6 @@
     # ===== エディタ/シェル支援 =====
     neovim
     vscode
-    jetbrains.pycharm
-    jetbrains.clion
-    jetbrains.idea
     tmux
     direnv
     stow

@@ -41,6 +41,7 @@
         args.language = "ja";
       }
       "google-chrome"
+      "jetbrains-toolbox"
       "logi-options+"
       "minecraft"
       "multipass"
