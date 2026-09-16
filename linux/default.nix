@@ -35,4 +35,12 @@ in
   # 対話シェルではBitwardenを使う。sessionVariablesの再読み込みに依存しない。
   programs.bash.initExtra = lib.mkAfter bitwardenSshAgentInit;
   programs.zsh.initContent = lib.mkAfter bitwardenSshAgentInit;
+
+
+  targets.genericLinux = {
+    enable = true;
+    gpu = {
+      enable = true;
+    };
+  };
 }
