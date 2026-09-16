@@ -8,7 +8,6 @@
     ./starship.nix
     ./firefox.nix
     ./fzf.nix
-    ./zoxide.nix
     ./git.nix
     ./nh.nix
     ./dotfiles.nix
@@ -36,7 +35,6 @@
     jq
     bat
     eza
-    zoxide
     coreutils
     # Keep Nix terminal tools while preferring Ghostty's own terminfo.
     (lib.lowPrio ncurses)
@@ -51,7 +49,7 @@
     vscode
     tmux
     direnv
-    stow
+    
     # ===== ターミナルエミュレーター ====
     (if stdenv.hostPlatform.isDarwin then ghostty-bin else ghostty)
 
