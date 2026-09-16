@@ -34,7 +34,7 @@
 │                        │ espanso/emacs/vscode/zed (拡張 + 設定) │
 ├────────────────────────┼───────────────────────────────────────┤
 │ nix-flatpak (Linux)    │ GUIアプリ本体 + sandbox設定           │
-│  - packages            │ Firefox/Chrome/LM Studio/Prism等      │
+│  - packages            │ Firefox/Chrome/Anki/Zotero等          │
 │  - overrides           │ Home Manager設定へのアクセス権限      │
 ├────────────────────────┼───────────────────────────────────────┤
 │ Home Manager          │ git / tmux / latexmk / ghostty         │
@@ -110,7 +110,7 @@
 - **`linux/flatpak.nix`**: `nix-flatpak` のユーザ用Flatpak宣言。Flathubのアプリ一覧、週次更新、宣言外パッケージの削除、Firefox/ZedからHome Manager管理設定を参照するsandbox overrideをLinux側へ集約。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
-- **`home/default.nix`**: 共通CLIツールと VS Code を管理する。Ghostty は macOS のみに導入し、設定ファイルも macOS 限定。LM Studio・Prism Launcher・Moonlight は macOS では Nix、Linux では `linux/flatpak.nix` で管理する。Linux の Emacs は `home/emacs.nix` で Nix 管理を維持する。
+- **`home/default.nix`**: 共通CLIツールと VS Code・LM Studio・Prism Launcher・Moonlight を Nix で管理する。Ghostty は macOS のみに導入し、設定ファイルも macOS 限定。Linux の Emacs は `home/emacs.nix` で Nix 管理を維持する。
 - **`home/emacs.nix` / `home/emacs/init.el`**: macOSのHomebrew Emacs PlusとLinuxのNix製Emacs 31.1 PGTKで共通の設定。GUIとTUI (`emacs -nw`) の両方で利用する。GNU/NonGNU ELPAを優先し、EvilはNonGNU-devel、lsp-modeとlsp-pyrightはMELPAに固定する。LSPはplist表現、補完はCorfu、診断はFlymakeを使う。LSPサーバーはNix、tree-sitter文法のダウンロード・コンパイルはEmacsが管理する。
 - **`home/zellij.nix`**: 通常は locked mode で入力を Emacs/Evil へ通し、Emacs/Evil で未割当の `F12` でのみ Zellij 操作モードを出入りする。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
@@ -207,9 +207,10 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - 基本CLI: ripgrep, fd, fzf, jq, bat, eza, zoxide, coreutils
 - Git周辺: git, git-filter-repo, lazygit, gh
 - エディタ: neovim, vscode。Linux の Emacs も Nix 管理を維持
-- macOS のみの GUI 本体: ghostty-bin, lmstudio, prismlauncher, moonlight-qt
+- macOS / Linux 共通の GUI 本体: lmstudio, prismlauncher, moonlight-qt
+- macOS のみの GUI 本体: ghostty-bin
 - シェル支援: tmux, zellij, direnv, stow, chezmoi
-- ローカルLLM GUI: LM Studio（macOS は Nix、Linux は Flatpak）
+- ローカルLLM GUI: LM Studio（macOS / Linux ともに Nix）
 - 暗号/パスワード: gnupg, age, bitwarden-cli
 - 言語処理系: deno, nodejs_22, uv, pixi, SBCL, elan (Lean 4), jdk, gradle
 - ビルド: automake, cmake, meson, pkgconf, gnumake, gcc, lld, lldb, llvm, openmp
@@ -222,29 +223,13 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 
 ### Linux GUI (`linux/flatpak.nix`)
 
-Linux の LM Studio・Prism Launcher・Moonlight は Flatpak 管理に移行した。
-VS Code と Emacs は Nix 管理を維持する。Ghostty は macOS 専用とし、Linux の
-パッケージ・設定ファイル・systemd ユーザーサービスの宣言から外している。
-
-| アプリ | Flathub ID | 引き継ぐデータ |
-|---|---|---|
-| LM Studio | `ai.lmstudio.lm-studio` | `~/.lmstudio`、`~/.config/LM Studio` |
-| Prism Launcher | `org.prismlauncher.PrismLauncher` | `~/.local/share/PrismLauncher` |
-| Moonlight | `com.moonlight_stream.Moonlight` | `~/.config/Moonlight Game Streaming Project` |
-
-表のパスは XDG の既定値の場合。Flatpak の sandbox override で既存の場所を
-読み書きできるようにし、設定・モデル・ワールド等をコピーせず使い続ける。
-`lmstudio`・`prismlauncher`・`moonlight` コマンドはユーザー用 Flatpak を起動する。
-Prism の既存インスタンスで Nix の Java パスを指定していた場合は、Prism 側の
-Java 自動管理へ切り替える。標準ディレクトリ外に置いたデータは個別にアクセス権を追加する。
+Firefox・Chrome・Anki・Zotero・Bitwarden 等を Flatpak で管理する。
+LM Studio・Prism Launcher・Moonlight は Nix 管理へ戻し、対応する Flatpak の
+パッケージ宣言と sandbox override は削除した。VS Code と Emacs も Nix 管理。
+Ghostty は macOS 専用とし、Linux には本体・設定ファイル・起動サービスを配置しない。
 
 通常の `home-manager switch --flake ~/nix-config#default --impure` で反映する。
-Flatpak 本体は dnf、アプリの追加と週次更新は既存の nix-flatpak サービスが担当する。
-移行前に対象アプリを終了し、反映後に起動する。
-
-配布情報: [LM Studio](https://flathub.org/en/apps/ai.lmstudio.lm-studio)、
-[Prism Launcher](https://flathub.org/en/apps/org.prismlauncher.PrismLauncher)、
-[Moonlight](https://flathub.org/en/apps/com.moonlight_stream.Moonlight)。
+Flatpak 本体は dnf、残りの Flatpak アプリの追加と週次更新は nix-flatpak が担当する。
 
 ### Homebrew (`darwin/homebrew.nix`)
 - **Casks**: anki, bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, latexit, llama-app, logi-options+, minecraft, multipass, pearcleaner, skim, slack, tailscale-app, wireshark-app, zed, zotero
@@ -662,7 +647,7 @@ Fedora のカーネル側 GPU ドライバーは OS 側で管理する。Nix 版
 描画ライブラリは Home Manager の GPU 連携で用意する。この設定は Fedora の
 ドライバーをインストール・置換するものではない。
 
-VS Code と Emacs を引き続き Nix 管理するため、既存の GPU 連携設定は維持する。
+VS Code・Emacs・LM Studio・Prism Launcher・Moonlight を Nix 管理するため、既存の GPU 連携設定は維持する。
 Ghostty は macOS 限定となり、Linux 側の Ghostty 用サービス登録は不要。
 Flatpak に移したアプリの描画ライブラリは Flatpak 側で管理される。
 
