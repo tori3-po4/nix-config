@@ -1,7 +1,11 @@
-{ config, lib, pkgs ,... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
-  bitwardenSshAuthSock =
-    "${config.home.homeDirectory}/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock";
+  bitwardenSshAuthSock = "${config.home.homeDirectory}/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock";
   bitwardenSshAgentInit = ''
     export SSH_AUTH_SOCK=${lib.escapeShellArg bitwardenSshAuthSock}
   '';
@@ -10,9 +14,6 @@ in
   imports = [
     ./flatpak.nix
   ];
-
-  # GNOME の D-Bus 起動が参照する Ghostty のユーザーサービスを登録する。
-  systemd.user.packages = [ pkgs.ghostty ];
 
   # Flatpak版BitwardenのSSHエージェントを利用する。
   home.sessionVariables.SSH_AUTH_SOCK = bitwardenSshAuthSock;
@@ -38,7 +39,6 @@ in
   # 対話シェルではBitwardenを使う。sessionVariablesの再読み込みに依存しない。
   programs.bash.initExtra = lib.mkAfter bitwardenSshAgentInit;
   programs.zsh.initContent = lib.mkAfter bitwardenSshAgentInit;
-
 
   targets.genericLinux = {
     enable = true;

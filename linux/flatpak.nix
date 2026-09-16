@@ -8,9 +8,11 @@ let
   isX86_64 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
   homeDirectory = config.home.homeDirectory;
   xdgConfigHome = config.xdg.configHome;
+  xdgDataHome = config.xdg.dataHome;
   firefoxConfigPath = ".mozilla/firefox";
 in
 {
+
   # Home Manager 26.05以降のXDGパス変更に影響されず、Flatpak版と
   # ネイティブ版Firefoxが共通で認識する従来の標準パスを使う。
   programs.firefox.configPath = firefoxConfigPath;
@@ -38,10 +40,13 @@ in
     ];
 
     packages = [
+      "ai.lmstudio.lm-studio"
       "com.bitwarden.desktop"
       "com.google.Chrome"
+      "com.moonlight_stream.Moonlight"
       "net.ankiweb.Anki"
       "org.mozilla.firefox"
+      "org.prismlauncher.PrismLauncher"
       "org.zotero.Zotero"
     ]
     ++ lib.optionals isX86_64 [
@@ -66,12 +71,35 @@ in
     };
 
     overrides = {
+      # Nix 版で使っていたモデル・設定をそのまま引き継ぐ。
+      "ai.lmstudio.lm-studio" = {
+        Context.filesystems = [
+          "${homeDirectory}/.lmstudio:create"
+          "${xdgConfigHome}/LM Studio:create"
+        ];
+        Environment.XDG_CONFIG_HOME = xdgConfigHome;
+      };
+
+      # 接続先・ペアリング情報を従来の Qt 設定ディレクトリで維持する。
+      "com.moonlight_stream.Moonlight" = {
+        Context.filesystems = [
+          "${xdgConfigHome}/Moonlight Game Streaming Project:create"
+        ];
+        Environment.XDG_CONFIG_HOME = xdgConfigHome;
+      };
+
       # programs.firefox が標準のLinuxプロファイルへ生成する設定をFlatpak版から使う。
       # Home Manager管理ファイルのsymlink先を読むため、Nix storeは読み取り専用にする。
       "org.mozilla.firefox".Context.filesystems = [
         "${homeDirectory}/${firefoxConfigPath}:rw"
         "/nix/store:ro"
       ];
+
+      # インスタンス・ワールド等の可変データはコピーせず元の場所を使う。
+      "org.prismlauncher.PrismLauncher" = {
+        Context.filesystems = [ "${xdgDataHome}/PrismLauncher:create" ];
+        Environment.XDG_DATA_HOME = xdgDataHome;
+      };
 
       # programs.zed-editor は $XDG_CONFIG_HOME/zed を管理するため、Flatpak内の
       # XDG_CONFIG_HOMEも同じ場所へ揃える。mutableUserSettingsで更新する

@@ -29,12 +29,12 @@
 │  - bitwarden.nix       │ Bitwarden SSH agent (SSH_AUTH_SOCK)    │
 ├────────────────────────┼───────────────────────────────────────┤
 │ Nix (home-manager)     │ macOS/Linux共通パッケージ + アプリ設定    │
-│  - home.packages       │ CLI、LSP、VSCode/JetBrains/Ghostty本体 │
+│  - home.packages       │ CLI、LSP、VSCode / macOS GUI本体      │
 │  - programs.*          │ zsh/bash/starship/fzf/zoxide/firefox/  │
 │                        │ espanso/emacs/vscode/zed (拡張 + 設定) │
 ├────────────────────────┼───────────────────────────────────────┤
 │ nix-flatpak (Linux)    │ GUIアプリ本体 + sandbox設定           │
-│  - packages            │ Firefox/Zed/Chrome/Anki等             │
+│  - packages            │ Firefox/Chrome/LM Studio/Prism等      │
 │  - overrides           │ Home Manager設定へのアクセス権限      │
 ├────────────────────────┼───────────────────────────────────────┤
 │ Home Manager          │ git / tmux / latexmk / ghostty         │
@@ -110,7 +110,7 @@
 - **`linux/flatpak.nix`**: `nix-flatpak` のユーザ用Flatpak宣言。Flathubのアプリ一覧、週次更新、宣言外パッケージの削除、Firefox/ZedからHome Manager管理設定を参照するsandbox overrideをLinux側へ集約。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
-- **`home/default.nix`**: 全てのCLIツール (ripgrep, jq, bat, eza, git, neovim, LSP一式, formatter等) と Nix管理するGUI本体 (VSCode, JetBrains IDE, Ghostty, LM Studio)。Firefox/Zed本体はプラットフォーム側で管理。
+- **`home/default.nix`**: 共通CLIツールと VS Code を管理する。Ghostty は macOS のみに導入し、設定ファイルも macOS 限定。LM Studio・Prism Launcher・Moonlight は macOS では Nix、Linux では `linux/flatpak.nix` で管理する。Linux の Emacs は `home/emacs.nix` で Nix 管理を維持する。
 - **`home/emacs.nix` / `home/emacs/init.el`**: macOSのHomebrew Emacs PlusとLinuxのNix製Emacs 31.1 PGTKで共通の設定。GUIとTUI (`emacs -nw`) の両方で利用する。GNU/NonGNU ELPAを優先し、EvilはNonGNU-devel、lsp-modeとlsp-pyrightはMELPAに固定する。LSPはplist表現、補完はCorfu、診断はFlymakeを使う。LSPサーバーはNix、tree-sitter文法のダウンロード・コンパイルはEmacsが管理する。
 - **`home/zellij.nix`**: 通常は locked mode で入力を Emacs/Evil へ通し、Emacs/Evil で未割当の `F12` でのみ Zellij 操作モードを出入りする。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
@@ -185,7 +185,7 @@ nix-collect-garbage -d
 ### dotfile の更新
 
 `home/dotfiles/` の設定を編集して、通常の Nix / Home Manager の switch で反映します。
-Git設定は `home/git.nix`、Ghostty・tmux・latexmkrcの配置は `home/dotfiles.nix` で宣言しています。
+Git設定は `home/git.nix`、Ghostty（macOSのみ）・tmux・latexmkrcの配置は `home/dotfiles.nix` で宣言しています。
 SSH・Neovimは移行対象外です。Neovimだけをchezmoiで更新する場合は
 `chezmoi apply ~/.config/nvim` と対象を指定します。
 
@@ -206,9 +206,10 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 ### Nix (`home/default.nix`)
 - 基本CLI: ripgrep, fd, fzf, jq, bat, eza, zoxide, coreutils
 - Git周辺: git, git-filter-repo, lazygit, gh
-- エディタ/GUI本体: neovim, vscode, jetbrains (pycharm/clion/idea), ghostty-bin
+- エディタ: neovim, vscode。Linux の Emacs も Nix 管理を維持
+- macOS のみの GUI 本体: ghostty-bin, lmstudio, prismlauncher, moonlight-qt
 - シェル支援: tmux, zellij, direnv, stow, chezmoi
-- ローカルLLM: llama-cpp (UI無効 overlay), lmstudio
+- ローカルLLM GUI: LM Studio（macOS は Nix、Linux は Flatpak）
 - 暗号/パスワード: gnupg, age, bitwarden-cli
 - 言語処理系: deno, nodejs_22, uv, pixi, SBCL, elan (Lean 4), jdk, gradle
 - ビルド: automake, cmake, meson, pkgconf, gnumake, gcc, lld, lldb, llvm, openmp
@@ -218,6 +219,32 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - LSP: rassumfrassum (多重化), lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
 - programs.* 設定: zsh, bash, starship, fzf, zoxide, emacs, firefox (user.js), vscode, zed-editor, espanso
+
+### Linux GUI (`linux/flatpak.nix`)
+
+Linux の LM Studio・Prism Launcher・Moonlight は Flatpak 管理に移行した。
+VS Code と Emacs は Nix 管理を維持する。Ghostty は macOS 専用とし、Linux の
+パッケージ・設定ファイル・systemd ユーザーサービスの宣言から外している。
+
+| アプリ | Flathub ID | 引き継ぐデータ |
+|---|---|---|
+| LM Studio | `ai.lmstudio.lm-studio` | `~/.lmstudio`、`~/.config/LM Studio` |
+| Prism Launcher | `org.prismlauncher.PrismLauncher` | `~/.local/share/PrismLauncher` |
+| Moonlight | `com.moonlight_stream.Moonlight` | `~/.config/Moonlight Game Streaming Project` |
+
+表のパスは XDG の既定値の場合。Flatpak の sandbox override で既存の場所を
+読み書きできるようにし、設定・モデル・ワールド等をコピーせず使い続ける。
+`lmstudio`・`prismlauncher`・`moonlight` コマンドはユーザー用 Flatpak を起動する。
+Prism の既存インスタンスで Nix の Java パスを指定していた場合は、Prism 側の
+Java 自動管理へ切り替える。標準ディレクトリ外に置いたデータは個別にアクセス権を追加する。
+
+通常の `home-manager switch --flake ~/nix-config#default --impure` で反映する。
+Flatpak 本体は dnf、アプリの追加と週次更新は既存の nix-flatpak サービスが担当する。
+移行前に対象アプリを終了し、反映後に起動する。
+
+配布情報: [LM Studio](https://flathub.org/en/apps/ai.lmstudio.lm-studio)、
+[Prism Launcher](https://flathub.org/en/apps/org.prismlauncher.PrismLauncher)、
+[Moonlight](https://flathub.org/en/apps/com.moonlight_stream.Moonlight)。
 
 ### Homebrew (`darwin/homebrew.nix`)
 - **Casks**: anki, bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, latexit, llama-app, logi-options+, minecraft, multipass, pearcleaner, skim, slack, tailscale-app, wireshark-app, zed, zotero
@@ -375,7 +402,7 @@ pkgs.vscode-marketplace-release.esbenp.prettier-vscode
 ### dotfile (`home/dotfiles/`)
 
 - `gitconfig`: ユーザー名・メール・デフォルトブランチ。既存のcredential helper無効化も維持
-- `tmux.conf`, `latexmkrc`, `ghostty.conf`: 元の設定内容をそのまま配置
+- `tmux.conf`, `latexmkrc`: 元の設定内容をそのまま配置。`ghostty.conf` は macOS のみ配置
 - SSH・Neovimは移行対象外。秘密鍵は引き続きBitwarden SSH agent管理
 
 ### システム設定 (`darwin/defaults.nix`)
@@ -629,18 +656,15 @@ home-manager switch --flake ~/nix-config#default --impure
 Flatpak 本体と desktop portal は dnf、ユーザ用アプリ、Flathub remote、
 sandbox override、週次更新 timer は `linux/flatpak.nix` が管理する。
 
-#### Nix 版 GUI の GPU 連携（Ghostty / Mesa / NVIDIA）
+#### Nix 版 GUI の GPU 連携（Mesa / NVIDIA）
 
 Fedora のカーネル側 GPU ドライバーは OS 側で管理する。Nix 版 GUI が使う
 描画ライブラリは Home Manager の GPU 連携で用意する。この設定は Fedora の
 ドライバーをインストール・置換するものではない。
 
-2026-09-16 の Ghostty 1.3.1 の調査では、HackGen Console NF の読み込みには成功したが、
-`Failed to create EGL display` が発生した。動的リンクのログでは
-`libEGL_mesa.so.0` を Nix 内で探索して見つけられず、`/run/opengl-driver` も
-存在しなかった。GPU は RTX 2060 SUPER、使用中のカーネルドライバーは `nouveau`。
-X11 / Wayland の両方で再現した。その後、以下の Mesa 連携を適用した実機で
-OpenGL 4.6 の読み込みとシェル起動の成功を確認した。
+VS Code と Emacs を引き続き Nix 管理するため、既存の GPU 連携設定は維持する。
+Ghostty は macOS 限定となり、Linux 側の Ghostty 用サービス登録は不要。
+Flatpak に移したアプリの描画ライブラリは Flatpak 側で管理される。
 
 **Mesa を使う場合（nouveau など）**
 
@@ -712,22 +736,9 @@ Home Manager が再セットアップを案内した場合は、そのコマン�
 readlink -f /run/opengl-driver
 ls /run/opengl-driver/share/glvnd/egl_vendor.d/
 fc-match "HackGen Console NF"
-ghostty +validate-config
-ghostty --gtk-single-instance=false
 ```
 
 フォント認識と GPU 描画の成功は別々に確認する。
-アプリ一覧からの起動で `app-com.mitchellh.ghostty.service` が見つからない場合も
-GPU とは別問題。`linux/default.nix` では次の設定で、Ghostty が提供する
-ユーザーサービスを systemd の検索先へ配置する。
-
-```nix
-systemd.user.packages = [ pkgs.ghostty ];
-```
-
-`home-manager switch` で反映すると、D-Bus 経由の起動でサービスを見つけられる。
-サービスは要求時に起動するため、`systemctl --user enable` は不要。
-上の直接起動は D-Bus 経由の問題を切り分けるためのもの。
 
 **設定の根拠・一次資料**
 
