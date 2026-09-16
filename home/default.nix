@@ -78,7 +78,6 @@
       lld # 高速リンカ
       lldb # デバッガ
       llvm # opt, llc, llvm-objdump 等
-      llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
       jdk
       gradle # Java/Kotlin ビルドツール(同梱 JDK ではなく上記 jdk を使う)
 
@@ -93,7 +92,6 @@
       gnupg
 
       # ===== Neovim external 管理 (その他の dotfile は Home Manager) =====
-      chezmoi
       age
 
       # ===== 専門ツール =====
@@ -114,7 +112,6 @@
       bitwarden-cli
 
       # ===== LSP servers (Nvim/Emacs共通) =====
-      rassumfrassum # LSP多重化・Eglotとの比較検証用。通常はlsp-modeが直接接続する。
       lua-language-server
       nil
       pyright
@@ -146,5 +143,7 @@
       lmstudio
       prismlauncher
       moonlight-qt
+      #clang用に入れた。
+      llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
     ];
 }
