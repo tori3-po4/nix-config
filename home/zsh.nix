@@ -38,14 +38,6 @@
       fi
 
 
-      # Ctrl-G: fzf-file-widget をディレクトリ候補で呼び出す(パス挿入のみ)
-      # (macOS の Option キー干渉回避もかねる)
-      bindkey -r '\ec' 2>/dev/null
-      fzf-dir-insert-widget() {
-        FZF_CTRL_T_COMMAND="${pkgs.fd}/bin/fd --type d --hidden --follow --exclude .git . $HOME" fzf-file-widget
-      }
-      zle -N fzf-dir-insert-widget
-      bindkey '^G' fzf-dir-insert-widget
-    '';
+      '';
   };
 }
