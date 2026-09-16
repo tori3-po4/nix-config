@@ -52,14 +52,10 @@
       tmux
       direnv
 
-      # ===== coding agent =====
-      (if pkgs.stdenv.hostPlatform.isLinux then codex else null)
-
       # ===== ドキュメント =====
       pandoc
 
       # ===== 言語処理系 =====
-      deno
       nodejs_26
       typescript # tsc コマンド
       pnpm
@@ -78,8 +74,7 @@
       lld # 高速リンカ
       lldb # デバッガ
       llvm # opt, llc, llvm-objdump 等
-      jdk
-      gradle # Java/Kotlin ビルドツール(同梱 JDK ではなく上記 jdk を使う)
+
 
       # ===== 画像/動画/PDF =====
       ffmpeg
@@ -99,9 +94,6 @@
       sqlite
       flyctl
 
-      # ===== コンテナ =====
-      docker-client
-      docker-compose
 
       # ===== LaTeX周辺 =====
       texliveFull # MacTeX-no-gui 相当(全部入り)
@@ -143,7 +135,16 @@
       lmstudio
       prismlauncher
       moonlight-qt
-      #clang用に入れた。
+
       llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
-    ];
+ 
+      # ===== コンテナ =====
+      docker-client
+      docker-compose
+    ]
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+      # ===== coding agent =====
+      codex
+    ]
+  ;
 }
