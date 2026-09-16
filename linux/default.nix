@@ -11,6 +11,9 @@ in
     ./flatpak.nix
   ];
 
+  # GNOME の D-Bus 起動が参照する Ghostty のユーザーサービスを登録する。
+  systemd.user.packages = [ pkgs.ghostty ];
+
   # Flatpak版BitwardenのSSHエージェントを利用する。
   home.sessionVariables.SSH_AUTH_SOCK = bitwardenSshAuthSock;
 

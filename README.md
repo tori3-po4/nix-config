@@ -639,8 +639,8 @@ Fedora のカーネル側 GPU ドライバーは OS 側で管理する。Nix 版
 `Failed to create EGL display` が発生した。動的リンクのログでは
 `libEGL_mesa.so.0` を Nix 内で探索して見つけられず、`/run/opengl-driver` も
 存在しなかった。GPU は RTX 2060 SUPER、使用中のカーネルドライバーは `nouveau`。
-X11 / Wayland の両方で再現した。以下はその解消に向けた設定手順であり、
-この調査時点では適用後の起動成功までは未検証。
+X11 / Wayland の両方で再現した。その後、以下の Mesa 連携を適用した実機で
+OpenGL 4.6 の読み込みとシェル起動の成功を確認した。
 
 **Mesa を使う場合（nouveau など）**
 
@@ -718,8 +718,16 @@ ghostty --gtk-single-instance=false
 
 フォント認識と GPU 描画の成功は別々に確認する。
 アプリ一覧からの起動で `app-com.mitchellh.ghostty.service` が見つからない場合も
-GPU とは別問題。今回の調査ではそのログも確認しており、ユーザー systemd への
-サービス登録を別途確認する必要がある。上の直接起動はその経路を切り分けるためのもの。
+GPU とは別問題。`linux/default.nix` では次の設定で、Ghostty が提供する
+ユーザーサービスを systemd の検索先へ配置する。
+
+```nix
+systemd.user.packages = [ pkgs.ghostty ];
+```
+
+`home-manager switch` で反映すると、D-Bus 経由の起動でサービスを見つけられる。
+サービスは要求時に起動するため、`systemctl --user enable` は不要。
+上の直接起動は D-Bus 経由の問題を切り分けるためのもの。
 
 **設定の根拠・一次資料**
 
