@@ -103,6 +103,8 @@
 (global-set-key (kbd "C-c u") #'universal-argument)
 
 (global-set-key (kbd "s-v") #'clipboard-yank)
+;; Use Super+Space for the mark while Control+Space switches the system IME.
+(global-set-key (kbd "s-SPC") #'set-mark-command)
 
 
 ;; This warm light preset resembles Zed's Gruvbox Light Soft.  Let the theme
