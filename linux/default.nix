@@ -44,6 +44,12 @@ in
     enable = true;
     gpu = {
       enable = true;
+
+      nvidia = {
+        enable =true;
+        version="615.71.09";
+        sha256="sha256-zc7tIrvrYSSNGm3qvCWWZz46ZQFpjucayNL9wo87cP4=";
+      };
     };
   };
 
