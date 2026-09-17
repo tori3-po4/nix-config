@@ -7,7 +7,6 @@
     ./bash.nix
     ./starship.nix
     ./firefox.nix
-    ./fzf.nix
     ./git.nix
     ./nh.nix
     ./dotfiles.nix
@@ -136,7 +135,7 @@
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
       # Ghostty は macOS のみで使用する。
       ghostty-bin
-
+      
       llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
  
       # ===== コンテナ =====
