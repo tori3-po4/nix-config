@@ -1,4 +1,9 @@
-{ username, inputs, ... }:
+{
+  username,
+  inputs,
+  pkgs,
+  ...
+}:
 {
   imports = [
     ./homebrew.nix
@@ -27,6 +32,21 @@
   users.users.${username} = {
     name = username;
     home = "/Users/${username}";
+  };
+
+  # ログイン設定と .zshrc を読み、普段のシェルの PATH で起動する。
+  # exec でシェルを置き換え、launchd が Emacs 本体を管理する。
+  launchd.user.agents.emacs = {
+    command = "/bin/zsh -lic 'exec /opt/homebrew/bin/emacs --fg-daemon'";
+    serviceConfig = {
+      Label = "org.nixos.emacs";
+      RunAtLoad = true;
+      KeepAlive = true;
+      ThrottleInterval = 10;
+      WorkingDirectory = "/Users/${username}";
+      StandardOutPath = "/Users/${username}/Library/Logs/emacs-daemon.log";
+      StandardErrorPath = "/Users/${username}/Library/Logs/emacs-daemon.error.log";
+    };
   };
 
   # /etc/zshrc の compinit が fpath をフルスキャンして ~1.5s かかる。

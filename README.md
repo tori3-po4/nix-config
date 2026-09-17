@@ -285,6 +285,8 @@ CUDA Toolkit・ヘッダ・ランタイム・関連ライブラリを dnf 側へ
 ### Emacs 31.1
 
 - macOSはHomebrewのEmacs Plus、LinuxはGNU公式 `emacs-31.1.tar.xz` をURLとSHA-256で固定した `emacs31-pgtk` を使う。
+- macOSのdaemonは `darwin/default.nix` のユーザーLaunchAgent (`org.nixos.emacs`) でログイン時に起動する。`zsh -lic 'exec /opt/homebrew/bin/emacs --fg-daemon'` でログイン設定と `.zshrc` を読み、普段のシェルのPATHを引き継ぐ。PATHの別管理は不要で、`home.sessionPath` の変更にも追従する。補完やプロンプトの初期化もdaemon起動時に一度実行される。既存の `init.el` によるNixコマンド優先とLSP設定も維持する。
+- daemonのGUIは `emacsclient -c -n`、TUIは `emacsclient -t` で開く。`Emacs.app` の通常起動は独立したEmacsを開くため、daemonに接続するときはEmacs Clientを使う。状態は `launchctl print "gui/$(id -u)/org.nixos.emacs"`、エラーは `~/Library/Logs/emacs-daemon.error.log` で確認する。`KeepAlive = true` のため終了後は再起動する。一時停止する場合はバッファを保存してから `launchctl bootout "gui/$(id -u)/org.nixos.emacs"`、再開は `launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/org.nixos.emacs.plist"` を使う。
 - Native Compilation と Tree-sitter を有効にし、フルAOTのみ無効化。GUIに加えて `emacs -nw` によるTUI利用も維持する。
 - 共通設定: `~/.config/emacs/init.el` と互換用 `~/.emacs.d/init.el`。GNU ELPA / NonGNU ELPA の安定版を優先し、EvilをNonGNU-devel、lsp-modeとlsp-pyrightをMELPAに固定。不足パッケージを起動時に自動導入し、既存の Evil が修正確認済みの `1.15.0.0.20260728.297` より古ければ開発版へ更新する。修正済みの版が入っていれば、この確認のための通信は行わない。
 - LSP: lsp-modeを使い、補完はCorfuのCAPF、診断はFlymakeへ統合する。`lsp-completion-provider = :none` でCompanyの自動起動を止め、LSPのCAPFは有効にする。LSPのsnippet候補を展開できるよう、LSPバッファで `yas-minor-mode` を有効にする。C/C++、Python、Rust、JS/TS/TSX、HTML/CSS、シェル、Nixで `lsp-deferred` を自動起動する。Pythonはlsp-pyrightと同梱のlsp-ruffでPyright＋Ruffを併用し、Nixは `nixd` を選ぶ。`lsp-completion-no-cache = nil`、`lsp-log-io = nil`、受信上限1MiB、`process-adaptive-read-buffering = nil` を使う。
