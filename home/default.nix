@@ -72,6 +72,7 @@
       automake
       cmake
       meson
+      ninja 
       pkgconf
       gnumake
       gcc # 競プロ <bits/stdc++.h>、クロスコンパイル

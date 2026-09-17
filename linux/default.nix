@@ -46,4 +46,21 @@ in
       enable = true;
     };
   };
+
+  # cuda用の環境変数を入れる。
+  home.sessionPath = [
+    "/usr/local/cuda-13.4/bin"
+  ];
+
+  home.sessionVariables.CUDA_PATH =
+    "/usr/local/cuda-13.4";
+
+  home.sessionVariables.CUDACXX =
+    "/usr/local/cuda-13.4/bin/nvcc";
+
+  home.sessionVariables.CUDAHOSTCXX =
+    "${pkgs.gcc}/bin/g++";
+
+  home.sessionVariables.NVCC_CCBIN =
+    "${pkgs.gcc}/bin/g++";
 }
