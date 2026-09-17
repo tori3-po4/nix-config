@@ -77,7 +77,7 @@
           inherit system;
           overlays = sharedOverlays;
           config.allowUnfree = true;
-          nvidia.acceptLicense = true;
+          config.nvidia.acceptLicense = true;
         };
 
       # Linuxユーザ環境で ./home に追加するプラットフォーム固有module。
