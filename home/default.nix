@@ -51,10 +51,6 @@
       tmux
       direnv
 
-      # ===== GUI アプリ (macOS / Linux 共通) =====
-      lmstudio
-      prismlauncher
-      moonlight-qt
 
       # ===== ドキュメント =====
       pandoc
@@ -137,7 +133,10 @@
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
       # Ghostty は macOS のみで使用する。
       ghostty-bin
-      
+      lmstudio
+      prismlauncher
+      moonlight-qt
+
       llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
  
       # ===== コンテナ =====
