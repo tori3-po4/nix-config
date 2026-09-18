@@ -169,6 +169,20 @@
   :init
   (vertico-mode 1))
 
+;; スペルチェックのエンジンと辞書
+(use-package ispell
+  :ensure nil
+  :defer t
+  :init
+  (setq ispell-program-name "aspell"
+        ispell-dictionary "en_US"))
+
+;; 入力中のスペルチェック
+(use-package flyspell
+  :ensure nil
+  :hook ((text-mode . flyspell-mode)
+         (prog-mode . flyspell-prog-mode)))
+
 (use-package magit
   :commands (magit-status magit-dispatch)
   :bind (("C-x g" . magit-status)))

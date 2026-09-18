@@ -98,7 +98,7 @@
       tree-sitter
       sqlite
       flyctl
-      (aspellWithDicts (dict : [dicts.en]))
+      (aspellWithDicts (dicts : [dicts.en]))
 
 
       # ===== LaTeX周辺 =====
