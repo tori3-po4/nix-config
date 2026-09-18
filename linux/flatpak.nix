@@ -39,6 +39,7 @@ in
     ];
 
     packages = [
+      "ai.lmstudio.lm-studio"
       "com.bitwarden.desktop"
       "com.google.Chrome"
       "net.ankiweb.Anki"
@@ -74,16 +75,6 @@ in
         "/nix/store:ro"
       ];
 
-      # programs.zed-editor は $XDG_CONFIG_HOME/zed を管理するため、Flatpak内の
-      # XDG_CONFIG_HOMEも同じ場所へ揃える。mutableUserSettingsで更新する
-      # settings.jsonは書き込み可能、その他のstore symlinkは読み取り専用で参照する。
-      "dev.zed.Zed" = {
-        Context.filesystems = [
-          "${xdgConfigHome}/zed:rw"
-          "/nix/store:ro"
-        ];
-        Environment.XDG_CONFIG_HOME = xdgConfigHome;
-      };
     };
   };
 }

@@ -110,7 +110,7 @@
 - **`linux/flatpak.nix`**: `nix-flatpak` のユーザ用Flatpak宣言。Flathubのアプリ一覧、週次更新、宣言外パッケージの削除、Firefox/ZedからHome Manager管理設定を参照するsandbox overrideをLinux側へ集約。
 - **`darwin/defaults.nix`**: macOS のあらゆる `defaults write` 相当を宣言。nix-darwin が公式オプションを持たない場合は `CustomUserPreferences` で plist 直書き。
 - **`darwin/llm.nix`**: llama.cpp の OpenAI 互換サーバを router mode で launchd 常駐 (`:8080`)。複数 GGUF モデルをリクエスト時に自動ロード、アイドル時アンロード。
-- **`home/default.nix`**: 共通CLIツールと VS Code・LM Studio・Prism Launcher・Moonlight を Nix で管理する。Ghostty は macOS のみに導入し、設定ファイルも macOS 限定。Linux の Emacs は `home/emacs.nix` で Nix 管理を維持する。
+- **`home/default.nix`**: 共通CLIツールと VS Code を Nix で管理する。LM Studio・Prism Launcher・Moonlight・Ghostty は macOS のみに導入し、Ghostty の設定ファイルも macOS 限定。Linux の LM Studio は `linux/flatpak.nix`、Emacs は `home/emacs.nix` で管理する。
 - **`home/emacs.nix` / `home/emacs/init.el`**: macOSのHomebrew Emacs PlusとLinuxのNix製Emacs 31.1 PGTKで共通の設定。GUIとTUI (`emacs -nw`) の両方で利用する。GNU/NonGNU ELPAを優先し、EvilはNonGNU-devel、lsp-modeとlsp-pyrightはMELPAに固定する。LSPはplist表現、補完はCorfu、診断はFlymakeを使う。LSPサーバーはNix、tree-sitter文法のダウンロード・コンパイルはEmacsが管理する。
 - **`home/zellij.nix`**: 通常は locked mode で入力を Emacs/Evil へ通し、Emacs/Evil で未割当の `F12` でのみ Zellij 操作モードを出入りする。
 - **`home/vscode.nix`**: `programs.vscode` (`package = null`、本体は home.packages 側) で拡張 + `userSettings` + スニペット。`mutableExtensionsDir = false` で完全宣言管理。darwin で配信されない `ms-vscode.cpptools` は nixpkgs 同梱版 (unfree) を使用。
@@ -207,10 +207,9 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - 基本CLI: ripgrep, fd, fzf, jq, bat, eza, zoxide, coreutils
 - Git周辺: git, git-filter-repo, lazygit, gh
 - エディタ: neovim, vscode。Linux の Emacs も Nix 管理を維持
-- macOS / Linux 共通の GUI 本体: lmstudio, prismlauncher, moonlight-qt
-- macOS のみの GUI 本体: ghostty-bin
+- macOS のみの GUI 本体: lmstudio, prismlauncher, moonlight-qt, ghostty-bin
 - シェル支援: tmux, zellij, direnv, stow, chezmoi
-- ローカルLLM GUI: LM Studio（macOS / Linux ともに Nix）
+- ローカルLLM GUI: LM Studio（macOS は Nix、Linux は Flatpak）
 - 暗号/パスワード: gnupg, age, bitwarden-cli
 - 言語処理系: deno, nodejs_22, uv, pixi, SBCL, elan (Lean 4), jdk, gradle
 - ビルド: automake, cmake, meson, pkgconf, gnumake, gcc, lld, lldb, llvm, openmp
@@ -223,9 +222,9 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 
 ### Linux GUI (`linux/flatpak.nix`)
 
-Firefox・Chrome・Anki・Zotero・Bitwarden 等を Flatpak で管理する。
-LM Studio・Prism Launcher・Moonlight は Nix 管理へ戻し、対応する Flatpak の
-パッケージ宣言と sandbox override は削除した。VS Code と Emacs も Nix 管理。
+Firefox・Chrome・Anki・Zotero・Bitwarden・LM Studio 等を Flatpak で管理する。
+LM Studio は Nix 版で GPU を認識しないため、Linux では Flathub の
+`ai.lmstudio.lm-studio`（コミュニティ管理版）を使用する。VS Code と Emacs は Nix 管理。
 Ghostty は macOS 専用とし、Linux には本体・設定ファイル・起動サービスを配置しない。
 
 通常の `home-manager switch --flake ~/nix-config#default --impure` で反映する。
@@ -424,7 +423,7 @@ pkgs.vscode-marketplace-release.esbenp.prettier-vscode
 
 ### Flatpak (`linux/flatpak.nix`)
 
-- **全アーキテクチャ**: Anki, Bitwarden, Google Chrome, Firefox, Zed, Zotero
+- **全アーキテクチャ**: Anki, Bitwarden, Google Chrome, Firefox, LM Studio, Zed, Zotero
 - **x86_64のみ**: Blender, Discord, Slack
 - `uninstallUnmanaged = true` により、ユーザ単位で導入した宣言外Flatpakを削除
 - activation時更新は無効。アプリ更新は週次のsystemd user timerで実行
@@ -696,7 +695,7 @@ Fedora のカーネル側 GPU ドライバーは OS 側で管理する。Nix 版
 描画ライブラリは Home Manager の GPU 連携で用意する。この設定は Fedora の
 ドライバーをインストール・置換するものではない。
 
-VS Code・Emacs・LM Studio・Prism Launcher・Moonlight を Nix 管理するため、既存の GPU 連携設定は維持する。
+VS Code・Emacs を Nix 管理するため、既存の GPU 連携設定は維持する。
 Ghostty は macOS 限定となり、Linux 側の Ghostty 用サービス登録は不要。
 Flatpak に移したアプリの描画ライブラリは Flatpak 側で管理される。
 
