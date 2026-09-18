@@ -69,4 +69,9 @@ in
 
   home.sessionVariables.NVCC_CCBIN =
     "${pkgs.gcc}/bin/g++";
+
+    # Nixコンパイラでリンクする際に、GPUライブラリの検索先を埋め込む。
+  home.sessionVariables."NIX_LDFLAGS_${pkgs.stdenv.cc.suffixSalt}" =
+    lib.mkIf config.targets.genericLinux.gpu.nvidia.enable
+      "-rpath /run/opengl-driver/lib";
 }
