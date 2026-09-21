@@ -216,7 +216,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - 画像/動画/PDF: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
 - コンテナ (macOS): docker-client, docker-compose (daemon は Docker Desktop cask)。Linux のコンテナ基盤は dnf 側で管理
 - LaTeX: texlive (scheme-full), ghostscript, tex-fmt
-- LSP: rassumfrassum (多重化), lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, yaml-language-server, bash-language-server, vscode-langservers-extracted
+- LSP: rassumfrassum (多重化), lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, dockerfile-language-server, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter/Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
 - programs.* 設定: zsh, bash, starship, fzf, zoxide, emacs, firefox (user.js), vscode, zed-editor, espanso
 
@@ -299,6 +299,12 @@ CUDA Toolkit・ヘッダ・ランタイム・関連ライブラリを dnf 側へ
 - ELPA本体とquickstartはEmacsメジャー別に保存し、32で生成したbyte-codeを31から読まない。
 - TUI: Emacs 31標準の tty child frame をCorfu 2.xが自動検出するため `corfu-terminal` は不要。
 - Zellij: locked mode を既定とし、`F12` 以外のキー入力を Emacs に通す。`F12` で Zellij の normal/locked mode を切り替える。
+
+Dockerfile / Compose:
+
+`Dockerfile`（`Dockerfile.dev` 等を含む）と `Containerfile` は標準の `dockerfile-ts-mode`、`.yaml` / `.yml` は標準の `yaml-ts-mode` を使い、既存のTree-sitter設定で文法を自動取得する。両モードで `lsp-deferred` を自動起動し、Nixの `dockerfile-language-server`（実行名 `docker-langserver`）と `yaml-language-server` へ接続する。
+
+Compose等のYAMLスキーマは、YAML Language Serverの既定のSchemaStore連携による自動判定・取得に任せる。Emacs設定ではスキーマURLやファイル名の対応を手書きしない。自動適用の対象はSchemaStoreのカタログに従い、取得時はネットワーク接続が必要。
 
 確認用:
 

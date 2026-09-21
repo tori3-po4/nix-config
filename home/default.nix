@@ -116,6 +116,7 @@
       texlab
       clang-tools # clangd, clang-format
       marksman
+      dockerfile-language-server
       yaml-language-server
       bash-language-server
       vscode-langservers-extracted # html, css, json, eslint LSPs

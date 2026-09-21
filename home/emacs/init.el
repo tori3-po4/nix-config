@@ -223,6 +223,7 @@
   :mode "\\.nix\\'")
 
 ;; Emacs 31 supplies grammar sources, downloads and mode remapping itself.
+;; This includes Dockerfile/Containerfile and .yaml/.yml file associations.
 (use-package treesit
   :ensure nil
   :demand t
@@ -248,6 +249,7 @@
           js-mode js-ts-mode typescript-ts-mode tsx-ts-mode
 	  html-mode mhtml-mode html-ts-mode css-mode css-ts-mode
           sh-mode bash-ts-mode
+          dockerfile-ts-mode yaml-ts-mode
           nix-mode nix-ts-mode)
          . lsp-deferred)
   :custom
