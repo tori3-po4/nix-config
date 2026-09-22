@@ -42,6 +42,7 @@
       }
       "google-chrome"
       "jetbrains-toolbox"
+      "kiwix"
       "logi-options+"
       "minecraft"
       "multipass"

@@ -43,6 +43,7 @@ in
       "com.bitwarden.desktop"
       "com.google.Chrome"
       "net.ankiweb.Anki"
+      "org.kiwix.desktop"
       "org.mozilla.firefox"
       "org.zotero.Zotero"
     ]

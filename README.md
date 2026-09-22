@@ -276,7 +276,7 @@ CUDA Toolkit・ヘッダ・ランタイム・関連ライブラリを dnf 側へ
 参考: [NVIDIA CUDA の構成と互換性](https://docs.nvidia.com/deploy/cuda-compatibility/why-cuda-compatibility.html)、[CUDA の導入・ホストコンパイラ要件](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/)、[CMake のホストコンパイラ指定](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_HOST_COMPILER.html)、[clangd の CUDA 対応](https://clangd.llvm.org/faq#does-clangd-support-cuda)。
 
 ### Homebrew (`darwin/homebrew.nix`)
-- **Casks**: anki, bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, latexit, llama-app, logi-options+, minecraft, multipass, pearcleaner, skim, slack, tailscale-app, wireshark-app, zed, zotero
+- **Casks**: anki, bitwarden, blender, chatgpt, claude-code@latest, codex, discord, docker-desktop, firefox, font-hackgen-nerd, google-chrome, kiwix, latexit, llama-app, logi-options+, minecraft, multipass, pearcleaner, skim, slack, tailscale-app, wireshark-app, zed, zotero
 - **Taps**: なし
 - **Brews**: mole (gtkwave は必要になったら `randomplum/gtkwave` tap で復活させる)
 - 運用: `cleanup = "uninstall"` / `autoUpdate` / `upgrade` / `greedyCasks` すべて有効
@@ -429,12 +429,46 @@ pkgs.vscode-marketplace-release.esbenp.prettier-vscode
 
 ### Flatpak (`linux/flatpak.nix`)
 
-- **全アーキテクチャ**: Anki, Bitwarden, Google Chrome, Firefox, LM Studio, Zed, Zotero
+- **全アーキテクチャ**: Anki, Bitwarden, Google Chrome, Firefox, Kiwix, LM Studio, Zed, Zotero
 - **x86_64のみ**: Blender, Discord, Slack
 - `uninstallUnmanaged = true` により、ユーザ単位で導入した宣言外Flatpakを削除
 - activation時更新は無効。アプリ更新は週次のsystemd user timerで実行
 - Firefox/Zedはoverrideを通じて `home/firefox.nix` / `home/zed.nix` の設定を利用
 - WiresharkはFlathub版にパケットキャプチャ機能がないため対象外
+
+### Kiwix と Wiki データ
+
+本体は macOS では [Homebrew Cask `kiwix`](https://formulae.brew.sh/cask/kiwix)、Linux では
+[Flathub `org.kiwix.desktop`](https://github.com/flathub/org.kiwix.desktop) で管理する。
+通常の `darwin-rebuild switch` / `home-manager switch` で導入される。
+現時点では本体だけを宣言しており、Wiki データの自動ダウンロードは行わない。
+[Kiwix Library](https://library.kiwix.org/) で言語・内容・容量を確認し、ZIM ファイルを選ぶ。
+ZIM はオフライン閲覧用のスナップショットで、更新時は新しい版を取得する。
+
+Wiki データも宣言的に管理できる。方法は次の2つ。
+
+- **Nix store に固定する**: 日付入りの ZIM URL と SHA-256 を `pkgs.fetchurl` に指定し、
+  Home Manager の `home.file` で閲覧用パスにリンクする。URL とハッシュを変更して更新する。
+  旧世代が参照する ZIM も GC までは残るため、大容量の Wikipedia では更新時の空き容量に注意する。
+  配布元が旧版を削除する場合に備え、長期の再取得には自分での保存・ミラーも必要になる。
+- **Nix store の外に保存する**: 取得対象の URL・ハッシュ・保存先と同期コマンドを Nix で定義し、
+  ZIM 本体は専用ディレクトリや外付け SSD に置く。大容量データ向けだが、ハッシュ検証、
+  ダウンロード再開、旧版の扱いを同期処理側で実装する必要がある。
+
+前者の設定例（未適用。`url` と `hash` は選んだ ZIM の実値に置き換える）：
+
+```nix
+# Home Manager モジュール内（pkgs を引数で受け取る）
+home.file."Documents/Kiwix/wikipedia-ja.zim".source = pkgs.fetchurl {
+  url = "https://download.kiwix.org/zim/wikipedia/<日付入りのファイル名>.zim";
+  hash = "sha256-<ZIM の SHA-256 を base64 で記載>";
+};
+```
+
+取得後は Kiwix でそのファイルを開く。ファイルの配置とアプリ内のライブラリ登録は別の操作になる。
+Linux の Flatpak でこのリンクを直接参照させる場合は、保存先とリンク先 `/nix/store` の
+読み取り権限を `linux/flatpak.nix` の Kiwix 用 override に追加する。
+参照: [Nixpkgs の `fetchurl`](https://nixos.org/manual/nixpkgs/stable/#sec-pkgs-fetchers-fetchurl)。
 
 ### dotfile (`home/dotfiles/`)
 
