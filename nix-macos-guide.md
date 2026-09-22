@@ -1294,54 +1294,30 @@ home.file."Library/Application Support/Code/User/settings.json".text =
   };
 ```
 
-### 12.4 Ghostty設定
+### 12.4 Alacritty設定（Ghosttyから移行）
 
-macOSではNixからのソースビルドが現状不可。3つの選択肢：
+macOS では `home/dotfiles.nix` の `programs.alacritty` で本体・テーマを導入し、
+`home/dotfiles/alacritty.toml` を読み込んだ設定を Home Manager から
+`~/.config/alacritty/alacritty.toml` に生成する。
 
-#### A. ghostty-bin（公式DMGをNixで再パッケージ・本リポジトリの現行方式）
+Ghostty の HackGen Console NF 16pt、130列×28行、不透明背景、左右 Option の
+Alt 動作を引き継ぐ。配色は Alacritty 用の同名テーマ `github_dark_high_contrast` を使う。
+行高の20%追加は割合指定がないため、Retina (2x)・16pt を基準に
+`font.offset.y = 8` で近似する。DPI や文字サイズを変更する場合は調整が必要。
+Ghostty 固有の `shell-integration = detect` に直接対応する設定はない。
 
-```nix
-home.packages = with pkgs; [
-  (if stdenv.hostPlatform.isDarwin  then ghostty-bin else ghostty)
-];
-# 設定ファイル (~/.config/ghostty/config) は chezmoi 側で管理
+```toml
+[env]
+TERM = "xterm-256color"
 ```
 
-Sparkle自動更新は壊れる（darwin-rebuild での更新に一本化される）。
+`TERM` は Alacritty から起動するプロセスだけに設定する。
+SSH 先に `xterm-ghostty` や `alacritty` の terminfo を追加する必要はない。
+tmux 内は引き続き `screen-256color` を使い、シェル設定では上書きしない。
+適用後に新しく開いた Alacritty で `echo "$TERM"` と `tput colors` を実行すると、
+tmux 外ではそれぞれ `xterm-256color` と `256` になる。
 
-#### B. Cask + 設定だけNix管理
-
-```nix
-# nix-darwin
-homebrew.casks = [ "ghostty" ];
-
-# home-manager
-programs.ghostty = {
-  enable = true;
-  package = null;   # ← 本体はインストールしない
-  
-  settings = {
-    font-family = "JetBrainsMono Nerd Font";
-    font-size = 14;
-  };
-};
-```
-
-自動更新も正常、設定はNix管理。
-
-#### C. 公式DMGを手動 + 設定Nix管理
-
-最速で最新版に追従したい人向け。Cask不要。
-
-#### sudo時の色問題
-
-```nix
-{
-  security.sudo.extraConfig = ''
-    Defaults env_keep += "TERMINFO"
-  '';
-}
-```
+設定項目: [Alacritty 公式ドキュメント](https://alacritty.org/config-alacritty.html)。
 
 ### 12.5 既存設定のエクスポート
 

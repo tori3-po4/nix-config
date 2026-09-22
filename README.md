@@ -37,7 +37,7 @@
 │  - packages            │ Firefox/Chrome/Anki/Zotero等          │
 │  - overrides           │ Home Manager設定へのアクセス権限      │
 ├────────────────────────┼───────────────────────────────────────┤
-│ Home Manager          │ git / tmux / latexmk / ghostty         │
+│ Home Manager          │ git / tmux / latexmk / alacritty       │
 │ chezmoi                │ SSH・Neovimのみ (移行対象外)            │
 │  - dot_ssh             │ SSH config のみ (鍵は Bitwarden 管理)  │
 │  - .chezmoiexternal    │ NvChad 設定 (別リポジトリ)             │
@@ -207,7 +207,7 @@ sudo darwin-rebuild switch --flake ~/nix-config --impure  # cleanup = "uninstall
 - 基本CLI: ripgrep, fd, fzf, jq, bat, eza, zoxide, coreutils
 - Git周辺: git, git-filter-repo, lazygit, gh
 - エディタ: neovim, vscode。Linux の Emacs も Nix 管理を維持
-- macOS のみの GUI 本体: lmstudio, prismlauncher, moonlight-qt, ghostty-bin
+- macOS のみの GUI 本体: lmstudio, prismlauncher, moonlight-qt。Alacritty は `home/dotfiles.nix` で導入
 - シェル支援: tmux, zellij, direnv, stow, chezmoi
 - ローカルLLM GUI: LM Studio（macOS は Nix、Linux は Flatpak）
 - 暗号/パスワード: gnupg, age, bitwarden-cli
@@ -439,8 +439,13 @@ pkgs.vscode-marketplace-release.esbenp.prettier-vscode
 ### dotfile (`home/dotfiles/`)
 
 - `gitconfig`: ユーザー名・メール・デフォルトブランチ。既存のcredential helper無効化も維持
-- `tmux.conf`, `latexmkrc`: 元の設定内容をそのまま配置。`ghostty.conf` は macOS のみ配置
+- `tmux.conf`, `latexmkrc`: 元の設定内容をそのまま配置。`alacritty.toml` は macOS のみ配置
+- Alacritty: Ghostty の HackGen Console NF 16pt、130列×28行、不透明背景、左右 Option の Alt 動作を引き継ぐ。配色は Alacritty 用の同名テーマ `github_dark_high_contrast` を Home Manager で読み込む
+- `TERM=xterm-256color` は Alacritty の `[env]` だけで設定し、SSH 先に専用 terminfo を要求しない。tmux 内は従来どおり `screen-256color`
+- 行間の `adjust-cell-height=20%` は Retina (2x)・16pt を基準に `font.offset.y=8` で近似。DPI や文字サイズを変えた場合は調整する。Ghostty 固有の `shell-integration=detect` に直接対応する設定はない
 - SSH・Neovimは移行対象外。秘密鍵は引き続きBitwarden SSH agent管理
+
+設定項目は [Alacritty 公式ドキュメント](https://alacritty.org/config-alacritty.html) を参照。
 
 ### システム設定 (`darwin/defaults.nix`)
 - Dock: autohide=off, mineffect=genie, tilesize=60, mru-spaces=off, show-recents=off
@@ -475,7 +480,10 @@ chezmoi apply ~/.config/nvim
 .tmux.conf
 .latexmkrc
 .config/ghostty
+.config/alacritty
 ```
+
+`.config/ghostty` の除外は、古い chezmoi ソースから廃止済み設定が再配置されるのを防ぐため残します。
 
 既存の通常ファイルは初回switch時に退避します。macOSは既存設定の `.hmbak` を使い、
 standalone Home Managerでは `home-manager switch -b hmbak --flake ~/nix-config#default --impure`

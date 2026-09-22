@@ -37,7 +37,8 @@
       bat
       eza
       coreutils
-      # Keep Nix terminal tools while preferring Ghostty's own terminfo.
+      # Eat でも clear/tput/tic/infocmp を Nix の zsh と同じ ncurses に揃える。
+      # 他パッケージの terminfo と競合した場合は、そちらを優先する。
       (lib.lowPrio ncurses)
 
       # ===== Git周辺 =====
@@ -132,8 +133,6 @@
       shfmt
     ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
-      # Ghostty は macOS のみで使用する。
-      ghostty-bin
       lmstudio
       prismlauncher
       moonlight-qt

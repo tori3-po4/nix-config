@@ -1,8 +1,10 @@
 { lib, pkgs, ... }:
 {
-  # 既存の設定内容を保持し、配置のみを Home Manager に移す。
-  xdg.configFile."ghostty/config" = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-    source = ./dotfiles/ghostty.conf;
+  # Alacritty 本体・設定・テーマは macOS のみ導入する。
+  programs.alacritty = {
+    enable = true;
+    theme = "github_dark_high_contrast";
+    settings = builtins.fromTOML (builtins.readFile ./dotfiles/alacritty.toml);
   };
   home.file.".tmux.conf".source = ./dotfiles/tmux.conf;
   home.file.".latexmkrc".source = ./dotfiles/latexmkrc;
