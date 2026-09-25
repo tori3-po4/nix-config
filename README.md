@@ -23,6 +23,7 @@ macOS は nix-darwin + Home Manager、Fedora などの Linux は standalone Home
 | Emacs 本体 | Homebrew Emacs Plus | Nix の Emacs 31.1 PGTK |
 | Emacs 設定 / デーモン | Home Manager / launchd | Home Manager / systemd user service |
 | Firefox・Chrome・Anki・Zotero・Bitwarden・Kiwix 等 | Homebrew Cask | nix-flatpak（ユーザ単位） |
+| Firefox のプロファイル・設定・拡張機能 | Firefox 自身 / Firefox Sync | Firefox 自身 / Firefox Sync |
 | LM Studio | Nix | Flatpak |
 | Prism Launcher / Moonlight | Nix | この構成では導入しない |
 | Codex | Homebrew Cask | Nix |
@@ -53,7 +54,7 @@ macOS は nix-darwin + Home Manager、Fedora などの Linux は standalone Home
 │   └── jetbrains-wrapper-fix.nix # Nix 版 JetBrains 用 overlay
 ├── linux/
 │   ├── default.nix           # Emacs、SSH agent、フォント、GPU / CUDA
-│   └── flatpak.nix           # GUI アプリ、更新 timer、Firefox override
+│   └── flatpak.nix           # GUI アプリ、更新 timer
 └── home/
     ├── default.nix           # 共通パッケージ、imports、macOS の .app コピー
     ├── emacs.nix             # Linux の Emacs 本体と共通設定の配置
@@ -65,7 +66,6 @@ macOS は nix-darwin + Home Manager、Fedora などの Linux は standalone Home
     ├── cpp-snippets.json    # VS Code の C++ スニペット
     ├── zsh.nix / bash.nix   # シェル、uv 補完、Eat 連携
     ├── starship.nix         # 両シェルのプロンプト
-    ├── firefox.nix          # profiles.ini / user.js
     ├── git.nix              # Git 設定の配置と credential helper のリセット
     ├── nh.nix               # nh と週次の世代・store 清掃
     ├── dotfiles.nix         # Alacritty、tmux、latexmk の設定
@@ -388,7 +388,7 @@ Python / Jupyter、C/C++ / CMake、Java、Rust、LaTeX、Astro、Tailwind、ESLi
 - **x86_64のみ**: Blender, Discord, Slack
 - `uninstallUnmanaged = true` により、ユーザ単位で導入した宣言外Flatpakを削除
 - activation時更新は無効。アプリ更新は週次のsystemd user timerで実行
-- Firefox は override を通じて `home/firefox.nix` が生成する標準プロファイルを参照
+- Firefox のプロファイルは Flatpak の標準領域で管理し、専用 override は設定しない
 - WiresharkはFlathub版にパケットキャプチャ機能がないため対象外
 
 ### Kiwix と Wiki データ
@@ -587,7 +587,7 @@ home-manager switch --flake ~/nix-config#default --impure
 
 `sudo home-manager ...` は root のホームを対象にするため使わない。
 Flatpak 本体と desktop portal は dnf、ユーザ用アプリ、Flathub remote、
-sandbox override、週次更新 timer は `linux/flatpak.nix` が管理する。
+週次更新 timer は `linux/flatpak.nix` が管理する。
 
 #### Nix 版 GUI の GPU 連携（Mesa / NVIDIA）
 
@@ -682,82 +682,84 @@ fc-match "HackGen Console NF"
 
 ### Firefox の設定と拡張機能を別マシンへ移行
 
-この構成ではFirefoxプロファイル全体をコピーしない。宣言済みの設定は `home/firefox.nix` から再生成する。現在は拡張機能の XPI をリポジトリに同梱せず、Home Manager での拡張機能導入も宣言していない。Zotero Connectorは新しいマシンでZotero公式サイトから手動導入し、それ以外のFirefox設定と拡張機能はFirefox Syncで復元する。Cookie、保存済みログイン、ログイン状態、履歴、セッション、サイトストレージは移行対象外とする。
+Nix構成ではFirefox本体の導入と更新だけを管理する。macOSはHomebrew Cask、LinuxはFlatpakを使い、プロファイルの作成・選択、設定、拡張機能はFirefox自身に任せる。プロファイル名や保存先、インストールIDをNixへ記録する必要はない。
+
+端末間ではFirefox Syncの **アドオンと設定だけ** を同期する。従来どおり、Cookie、保存済みログイン、ログイン状態、履歴、セッション、サイトストレージは別マシンへ移行しない。
 
 | 移行対象 | 移行方法 |
 |---|---|
-| `about:config`、UI、ツールバー、キャッシュ等 | `home/firefox.nix` → Home Managerの `user.js` |
-| プロファイルパス | Home Manager → macOSは `Profiles/default`、Linuxは `~/.mozilla/firefox/default` |
-| `home/firefox.nix` にないFirefox設定 | Firefox Syncの「設定」を同期 |
+| Syncの対象となるFirefox設定 | Firefox Syncの「設定」を同期 |
+| 同期されない設定・ツールバー配置・`about:config` | 必要なものだけ新しいマシンで手動設定 |
 | Zotero Connector | 新しいマシンでZotero公式サイトから手動導入 |
-| その他の拡張機能 | Firefox Syncの「アドオン」を同期 |
+| その他の拡張機能 | Firefox Syncの「アドオン」を同期し、不足分を手動導入 |
 | 拡張機能固有の設定 | 拡張機能自身の同期機能またはエクスポート／インポート |
 | Cookie、保存済みログイン、履歴、セッション等 | 移行しない |
 
-#### 1. 移行元のMacで準備
+Syncはすべての設定を複製するものではない。同期対象は[Mozilla公式ヘルプ](https://support.mozilla.org/en-US/kb/sync-custom-preferences)を参照する。キャッシュ容量やプロセス数などは通常Firefoxの既定値を使い、必要が生じた端末だけで調整する。
 
-1. `home/firefox.nix` を含む最新のNix設定をコミットしてリモートへpushする。
-2. Firefoxの「設定 → Sync → 同期する項目を変更」で **アドオンと設定だけ** を有効にする。パスワード、履歴、開いているタブ、ブックマーク、住所、支払い方法等は無効にする。同期対象の変更方法は[Mozilla公式ヘルプ](https://support.mozilla.org/en-US/kb/how-do-i-choose-what-information-sync-firefox)を参照。
-3. 拡張機能固有の設定が必要なら、それぞれの拡張機能が提供する同期機能を有効にするか、設定をエクスポートする。Firefox Syncで拡張機能本体が復元されても、拡張機能内部のデータまで必ず同期されるとは限らない。
+#### 1. 移行元で準備
 
-現在有効なユーザ導入拡張機能は、移行確認用に次のコマンドで一覧を保存できる。
-
-```bash
-firefox_extensions="$HOME/Library/Application Support/Firefox/Profiles/default/extensions.json"
-
-jq -r '
-  .addons[]
-  | select(.type == "extension" and .active == true and .location == "app-profile")
-  | [(.defaultLocale.name // .id), .id]
-  | @tsv
-' "$firefox_extensions" > "$HOME/Desktop/firefox-extensions.tsv"
-```
+1. FirefoxのSync設定で **アドオンと設定だけ** を有効にする。パスワード、履歴、開いているタブ、ブックマーク、住所、支払い方法等は無効にする。[同期対象の変更方法](https://support.mozilla.org/en-US/kb/how-do-i-choose-what-information-sync-firefox)を参照。
+2. 「アドオンとテーマ」で使用中の拡張機能を確認し、同期されない設定やツールバー配置のうち、再現したいものを控える。
+3. 拡張機能固有の設定が必要なら、それぞれの拡張機能が提供する同期機能を有効にするか、設定をエクスポートする。Firefox Syncで拡張機能本体が復元されても、内部のデータまで必ず同期されるとは限らない。
 
 #### 2. 新しいmacOSで復元
 
-1. [macOS のセットアップ](#macos-の初回セットアップ)を実行する。Homebrew 版 Firefox が導入され、Home Manager が `profiles.ini` と `Profiles/default/user.js` を配置する。
-2. `/Applications/Firefox.app` を起動する。
-3. 旧 Macと同じFirefoxアカウントへログインし、Syncは **アドオンと設定だけ** を有効にする。`home/firefox.nix` と重複する設定は、次回起動時にHome Managerの `user.js` の値が優先される。
+1. [macOS のセットアップ](#macos-の初回セットアップ)を実行し、Homebrew版Firefoxを導入する。
+2. `/Applications/Firefox.app` を起動する。初回プロファイルはFirefoxが作成する。
+3. 移行元と同じMozillaアカウントへログインし、Syncは **アドオンと設定だけ** を有効にする。
 4. Zotero公式サイトからZotero Connectorを導入し、Zoteroとの接続を確認する。
-5. `firefox-extensions.tsv` と「アドオンとテーマ」の一覧を比較し、不足している拡張機能を手動で導入する。
-6. 旧 Macでエクスポートした拡張機能固有の設定があればインポートする。各サービスや拡張機能へのログインは新 Macでやり直す。
+5. 不足している拡張機能と必要な設定だけを手動で追加する。エクスポートした拡張機能の設定があればインポートする。各サービスへのログインは新しいマシンでやり直す。
 
-復元後に次を確認する。
-
-- `about:config` の設定、UI、ツールバー配置が `home/firefox.nix` の内容になっている。
-- 必要な拡張機能が有効になっている。
-- DRMコンテンツを使う場合は「設定 → 一般 → DRMコンテンツを再生」とWidevineが有効になっている。
-
-> `~/Library/Application Support/Firefox` は旧 Macからコピーしない。これによりCookie、ログイン状態、保存済みログイン、履歴、セッション、サイトストレージ等を新 Macへ持ち込まない。`profiles.ini`、`Profiles/default`、`user.js`を含む宣言部分はHome Managerが再生成する。
+> 別マシンへの移行では `~/Library/Application Support/Firefox` 全体をコピーしない。Cookieやログイン状態などを持ち込まず、Firefox自身が新しいプロファイルを作成する。
 
 #### 3. 新しいLinux（Flatpak）で復元
 
-1. [Fedora など dnf 系 Linux](#fedora-など-dnf-系-linux-standalone-home-manager) の手順でFlatpak本体、desktop portal、Nix、Home Manager構成を導入する。Flathub remote、ユーザ用アプリ、overrideは `nix-flatpak` が管理するため、個別の `flatpak install` / `flatpak override` は実行しない。
-2. `private/user.nix` の `system` がLinuxのCPUに合う `x86_64-linux` または `aarch64-linux` であることを確認する。`flake.nix` はその値から `homeConfigurations.default` と `homeConfigurations."<user>@<host>"` を生成する。
-3. Firefoxを終了してから対象のHome Manager構成を適用する。
+1. [Fedora など dnf 系 Linux](#fedora-など-dnf-系-linux-standalone-home-manager) の手順でFlatpak本体、desktop portal、Nix、Home Manager構成を導入する。Flathub remoteとユーザ用アプリは `nix-flatpak` が管理する。
+2. `private/user.nix` の `system` がLinuxのCPUに合う `x86_64-linux` または `aarch64-linux` であることを確認し、構成を適用する。
 
    ```bash
    home-manager switch --flake ~/nix-config#default --impure
    ```
 
-4. `flatpak run org.mozilla.firefox` で起動する。Firefoxアカウントへログインし、Zotero ConnectorはZotero公式サイトから手動導入する。
+3. `flatpak run org.mozilla.firefox` で起動し、macOSと同様にSyncとZotero Connectorを設定する。
 
-Linux では Home Manager が通常の Firefox と同じ場所に設定を配置する。
+プロファイルはFlatpakの標準領域 `~/.var/app/org.mozilla.firefox/.mozilla/firefox/` にFirefox自身が作成する（[Mozillaの移行案内](https://support.mozilla.org/en-US/kb/install-firefox-linux#w_data-migration)）。ホストの `~/.mozilla/firefox` や `/nix/store` へアクセスする専用overrideは使わない。
 
-```text
-~/.mozilla/firefox/profiles.ini
-~/.mozilla/firefox/default/user.js
-```
+#### 既存端末でHome Manager管理を解除する（一度だけ）
 
-Home Managerの管理ファイルは `/nix/store` へのシンボリックリンクになるため、`linux/flatpak.nix` がFirefoxの標準プロファイルへ読み書き、Nix storeへ読み取り専用の権限を与える。Home Manager自身は `~/.var/app` 以下を直接管理せず、Cookie、ログイン状態、履歴、拡張機能内部データなどの可変状態は Firefox 自身が管理する。
+この手順は、以前の `home/firefox.nix` を適用済みの端末だけで行う。同じ端末の既存データを引き継ぐための手順であり、上記の別マシンへの移行とは異なる。**最初にFirefoxを完全に終了し、作業が終わるまで起動しない。**
 
-#### Firefoxが「Your profile cannot be loaded」で起動しない場合
+**macOS**
 
-`--profile "$HOME/.mozilla/firefox/default"` を付けると起動できる場合、通常起動時のプロファイル選択を確認する。Firefoxは `profiles.ini` の `[Install<インストールID>]` でインストールごとの起動先を選ぶ。`installs.ini` はバックアップ用なので、こちらだけの変更では直らないことがある。
+1. `~/Library/Application Support/Firefox` をバックアップする。
+2. `profiles.ini` がHome Managerへのシンボリックリンクなら、内容を保った書き込み可能な通常ファイルへ置き換える。これにより、次のswitchでも既存プロファイルの登録が残る。
 
-`linux/flatpak.nix` はFedora実機で確認したFlathub版のID `CF146F38BCAB2D21` に対して `Default=default` を宣言する。Firefoxを終了してから `home-manager switch --flake ~/nix-config#default --impure` で反映し、`flatpak run org.mozilla.firefox` で通常起動を確認する。異なる配布元・インストール先ではIDが異なる可能性があるため、このIDをそのまま流用しない。
+   ```bash
+   (
+     set -eu
+     firefox_registry="$HOME/Library/Application Support/Firefox/profiles.ini"
+     if [ -L "$firefox_registry" ]; then
+       firefox_registry_copy=$(mktemp "${firefox_registry}.XXXXXX")
+       cp -L "$firefox_registry" "$firefox_registry_copy"
+       chmod u+w "$firefox_registry_copy"
+       mv -f "$firefox_registry_copy" "$firefox_registry"
+     fi
+   )
+   ```
 
-仕様: [Mozilla Profiles Service Changes](https://firefox-source-docs.mozilla.org/toolkit/profile/changes.html#profile-per-install)。既存のプロファイルフォルダを削除する必要はない。
+3. `sudo darwin-rebuild switch --flake ~/nix-config#default --impure` を実行する。旧 `Profiles/default/user.js` の管理リンクはHome Managerが削除する。`profiles.ini` の削除をスキップしたという警告は、手順2で通常ファイルにしたためで正常。
+4. Firefoxを起動し、既存の設定や拡張機能を確認する。プロファイルが選ばれない場合は `about:profiles` から既存の `Profiles/default` を使うプロファイルを登録し、既定にする。インストールIDの手動編集は不要。
+
+**Linux（Flatpak）**
+
+1. ホストの `~/.mozilla/firefox` と、存在する場合は `~/.var/app/org.mozilla.firefox/.mozilla/firefox` をバックアップする。
+2. 旧構成で使っていた `~/.mozilla/firefox` の内容を、Flatpakの標準領域 `~/.var/app/org.mozilla.firefox/.mozilla/firefox` へコピーする。コピー先が既にある場合は別名で退避してから行い、異なるプロファイル同士を混ぜない。
+3. コピー先の `profiles.ini` はリンク先の内容を持つ書き込み可能な通常ファイルにする。コピーされた `default/user.js` は `user.js.disabled` に改名して、旧設定の強制適用を止める。元の `~/.mozilla/firefox` は確認が済むまで残す。
+4. `home-manager switch --flake ~/nix-config#default --impure` を実行する。旧管理ファイルのリンクと、nix-flatpakが管理していたFirefox専用overrideが解除される。
+5. `flatpak run org.mozilla.firefox` で通常起動を確認する。プロファイルが選ばれない場合は `about:profiles` で引き継いだプロファイルを既定にする。Flatpak内の表示パスは `~/.mozilla/firefox` でも、ホスト側の実体は手順2の標準領域にある。
+
+**管理解除は設定値の初期化ではない。** `user.js` を外しても以前の値は `prefs.js` に残るため、既存端末では必要に応じてFirefoxの設定画面や `about:config` で変更・リセットする。プロファイル全体や `prefs.js` を削除する必要はない。設定ファイルの役割は[Mozillaの仕様](https://firefox-source-docs.mozilla.org/modules/libpref/index.html)を参照。
 
 ### 鍵が使えない場合のフォールバック
 

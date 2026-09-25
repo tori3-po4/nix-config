@@ -6,7 +6,6 @@
     ./zsh.nix
     ./bash.nix
     ./starship.nix
-    ./firefox.nix
     ./git.nix
     ./nh.nix
     ./dotfiles.nix

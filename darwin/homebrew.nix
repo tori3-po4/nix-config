@@ -35,7 +35,7 @@
       # Emacs本体はHomebrew、init.elはHome Managerで管理する。
       "emacs-plus-app"
       "font-hackgen-nerd"
-      # Mozilla 公式 DMG の本体だけを Cask 管理し、プロファイルは Home Manager で維持する。
+      # 本体だけを Cask 管理し、プロファイル・設定・拡張機能は Firefox 自身で管理する。
       {
         name = "firefox";
         args.language = "ja";

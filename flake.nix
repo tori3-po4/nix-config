@@ -81,7 +81,7 @@
         };
 
       # Linuxユーザ環境で ./home に追加するプラットフォーム固有module。
-      # nix-flatpak本体のmoduleと、アプリ一覧・overrideを必ず同時に読み込む。
+      # nix-flatpak本体のmoduleと、アプリ一覧・更新設定を必ず同時に読み込む。
       linuxHomeModules = [
         inputs.nix-flatpak.homeManagerModules.nix-flatpak
         ./linux
