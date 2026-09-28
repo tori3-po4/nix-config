@@ -41,6 +41,7 @@
         args.language = "ja";
       }
       "google-chrome"
+      "google-japanese-ime"
       "jetbrains-toolbox"
       "kiwix"
       "logi-options+"
