@@ -49,6 +49,7 @@ in
       show-recents = false;
       tilesize = 60;
       wvous-br-corner = 1;
+      largesize = 60;
     };
 
     finder = {
