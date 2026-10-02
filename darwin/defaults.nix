@@ -47,9 +47,8 @@ in
       minimize-to-application = true;
       mru-spaces = false;
       show-recents = false;
-      tilesize = 60;
+      tilesize = 40;
       wvous-br-corner = 1;
-      largesize = 60;
     };
 
     finder = {
