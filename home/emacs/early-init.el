@@ -18,5 +18,5 @@
             (setq gc-cons-threshold (* 64 1024 1024)
                   gc-cons-percentage 0.1)))
 
-(add-to-list 'default-frame-alist '(fullscreen . fullboth))
+;;(add-to-list 'default-frame-alist '(fullscreen . fullboth))
 ;;; early-init.el ends here
