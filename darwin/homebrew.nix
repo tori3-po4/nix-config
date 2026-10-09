@@ -51,10 +51,10 @@
       "skim"
       "slack"
       "tailscale-app"
-      {
-        name = "tor-browser";
-        args.language = "ja";
-      }
+      #{
+      #  name = "tor-browser";
+      #  args.language = "ja";
+      #}
       "thunderbird"
       "zotero"
       "wireshark-app"
