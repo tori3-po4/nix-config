@@ -27,7 +27,7 @@ macOS は nix-darwin + Home Manager、Fedora などの Linux は standalone Home
 | LM Studio | Nix | Flatpak |
 | Prism Launcher / Moonlight | Nix | この構成では導入しない |
 | Codex | Homebrew Cask | Nix |
-| Pi / Hermes Agent | Nix / Home Manager | Nix / Home Manager |
+| Pi | Nix / Home Manager | Nix / Home Manager |
 | SSH agent の接続先 | `~/.bitwarden-ssh-agent.sock` | `~/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock` |
 
 設定の読み込み順は `flake.nix` → `darwin/` + `home/`（macOS）、または `home/` + `linux/`（Linux）。Nix の依存は `flake.lock` で固定する。Homebrew / Flatpak のアプリ、Emacs が取得するパッケージ・Tree-sitter 文法、elan のツールチェーンは Nix store 外でも管理されるため、すべてが `flake.lock` だけで固定されるわけではない。
@@ -170,7 +170,7 @@ sudo darwin-rebuild switch --flake ~/nix-config#default --impure  # cleanup = "u
 - Git周辺: git, git-filter-repo, gh
 - エディタ・端末: neovim（デフォルト設定）, vscode, Alacritty（`home/dotfiles.nix`）、Linux の Emacs（`home/emacs.nix`）
 - シェル支援: tmux, direnv, nh。zsh / bash / starship は `programs.*` で設定
-- AI エージェント: Pi（`pi`）、Nous Research の Hermes Agent（`hermes`）。いずれも公式 flake
+- AI エージェント: Pi（`pi`、公式 flake）
 - 言語処理系: nodejs_26, typescript, pnpm, uv, pixi, SBCL, elan（Lean 4）
 - ビルド: automake, cmake, meson, ninja, pkgconf, gnumake, gcc, lld, lldb, llvm
 - 画像・動画・文書: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
@@ -184,26 +184,20 @@ sudo darwin-rebuild switch --flake ~/nix-config#default --impure  # cleanup = "u
 
 fzf はパッケージのみ導入し、専用の Home Manager モジュールやシェル統合は宣言していない。direnv もパッケージのみで、`programs.direnv` は未設定。
 
-### Pi / Hermes Agent
+### Pi
 
-両方とも `home/default.nix` の共通パッケージとして macOS / Linux に導入する。
-[Pi](https://github.com/earendil-works/pi) と
-[Hermes Agent](https://hermes-agent.nousresearch.com/docs/getting-started/nix-setup)
-それぞれの公式 flake を `flake.nix` の inputs に追加し、`packages.<system>.default` を使う。
-Hermes の Nix 対応は upstream では best-effort 扱い。
+[Pi](https://github.com/earendil-works/pi) の公式 flake を `flake.nix` の inputs に追加し、
+`packages.<system>.default` を `home/default.nix` の共通パッケージとして macOS / Linux に導入する。
 
 通常の switch で反映した後、初回のみ端末で認証・モデルを設定する。
 
 ```bash
 pi             # 起動後に /login でプロバイダを選択（API キーによる認証も可能）
-hermes setup   # プロバイダ・モデル等の初回設定
-hermes         # 対話を開始
 ```
 
-認証情報・設定・履歴は `~/.pi/agent/` と `~/.hermes/` のローカル管理とし、リポジトリには含めない。
-Hermes の gateway 常駐サービスはこの構成では有効化しない。
+認証情報・設定・履歴は `~/.pi/agent/` のローカル管理とし、リポジトリには含めない。
 本体と依存関係は `flake.lock` で固定する。更新は `nix flake update` とビルド確認後の switch で行う。
-両エージェントだけを更新する場合は `nix flake update pi hermes-agent` を使う（アプリ内の自己更新は使わない）。
+Pi だけを更新する場合は `nix flake update pi` を使う（アプリ内の自己更新は使わない）。
 
 ### Linux GUI (`linux/flatpak.nix`)
 
