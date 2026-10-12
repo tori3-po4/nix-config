@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 {
   imports = [
     ./emacs.nix
@@ -50,6 +55,10 @@
       vscode
       tmux
       direnv
+
+      # ===== AI agent =====
+      inputs.pi.packages.${pkgs.stdenv.hostPlatform.system}.default # pi コマンド
+      inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default # hermes コマンド
 
 
       # ===== ドキュメント =====

@@ -63,6 +63,7 @@
       "chatgpt"
       "bitwarden"
       "docker-desktop"
+      "unsloth"
     ];
 
   };

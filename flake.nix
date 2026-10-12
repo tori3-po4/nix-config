@@ -19,11 +19,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    pi = {
+      url = "github:earendil-works/pi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Flatpak の宣言管理モジュール自体を安定版へ固定する。
     # Flatpak アプリの実体は Nix store 外に置かれるため、アプリの更新方針は
     # linux/flatpak.nix 側で明示的に管理する。
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
- };
+  };
 
   outputs =
     inputs@{
