@@ -179,7 +179,7 @@ sudo darwin-rebuild switch --flake ~/nix-config#default --impure  # cleanup = "u
 - LaTeX: texliveFull, ghostscript, tex-fmt
 - LSP: lua-language-server, nil, nixd, pyright, rust-analyzer, typescript-language-server, astro-language-server, tailwindcss-language-server, texlab, clang-tools, marksman, dockerfile-language-server, yaml-language-server, bash-language-server, vscode-langservers-extracted
 - Formatter / Linter: stylua, nixfmt, ruff, rustfmt, prettier, shellcheck, shfmt
-- macOS のみ: lmstudio, prismlauncher, moonlight-qt, llvmPackages.openmp, docker-client, docker-compose（daemon は Docker Desktop Cask）
+- macOS のみ:  prismlauncher, moonlight-qt, llvmPackages.openmp, docker-client, docker-compose（daemon は Docker Desktop Cask）
 - Linux のみ: codex、`linux/default.nix` の hackgen-nf-font
 
 fzf はパッケージのみ導入し、専用の Home Manager モジュールやシェル統合は宣言していない。direnv もパッケージのみで、`programs.direnv` は未設定。

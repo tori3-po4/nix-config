@@ -59,6 +59,7 @@
       "zotero"
       "wireshark-app"
       "latexit"
+      "llama.cpp"
       "codex"
       "chatgpt"
       "bitwarden"

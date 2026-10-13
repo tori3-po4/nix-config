@@ -59,7 +59,6 @@
       # ===== AI agent =====
       inputs.pi.packages.${pkgs.stdenv.hostPlatform.system}.default # pi コマンド
 
-
       # ===== ドキュメント =====
       pandoc
 
@@ -76,14 +75,13 @@
       automake
       cmake
       meson
-      ninja 
+      ninja
       pkgconf
       gnumake
       gcc # 競プロ <bits/stdc++.h>、クロスコンパイル
       lld # 高速リンカ
       lldb # デバッガ
       llvm # opt, llc, llvm-objdump 等
-
 
       # ===== 画像/動画/PDF =====
       ffmpeg
@@ -102,8 +100,7 @@
       tree-sitter
       sqlite
       flyctl
-      (aspellWithDicts (dicts : [dicts.en]))
-
+      (aspellWithDicts (dicts: [ dicts.en ]))
 
       # ===== LaTeX周辺 =====
       texliveFull # MacTeX-no-gui 相当(全部入り)
@@ -140,12 +137,11 @@
       shfmt
     ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
-      lmstudio
       prismlauncher
       moonlight-qt
 
       llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
- 
+
       # ===== コンテナ =====
       docker-client
       docker-compose
@@ -153,6 +149,5 @@
     ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
       # ===== coding agent =====
       codex
-    ]
-  ;
+    ];
 }
