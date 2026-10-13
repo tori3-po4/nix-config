@@ -2,9 +2,10 @@
 set -euo pipefail
 
 # Install software that is intentionally not managed by Home Manager on
-# non-NixOS Linux.  Home Manager remains responsible for dotfiles and shell
-# configuration.  This script is idempotent and targets Fedora/dnf first, with a
-# best-effort Debian/Ubuntu apt path.
+# non-NixOS Linux.  Run this setup script before applying Home Manager, which
+# manages dotfiles, shell configuration, Emacs and user Flatpak apps.  This script
+# is idempotent and targets Fedora/dnf first, with a best-effort Debian/Ubuntu apt
+# path.
 
 DRY_RUN=0
 WITH_NPM_TOOLS=1
@@ -81,7 +82,7 @@ install_dnf() {
 [dnf note]
 Some tools from the old Nix profile are not consistently available in Fedora
 repositories, or require external repositories:
-  pi, codex, pixi, elan, flyctl, nil/nixd, lua-language-server, tex-fmt,
+  codex, pixi, elan, flyctl, nil/nixd, lua-language-server, tex-fmt,
   tree-sitter-cli, marksman, dockerfile/yaml/bash/vscode language servers.
 Install those per-project, via their upstream installers, or add a dedicated
 script section once you decide the preferred source.
@@ -108,7 +109,7 @@ install_apt() {
   cat <<'NOTE'
 
 [apt note]
-VS Code, GitHub CLI, uv, pixi, elan, flyctl, many LSP servers, pi and codex may
+VS Code, GitHub CLI, uv, pixi, elan, flyctl, many LSP servers and codex may
 need vendor repositories or upstream installers depending on your distribution.
 This apt path is best-effort; Fedora/dnf is the primary target for this repo.
 NOTE
@@ -136,10 +137,15 @@ install_npm_tools() {
   )
   run npm install -g "${npm_tools[@]}"
 
+  # Pi's official npm install skips lifecycle scripts and needs Node.js >=22.19.
+  # Reject unsupported engines instead of installing a CLI that cannot run.
+  run npm install -g --ignore-scripts --engine-strict @earendil-works/pi-coding-agent
+
   cat <<NOTE
 
 [npm note]
-Add this to PATH if it is not already available:
+Home Manager adds ${prefix}/bin to PATH on Linux.
+To use these tools in the current shell before applying Home Manager:
   export PATH="${prefix}/bin:\$PATH"
 NOTE
 }
@@ -159,8 +165,11 @@ fi
 
 cat <<'DONE'
 
-Done. Re-open your shell, then run:
+Done. Apply Home Manager, then re-open your shell:
   home-manager switch --flake ~/nix-config#default --impure
 
-Home Manager will now mainly apply dotfiles and shell/session settings on Linux.
+For first setup, when home-manager is not installed yet:
+  nix run home-manager/master -- switch --flake ~/nix-config#default --impure -b hmbak
+
+Home Manager manages dotfiles, shell/session settings, Emacs and user Flatpak apps.
 DONE

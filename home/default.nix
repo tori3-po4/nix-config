@@ -24,24 +24,27 @@ in
     type = lib.types.bool;
     default = pkgs.stdenv.hostPlatform.isDarwin;
     description = ''
-      Whether Home Manager should install user packages.  On non-NixOS Linux the
-      default is false so Home Manager mainly manages dotfiles and shell config,
-      while OS packages are installed by scripts/install-linux-software.sh.
+      Whether Home Manager should install the common package list and optional
+      Nix integrations.  On Linux the default is false; host software is installed
+      by scripts/install-linux-software.sh.  Emacs, shell modules and user Flatpak
+      apps are managed separately and are not disabled by this option.
     '';
   };
 
-  home.stateVersion = "24.11";
+  config.home.stateVersion = "24.11";
 
-  home.sessionPath = [
+  config.home.sessionPath = [
     "$HOME/.local/bin"
+  ] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+    "$HOME/.local/share/npm-global/bin"
   ];
 
   # Spotlight/F4 が Nix store への symlink をアプリとして索引化しないため、
   # macOS では .app バンドルを ~/Applications に実体コピーする。
-  targets.darwin.linkApps.enable = false;
-  targets.darwin.copyApps.enable = pkgs.stdenv.hostPlatform.isDarwin;
+  config.targets.darwin.linkApps.enable = false;
+  config.targets.darwin.copyApps.enable = pkgs.stdenv.hostPlatform.isDarwin;
 
-  home.packages = lib.mkIf installPackagesWithNix (
+  config.home.packages = lib.mkIf installPackagesWithNix (
     with pkgs;
     [
       # ===== Nix utilties =====

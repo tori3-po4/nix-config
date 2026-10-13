@@ -21,7 +21,7 @@ in
   # nix-flatpak の Home Manager module と組み合わせ、ユーザ単位で管理する。
   # ここでは本体と更新だけを宣言し、Firefox のプロファイル・設定・拡張機能は
   # Firefox 自身で管理する。
-  services.flatpak = lib.mkIf config.local.manageFlatpakWithHomeManager {
+  config.services.flatpak = lib.mkIf config.local.manageFlatpakWithHomeManager {
     enable = true;
 
     remotes = [

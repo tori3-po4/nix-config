@@ -1,6 +1,6 @@
 # nix-config — macOS / Linux 環境の宣言的管理
 
-macOS は nix-darwin + Home Manager、Fedora などの Linux は standalone Home Manager で管理する個人用設定です。パッケージと dotfile はこのリポジトリに集約しています。Neovim は Nix のパッケージをデフォルト設定で使い、chezmoi は削除済みです。SSH 接続設定はローカルで管理し、秘密鍵には Bitwarden SSH agent を使います。
+macOS は nix-darwin + Home Manager、Fedora などの Linux はセットアップスクリプト + standalone Home Manager で管理する個人用設定です。Linux の一般的な CLI・開発ツールは dnf / npm で導入し、Emacs・シェル環境・ユーザ用 Flatpak・dotfile は Home Manager で管理します。Neovim はデフォルト設定で使い、chezmoi は削除済みです。SSH 接続設定はローカルで管理し、秘密鍵には Bitwarden SSH agent を使います。
 
 ## 目次
 
@@ -18,8 +18,9 @@ macOS は nix-darwin + Home Manager、Fedora などの Linux は standalone Home
 | 管理対象 | macOS | Linux |
 |---|---|---|
 | OS・システム設定 | nix-darwin（defaults、キーボード、DNS、launchd） | OS 側で管理（dnf、systemd 等） |
-| CLI・開発ツール・dotfile | Home Manager | Home Manager |
-| Neovim / VS Code / Alacritty | Nix | Nix |
+| CLI・開発ツール | Home Manager | セットアップスクリプト（dnf / npm、一部ツールは未対応） |
+| dotfile・Zsh・Starship | Home Manager | Home Manager |
+| Neovim / VS Code / Alacritty | Nix | セットアップスクリプト（VS Code / Alacritty はリポジトリにある場合） |
 | Emacs 本体 | Homebrew Emacs Plus | Nix の Emacs 31.1 PGTK |
 | Emacs 設定 / デーモン | Home Manager / launchd | Home Manager / systemd user service |
 | Firefox・Chrome・Anki・Zotero・Bitwarden・Kiwix 等 | Homebrew Cask | nix-flatpak（ユーザ単位） |
@@ -170,7 +171,7 @@ sudo darwin-rebuild switch --flake ~/nix-config#default --impure  # cleanup = "u
 - Git周辺: git, git-filter-repo, gh
 - エディタ・端末: neovim（デフォルト設定）, vscode, Alacritty（`home/dotfiles.nix`）、Linux の Emacs（`home/emacs.nix`）
 - シェル支援: tmux, direnv, nh。zsh / bash / starship は `programs.*` で設定
-- AI エージェント: Pi（`pi`、公式 flake）
+- AI エージェント: Pi（`pi`、macOS は公式 flake、Linux は npm）
 - 言語処理系: nodejs_26, typescript, pnpm, uv, pixi, SBCL, elan（Lean 4）
 - ビルド: automake, cmake, meson, ninja, pkgconf, gnumake, gcc, lld, lldb, llvm
 - 画像・動画・文書: ffmpeg, imagemagick, libwebp, poppler, yt-dlp, pandoc
@@ -186,18 +187,28 @@ fzf はパッケージのみ導入し、専用の Home Manager モジュール�
 
 ### Pi
 
-[Pi](https://github.com/earendil-works/pi) の公式 flake を `flake.nix` の inputs に追加し、
-`packages.<system>.default` を `home/default.nix` の共通パッケージとして macOS / Linux に導入する。
+[Pi](https://github.com/earendil-works/pi#getting-started) は、macOS では公式 flake の
+`packages.<system>.default` を `home/default.nix` から導入する。
+Linux の既定構成では `scripts/install-linux-software.sh` が公式 npm パッケージ
+`@earendil-works/pi-coding-agent` を導入する（`--no-npm-tools` 指定時は対象外）。
+Node.js 22.19 以上が必要で、対応しないバージョンではインストールをエラーにする。
 
-通常の switch で反映した後、初回のみ端末で認証・モデルを設定する。
+Linux ではセットアップ後に Home Manager を適用してログインシェルを開き直すと、
+`~/.local/share/npm-global/bin/pi` が PATH から見つかる。初回のみ端末で認証・モデルを設定する。
 
 ```bash
 pi             # 起動後に /login でプロバイダを選択（API キーによる認証も可能）
 ```
 
 認証情報・設定・履歴は `~/.pi/agent/` のローカル管理とし、リポジトリには含めない。
-本体と依存関係は `flake.lock` で固定する。更新は `nix flake update` とビルド確認後の switch で行う。
-Pi だけを更新する場合は `nix flake update pi` を使う（アプリ内の自己更新は使わない）。
+macOS の Nix 版は本体と依存関係を `flake.lock` で固定する。
+Pi だけを更新する場合は `nix flake update pi` とビルド確認後の switch を使う。
+Linux の npm 版は `flake.lock` の対象外で、セットアップスクリプトの再実行、
+または次のコマンドで更新する。
+
+```bash
+npm install -g --ignore-scripts --engine-strict @earendil-works/pi-coding-agent
+```
 
 ### Linux GUI (`linux/flatpak.nix`)
 
@@ -522,9 +533,16 @@ exec zsh -l
 
 対象は systemd を使い、`nix` / `nix-daemon` パッケージを
 標準リポジトリまたは EPEL から導入できる Fedora / Rocky Linux /
-AlmaLinux などの `x86_64` または `aarch64` 環境。Home Manager はユーザ環境と
-ユーザ単位の Flatpak だけを管理し、OS 自体のパッケージ、SELinux、
-ファイアウォール等は引き続き dnf 側で管理する。
+AlmaLinux などの `x86_64` または `aarch64` 環境。
+`scripts/install-linux-software.sh` で CLI・開発ツールを dnf / npm から導入し、
+その後 Home Manager を適用して dotfile・シェル設定・Emacs・ユーザ単位の
+Flatpak を管理する。Zsh・Starship と Zsh の補完・ハイライトも、シェル設定と一緒に
+Home Manager から Nix で導入する。
+OS 自体のパッケージ、SELinux、ファイアウォール等は引き続き dnf 側で管理する。
+
+セットアップスクリプトは `home-manager switch` とは別に実行する。
+`codex`、`pixi` など、スクリプトが案内する一部ツールの自動導入は未対応のため、
+現時点ではこの2段階だけで従来の全ツールが揃うわけではない。
 
 GPU / CUDA を使うホストでは、[Linux GPU と CUDA の管理方針](#linux-gpu-と-cuda-の管理方針) に従ってドライバー・CUDA SDK・必要なコンテナ基盤を dnf 側で別途用意する。以下の Home Manager セットアップだけでは、これらは導入されない。
 
@@ -569,22 +587,26 @@ vi private/user.nix
 # hostname: hostnamectl --static と一致
 # system: uname -m=x86_64 なら "x86_64-linux"、aarch64 なら "aarch64-linux"
 
-# 6. linux/default.nix の NVIDIA の版・ハッシュ、CUDA のパスをホストに合わせる
-#    Mesa を使うホストでは nvidia.enable を false にする（後述）
+# 6. linux/default.nix の CUDA のパスをホストに合わせる
+#    local.installPackagesWithNix = true にする場合は、NVIDIA の版・ハッシュも確認する
+#    その場合、Mesa を使うホストでは nvidia.enable を false にする（後述）
 #    private/user.nix は Git 管理外のままにする
 
-# 7. 初回ビルドと適用
+# 7. OS 側の CLI・開発ツールと npm ツールをセットアップ
+./scripts/install-linux-software.sh
+
+# 8. 初回ビルドと適用
 #    -b hmbak は既存の競合ファイルを *.hmbak へ一度だけ退避する
 nix run home-manager/master -- switch \
   --flake ".#default" --impure -b hmbak
 
-# 8. ログインシェルを再読み込みし、導入結果を確認
+# 9. ログインシェルを再読み込みし、導入結果を確認
 exec "$SHELL" -l
 home-manager generations
 flatpak list --user
 systemctl --user list-timers '*flatpak*'
 
-# 9. Bitwarden を起動してログイン・SSH agent を有効化
+# 10. Bitwarden を起動してログイン・SSH agent を有効化
 flatpak run com.bitwarden.desktop
 # 新しいシェルで SSH_AUTH_SOCK と鍵の認識を確認
 printenv SSH_AUTH_SOCK
@@ -596,11 +618,15 @@ ssh-add -l
 導入後の `/usr/share/doc/nix-core/README.fedora.md` でも確認できる。
 
 初回適用で `programs.home-manager.enable = true` も有効になるため、
-2 回目以降は通常ユーザで次だけを実行すればよい。
+2 回目以降の Home Manager 設定の反映は、通常ユーザで次を実行する。
 
 ```bash
 home-manager switch --flake ~/nix-config#default --impure
 ```
+
+セットアップスクリプトの導入一覧を変更した場合は、先にスクリプトを再実行する。
+npm ツールの `~/.local/share/npm-global/bin` は Home Manager が PATH に追加する。
+初回適用後は新しいログインシェルで利用できる。
 
 `sudo home-manager ...` は root のホームを対象にするため使わない。
 Flatpak 本体と desktop portal は dnf、ユーザ用アプリ、Flathub remote、
