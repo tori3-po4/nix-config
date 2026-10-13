@@ -25,6 +25,7 @@
     brews = [
       # "randomplum/gtkwave/gtkwave"
       "mole"
+      "llama.cpp"
     ];
 
     casks = [
@@ -59,7 +60,6 @@
       "zotero"
       "wireshark-app"
       "latexit"
-      "llama.cpp"
       "codex"
       "chatgpt"
       "bitwarden"
