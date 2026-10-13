@@ -5,6 +5,8 @@
   ...
 }:
 let
+  installPackagesWithNix = config.local.installPackagesWithNix;
+  cudaHostCxx = if installPackagesWithNix then "${pkgs.gcc}/bin/g++" else "/usr/bin/g++";
   bitwardenSshAuthSock = "${config.home.homeDirectory}/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock";
   bitwardenSshAgentInit = ''
     export SSH_AUTH_SOCK=${lib.escapeShellArg bitwardenSshAuthSock}
@@ -33,14 +35,14 @@ in
 
   #fontの設定を追加した
   fonts.fontconfig.enable = true;
-  home.packages = [ pkgs.hackgen-nf-font ];
+  home.packages = lib.mkIf installPackagesWithNix [ pkgs.hackgen-nf-font ];
 
   # デスクトップセッションが別のSSHエージェントを設定した場合も、
   # 対話シェルではBitwardenを使う。sessionVariablesの再読み込みに依存しない。
   programs.bash.initExtra = lib.mkAfter bitwardenSshAgentInit;
   programs.zsh.initContent = lib.mkAfter bitwardenSshAgentInit;
 
-  targets.genericLinux = {
+  targets.genericLinux = lib.mkIf installPackagesWithNix {
     enable = true;
     gpu = {
       enable = true;
@@ -65,13 +67,13 @@ in
     "/usr/local/cuda-13.4/bin/nvcc";
 
   home.sessionVariables.CUDAHOSTCXX =
-    "${pkgs.gcc}/bin/g++";
+    cudaHostCxx;
 
   home.sessionVariables.NVCC_CCBIN =
-    "${pkgs.gcc}/bin/g++";
+    cudaHostCxx;
 
     # Nixコンパイラでリンクする際に、GPUライブラリの検索先を埋め込む。
   home.sessionVariables."NIX_LDFLAGS_${pkgs.stdenv.cc.suffixSalt}" =
-    lib.mkIf config.targets.genericLinux.gpu.nvidia.enable
+    lib.mkIf (installPackagesWithNix && config.targets.genericLinux.gpu.nvidia.enable)
       "-rpath /run/opengl-driver/lib";
 }

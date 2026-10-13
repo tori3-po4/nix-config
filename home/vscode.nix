@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
   # 統合ターミナル・検索欄・Quick Pick には編集用のキーを適用しない。
   workbenchWhen = "!terminalFocus && !quickInputVisible && (!inputFocus || editorTextFocus)";
@@ -7,7 +7,7 @@ in
   programs.vscode = {
     enable = true;
     package = null;
-    mutableExtensionsDir = false;
+    mutableExtensionsDir = !config.local.installPackagesWithNix;
 
     profiles.default = {
       userSettings = builtins.fromJSON (builtins.readFile ./vscode-settings.json);
@@ -15,7 +15,7 @@ in
       # Zed と同じスニペット定義を共有する。
       languageSnippets.cpp = builtins.fromJSON (builtins.readFile ./cpp-snippets.json);
 
-      extensions =
+      extensions = lib.optionals config.local.installPackagesWithNix (
         (with pkgs.vscode-marketplace; [
           github.github-vscode-theme
           james-yu.latex-workshop
@@ -48,7 +48,8 @@ in
           # cpptools 本体は nix-vscode-extensions 側で darwin から削除されているため、
           # nixpkgs 同梱版 (allowUnfree) を使う
           pkgs.vscode-extensions.ms-vscode.cpptools
-        ];
+        ]
+      );
     };
   };
 }

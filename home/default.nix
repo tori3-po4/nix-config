@@ -1,9 +1,13 @@
 {
+  config,
   inputs,
   lib,
   pkgs,
   ...
 }:
+let
+  installPackagesWithNix = config.local.installPackagesWithNix;
+in
 {
   imports = [
     ./emacs.nix
@@ -16,6 +20,16 @@
     ./dotfiles.nix
   ];
 
+  options.local.installPackagesWithNix = lib.mkOption {
+    type = lib.types.bool;
+    default = pkgs.stdenv.hostPlatform.isDarwin;
+    description = ''
+      Whether Home Manager should install user packages.  On non-NixOS Linux the
+      default is false so Home Manager mainly manages dotfiles and shell config,
+      while OS packages are installed by scripts/install-linux-software.sh.
+    '';
+  };
+
   home.stateVersion = "24.11";
 
   home.sessionPath = [
@@ -27,7 +41,7 @@
   targets.darwin.linkApps.enable = false;
   targets.darwin.copyApps.enable = pkgs.stdenv.hostPlatform.isDarwin;
 
-  home.packages =
+  home.packages = lib.mkIf installPackagesWithNix (
     with pkgs;
     [
       # ===== Nix utilties =====
@@ -149,5 +163,6 @@
     ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
       # ===== coding agent =====
       codex
-    ];
+    ]
+  );
 }

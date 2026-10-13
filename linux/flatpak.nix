@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -7,10 +8,20 @@ let
   isX86_64 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
 in
 {
+  options.local.manageFlatpakWithHomeManager = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = ''
+      Whether Home Manager/nix-flatpak should manage user Flatpak apps.  The
+      default is true: the shell installer only installs the Flatpak runtime and
+      desktop portal packages, while this module manages user apps and updates.
+    '';
+  };
+
   # nix-flatpak の Home Manager module と組み合わせ、ユーザ単位で管理する。
   # ここでは本体と更新だけを宣言し、Firefox のプロファイル・設定・拡張機能は
   # Firefox 自身で管理する。
-  services.flatpak = {
+  services.flatpak = lib.mkIf config.local.manageFlatpakWithHomeManager {
     enable = true;
 
     remotes = [

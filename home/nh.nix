@@ -1,8 +1,10 @@
 {
+  config,
+  lib,
   ...
 }:
 {
-  programs.nh = {
+  programs.nh = lib.mkIf config.local.installPackagesWithNix {
     enable = true;
     clean = {
       enable = true;
