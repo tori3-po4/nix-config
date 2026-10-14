@@ -1,6 +1,14 @@
-# Sunshine + Moonlight で Windows ゲームをMacから遊ぶ
+# Sunshine + Moonlight で Windows ゲームを Mac から遊ぶ
+
+[README に戻る](../README.md)
 
 Windows PCでゲームを実行し、オープンソースのSunshineで配信、MacのMoonlightで操作する。外出先からの接続にはTailscaleを使い、ルーターのポート開放やSunshineのUPnPは使用しない。
+
+- [Mac 側の導入](#mac側-moonlightを導入する)
+- [Windows 側の導入](#windows側-sunshineを導入する)
+- [ペアリング](#macとwindowsをペアリングする)
+- [最初の推奨設定](#最初の推奨設定)
+- [接続できない場合](#接続できない場合)
 
 ## 構成
 
@@ -12,27 +20,17 @@ SunshineとMoonlightはGPL-3.0のオープンソースソフトウェアであ�
 
 ## Mac側: Moonlightを導入する
 
-MoonlightはHomebrewではなくnixpkgsの `moonlight-qt` を使用する。`home/default.nix` の `home.packages` に宣言済みである。
-
-```nix
-home.packages = with pkgs; [
-  moonlight-qt
-];
-```
+MoonlightはHomebrewではなくnixpkgsの `moonlight-qt` を使用する。[`home/default.nix`](../home/default.nix) の macOS 用パッケージに宣言済みである。
 
 nix-darwin構成を反映する。
 
 ```bash
-sudo darwin-rebuild switch --flake ~/nix-config --impure
+sudo darwin-rebuild switch --flake ~/nix-config#default --impure
 ```
 
 この構成では `targets.darwin.copyApps.enable = true` により、Moonlightのアプリバンドルが `~/Applications/Home Manager Apps/` にコピーされ、SpotlightやLaunchpadから起動できる。
 
-確認:
-
-```bash
-nix-store -q --references ~/.local/state/nix/profiles/home-manager/home-path | grep -i moonlight
-```
+適用後、Moonlight を起動できることを確認する。Tailscale は [`darwin/homebrew.nix`](../darwin/homebrew.nix) の Cask で導入する。Mac 側でもログインし、接続を有効にしておく。
 
 ## Windows側: Sunshineを導入する
 
