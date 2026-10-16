@@ -61,7 +61,7 @@
       "wireshark-app"
       "latexit"
       "codex"
-      "chatgpt"
+      #"chatgpt"
       "bitwarden"
       "docker-desktop"
       "unsloth"
