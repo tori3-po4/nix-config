@@ -65,6 +65,7 @@
       "bitwarden"
       "docker-desktop"
       "unsloth"
+      "virtualbox"
     ];
 
   };

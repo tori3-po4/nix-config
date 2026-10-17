@@ -69,7 +69,6 @@
       uv
       pixi
       sbcl # SLIME から使う Common Lisp 実装
-      elan # Leanのバージョン管理。lean/lakeはプロジェクトのlean-toolchainに従う。
 
       # ===== ビルドツール =====
       automake
@@ -82,6 +81,7 @@
       lld # 高速リンカ
       lldb # デバッガ
       llvm # opt, llc, llvm-objdump 等
+      qemu
 
       # ===== 画像/動画/PDF =====
       ffmpeg
