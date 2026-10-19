@@ -58,9 +58,6 @@ in
       bat
       eza
       coreutils
-      # Eat でも clear/tput/tic/infocmp を Nix の zsh と同じ ncurses に揃える。
-      # 他パッケージの terminfo と競合した場合は、そちらを優先する。
-      (lib.lowPrio ncurses)
 
       # ===== Git周辺 =====
       git
@@ -86,7 +83,6 @@ in
       uv
       pixi
       sbcl # SLIME から使う Common Lisp 実装
-      elan # Leanのバージョン管理。lean/lakeはプロジェクトのlean-toolchainに従う。
 
       # ===== ビルドツール =====
       automake
@@ -99,6 +95,7 @@ in
       lld # 高速リンカ
       lldb # デバッガ
       llvm # opt, llc, llvm-objdump 等
+      qemu
 
       # ===== 画像/動画/PDF =====
       ffmpeg
@@ -156,8 +153,6 @@ in
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
       prismlauncher
       moonlight-qt
-
-      llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
 
       # ===== コンテナ =====
       docker-client

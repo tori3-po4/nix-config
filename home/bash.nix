@@ -31,11 +31,7 @@
         source "$HOME/.opam/opam-init/init.sh" > /dev/null 2> /dev/null
 
 
-      # eat統合
-      if [ -n "$EAT_SHELL_INTEGRATION_DIR" ]; then
-         source "$EAT_SHELL_INTEGRATION_DIR/bash"
-      fi
 
-     '';
+    '';
   };
 }
