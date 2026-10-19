@@ -137,8 +137,6 @@
       prismlauncher
       moonlight-qt
 
-      llvmPackages.openmp # Apple clang で -fopenmp を使うためのランタイム
-
       # ===== コンテナ =====
       docker-client
       docker-compose
