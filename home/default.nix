@@ -41,9 +41,6 @@
       bat
       eza
       coreutils
-      # Eat でも clear/tput/tic/infocmp を Nix の zsh と同じ ncurses に揃える。
-      # 他パッケージの terminfo と競合した場合は、そちらを優先する。
-      (lib.lowPrio ncurses)
 
       # ===== Git周辺 =====
       git
