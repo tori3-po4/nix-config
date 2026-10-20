@@ -2,7 +2,7 @@
 
 [README に戻る](../README.md)
 
-[Linux の初回セットアップ](setup.md#linux)と併せて参照する。NVIDIA の版・ハッシュ、CUDA の配置はホストごとに合わせる。
+[Linux の初回セットアップ](setup.md#linux)と併せて参照する。GPU 連携を有効にする場合は NVIDIA の版・ハッシュをホストごとに合わせる。CUDA の導入は後日対応する。
 
 - [管理方針](#管理方針)
 - [Nix 版 GUI の GPU 連携](#nix-版-gui-の-gpu-連携)
@@ -11,48 +11,15 @@
 
 ## 管理方針
 
-Linux では **GPU / CUDA 一式を OS 側の SDK として dnf で管理し、汎用の開発ツールと個人の設定を Nix / Home Manager で管理する**。
-普段使う CUDA 環境はホストごとに用意し、Home Manager のグローバル環境には汎用開発ツールを配置する方針とする。
+Linux の汎用パッケージと VirtualBox は `scripts/install-linux-software.sh` で導入し、Home Manager は設定・Emacs・シェルモジュール・ユーザ単位の Flatpak を管理する。
 
-| 対象 | 管理場所 | 理由 |
-|---|---|---|
-| NVIDIA カーネルドライバー | dnf | OS のカーネルと連携するため |
-| ドライバーの `libcuda.so.1` | OS 側のドライバーを基準に管理 | カーネル側ドライバーと整合させるため |
-| Docker / Podman・NVIDIA Container Toolkit | dnf | ホストのサービスやデバイスと連携するため |
-| CUDA Toolkit（NVCC・CUDA ヘッダ） | dnf（対応する NVIDIA リポジトリ等） | ホスト共通の CUDA SDK として用意するため |
-| CUDA ランタイムの `libcudart` | dnf | OS 側の CUDA Toolkit と揃えるため |
-| cuBLAS・cuDNN 等の必要な CUDA 関連ライブラリ | dnf | CUDA SDK と同じ管理系統で依存関係を揃えるため |
-| GCC / G++・Clang / clangd・CMake / Ninja 等の汎用開発ツール | Nix | 必要な版とツール構成を宣言し、別マシンへ持ち運ぶため |
-| エディタ・LSP 設定・ドットファイル | Nix / Home Manager | 個人の開発環境を再現するため。SSH 接続設定はローカル管理、Neovim はデフォルト設定 |
+**CUDA 本体と PATH・環境変数は、後日作成する専用スクリプトで導入する。** 現時点では CUDA の導入処理を含めず、`linux/default.nix` でも CUDA の場所やコンパイラを指定しない。
 
-**設計の意図**: 持ち運びたい個人の開発環境と、各ホストで用意する GPU / CUDA 基盤の境界を明確にする。
-CUDA Toolkit・ヘッダ・ランタイム・関連ライブラリを dnf 側へまとめ、Nix で分かれている CUDA の構成要素から SDK の配置を組み立てる手間を抑える。
-汎用開発ツールは既存の Nix 管理を活かし、CUDA のためだけにすべてを OS 側へ入れ直さない。
-これは「ランタイムはすべて dnf」という分類ではなく、標準の CUDA SDK を一式で OS 側へ置く方針である。Nix 製ツール自身の実行時依存ライブラリは Nix に任せる。
+以前の `/usr/local/cuda-13.4/bin` の PATH 追加、`CUDA_PATH`・`CUDACXX`・`CUDAHOSTCXX`・`NVCC_CCBIN`、Nix コンパイラ向けの `NIX_LDFLAGS_…` は削除した。設定反映前から開いているシェルやデスクトップセッションには古い環境変数が残ることがあるため、反映後はログアウト・ログインする。
 
-**管理境界をまたぐ設定と運用**:
+今後 CUDA を導入するときは、OS 側のドライバー・SDK・対応コンパイラを選び、その配置に合わせて環境変数を設定する。導入済みの CUDA やドライバーを Home Manager が削除することはない。
 
-- **コンパイラの選択**: NVCC が対応する GCC / G++ の版を Nix 側で選ぶ。CUDA のドライバー要件と、NVCC のホストコンパイラ要件は別に確認する。CMake では `CMAKE_CUDA_COMPILER` と `CMAKE_CUDA_HOST_COMPILER` を初回構成時に明示し、通常の C++ 用の `CMAKE_CXX_COMPILER` も同じ対応版 G++ に揃える。Nix のラッパーやライブラリ検索先も含め、実ビルドで確認する。
-- **clangd の連携**: Nix 版 clangd に `compile_commands.json` を渡し、必要に応じて `.clangd` で OS 側 CUDA の場所（`--cuda-path`）、標準ヘッダの検索先、NVCC 固有の引数を調整する。CUDA ファイルでの LSP 起動もエディタ側で設定する。dnf で SDK を導入しても、この連携がすべて自動設定されるわけではない。
-- **プロジェクト固有の条件**: ソース一覧、マクロ、言語規格、GPU アーキテクチャは CMake 等で管理し、コンパイル情報を生成する。手元の RTX 2060 SUPER は Compute Capability 7.5 のため、対象にする場合の CMake 指定は `CMAKE_CUDA_ARCHITECTURES=75`、clangd 側は `--cuda-gpu-arch=sm_75` とする。
-- **移行と更新**: `flake.lock` が固定するのは Nix 側の環境であり、dnf 側の CUDA までは固定しない。各ホストで導入時に使用したリポジトリ・パッケージと、動作確認したドライバー / CUDA / GCC / clangd の版を記録する。更新時は CMake のコンパイル情報を再生成し、ビルド・clangd の解析・GPU 実行を個別に確認する。
-- **Nix パッケージの依存関係**: Nix 製の CUDA 対応アプリが dnf の CUDA ライブラリを自動利用するわけではない。そのパッケージが宣言する Nix 側の CUDA 依存は許容する。この方針は、自分で開発・ビルドする際の標準 CUDA 環境を対象とする。
-- **別バージョンが必要な場合**: CUDA の版までプロジェクト単位で再現する必要が出た場合は、そのプロジェクトに専用の Nix `devShell` またはコンテナ環境を用意する。
-
-以下の [Nix 版 GUI の GPU 連携](#nix-版-gui-の-gpu-連携)も併用する。Home Manager が Nix アプリ向けにドライバーライブラリを用意する場合も、NVIDIA の版は OS 側に合わせる。これは CUDA Toolkit の管理を Nix へ移すものではない。
-
-現在の `linux/default.nix` には以下を宣言している。別ホストでは適用前に実環境へ合わせる。
-
-- `targets.genericLinux.gpu.nvidia`: 有効、ドライバーバージョン `615.71.09` と対応ハッシュを固定
-- `home.sessionPath`: `/usr/local/cuda-13.4/bin` を追加
-- `CUDA_PATH`: `/usr/local/cuda-13.4`
-- `CUDACXX`: `/usr/local/cuda-13.4/bin/nvcc`
-- `CUDAHOSTCXX` / `NVCC_CCBIN`: Nix の `pkgs.gcc` が提供する `g++`
-- `NIX_LDFLAGS_${pkgs.stdenv.cc.suffixSalt}`: NVIDIA 連携が有効な場合に `-rpath /run/opengl-driver/lib`
-
-これらは既存 SDK の参照先を指定する設定で、CUDA SDK やカーネルドライバー自体はインストールしない。OS 側の版・配置とコンパイラの互換性は各ホストで確認する。
-
-参考: [NVIDIA CUDA の構成と互換性](https://docs.nvidia.com/deploy/cuda-compatibility/why-cuda-compatibility.html)、[CUDA の導入・ホストコンパイラ要件](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/)、[CMake のホストコンパイラ指定](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_HOST_COMPILER.html)、[clangd の CUDA 対応](https://clangd.llvm.org/faq#does-clangd-support-cuda)。
+参考: [CUDA の導入・ホストコンパイラ要件](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/)。
 
 ## Nix 版 GUI の GPU 連携
 
@@ -60,9 +27,9 @@ Fedora のカーネル側 GPU ドライバーは OS 側で管理する。Nix 版
 描画ライブラリは Home Manager の GPU 連携で用意する。この設定は Fedora の
 ドライバーをインストール・置換するものではない。
 
-VS Code・Emacs・Alacritty を Nix 管理するため、GPU 連携を有効にしている。
-現在は NVIDIA `615.71.09` を固定しているので、別ホストでは適用前に変更する。
-Flatpak に移したアプリの描画ライブラリは Flatpak 側で管理される。
+`targets.genericLinux` は汎用パッケージの導入方法に関係なく有効にする。現在の設定は NVIDIA `615.71.09` とそのハッシュを指定しているので、適用前にホストに合わせる。
+
+Emacs の PGTK 版は Nix で導入するため、GPU 連携も Home Manager で管理する。汎用パッケージ全体を Nix 管理へ戻す必要はない。Flatpak アプリの描画ライブラリは Flatpak 側で管理される。VirtualBox は OS のパッケージを使い、ホスト用カーネルモジュールも[セットアップ用スクリプト](setup.md#3-virtualbox)で導入する。
 
 ### Mesa を使う場合
 

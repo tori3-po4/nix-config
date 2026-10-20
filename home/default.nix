@@ -26,8 +26,9 @@ in
     description = ''
       Whether Home Manager should install the common package list and optional
       Nix integrations.  On Linux the default is false; host software is installed
-      by scripts/install-linux-software.sh.  Emacs, shell modules and user Flatpak
-      apps are managed separately and are not disabled by this option.
+      by scripts/install-linux-software.sh.  Emacs, Linux GPU
+      integration, shell modules and user Flatpak apps are managed separately
+      and are not disabled by this option.
     '';
   };
 

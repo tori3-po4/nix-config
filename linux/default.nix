@@ -6,7 +6,6 @@
 }:
 let
   installPackagesWithNix = config.local.installPackagesWithNix;
-  cudaHostCxx = if installPackagesWithNix then "${pkgs.gcc}/bin/g++" else "/usr/bin/g++";
   bitwardenSshAuthSock = "${config.home.homeDirectory}/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock";
   bitwardenSshAgentInit = ''
     export SSH_AUTH_SOCK=${lib.escapeShellArg bitwardenSshAuthSock}
@@ -42,38 +41,19 @@ in
   programs.bash.initExtra = lib.mkAfter bitwardenSshAgentInit;
   programs.zsh.initContent = lib.mkAfter bitwardenSshAgentInit;
 
-  targets.genericLinux = lib.mkIf installPackagesWithNix {
+  # Nix 版 Emacs 向けの GPU 連携。
+  targets.genericLinux = {
     enable = true;
     gpu = {
       enable = true;
 
       nvidia = {
-        enable =true;
-        version="615.71.09";
-        sha256="sha256-zc7tIrvrYSSNGm3qvCWWZz46ZQFpjucayNL9wo87cP4=";
+        enable = true;
+        version = "615.71.09";
+        sha256 = "sha256-zc7tIrvrYSSNGm3qvCWWZz46ZQFpjucayNL9wo87cP4=";
       };
     };
   };
 
-  # cuda用の環境変数を入れる。
-  home.sessionPath = [
-    "/usr/local/cuda-13.4/bin"
-  ];
-
-  home.sessionVariables.CUDA_PATH =
-    "/usr/local/cuda-13.4";
-
-  home.sessionVariables.CUDACXX =
-    "/usr/local/cuda-13.4/bin/nvcc";
-
-  home.sessionVariables.CUDAHOSTCXX =
-    cudaHostCxx;
-
-  home.sessionVariables.NVCC_CCBIN =
-    cudaHostCxx;
-
-    # Nixコンパイラでリンクする際に、GPUライブラリの検索先を埋め込む。
-  home.sessionVariables."NIX_LDFLAGS_${pkgs.stdenv.cc.suffixSalt}" =
-    lib.mkIf (installPackagesWithNix && config.targets.genericLinux.gpu.nvidia.enable)
-      "-rpath /run/opengl-driver/lib";
+  # CUDA 本体・PATH・コンパイラの選択は、今後の専用スクリプトで管理する。
 }

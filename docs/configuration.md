@@ -9,16 +9,19 @@
 | 対象 | macOS | Linux |
 |---|---|---|
 | OS・システム設定 | nix-darwin | OS 側（dnf、systemd 等） |
-| CLI・開発ツール・dotfile | Home Manager | Home Manager |
-| Neovim / VS Code / Alacritty | Nix | Nix |
+| CLI・開発ツール | Home Manager | シェルスクリプト（dnf / apt / npm） |
+| dotfile | Home Manager | Home Manager |
+| Neovim / VS Code / Alacritty | Nix | OS パッケージ（提供リポジトリが必要な場合あり） |
 | Emacs 本体 | Homebrew Emacs Plus | Nix（Emacs 31.1 PGTK） |
 | Emacs 設定 / デーモン | Home Manager / launchd | Home Manager / systemd user service |
 | Firefox・Chrome・Anki・Zotero・Bitwarden・Kiwix 等 | Homebrew Cask | nix-flatpak（ユーザ単位） |
 | Firefox のプロファイル・設定・拡張機能 | Firefox 自身 / Firefox Sync | Firefox 自身 / Firefox Sync |
 | LM Studio | この構成では導入しない | Flatpak |
 | Prism Launcher / Moonlight | Nix | この構成では導入しない |
-| Codex | Homebrew Cask | Nix |
-| Pi | Nix / Home Manager | Nix / Home Manager |
+| Codex | Homebrew Cask | 別途導入 |
+| Pi | Nix / Home Manager | シェルスクリプト（npm） |
+| VirtualBox | Homebrew Cask | シェルスクリプト（Fedora は RPM Fusion、apt は配布パッケージ） |
+| CUDA 本体・PATH・環境変数 | この構成では導入しない | 後日、専用スクリプトで導入予定 |
 | SSH agent の接続先 | `~/.bitwarden-ssh-agent.sock` | `~/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock` |
 
 macOS の JetBrains IDE は Homebrew Cask の Toolbox から導入する。Nix 版 IDE や専用 overlay は現在の構成に含まれない。
@@ -36,7 +39,8 @@ Linux の Tailscale と GNOME の AppIndicator 拡張は OS 側で別途導入�
 | macOS の Nix・zsh・Emacs デーモン | [`darwin/default.nix`](../darwin/default.nix) |
 | macOS の外観・キーボード・DNS | [`darwin/defaults.nix`](../darwin/defaults.nix)、[`darwin/symbolic-hotkeys.nix`](../darwin/symbolic-hotkeys.nix) |
 | macOS の SSH agent | [`darwin/bitwarden.nix`](../darwin/bitwarden.nix) |
-| Linux の Emacs デーモン・SSH agent・フォント・GPU / CUDA | [`linux/default.nix`](../linux/default.nix) |
+| Linux の汎用パッケージ・VirtualBox | [`scripts/install-linux-software.sh`](../scripts/install-linux-software.sh) |
+| Linux の Emacs デーモン・SSH agent・フォント・GPU 連携 | [`linux/default.nix`](../linux/default.nix) |
 | Linux の GUI アプリ・Flatpak 更新 | [`linux/flatpak.nix`](../linux/flatpak.nix) |
 | Emacs 本体・設定の配置 | [`home/emacs.nix`](../home/emacs.nix) |
 | Emacs の操作・パッケージ設定 | [`home/emacs/init.el`](../home/emacs/init.el)、[`early-init.el`](../home/emacs/early-init.el) |
@@ -70,7 +74,7 @@ fzf・direnv はパッケージのみ導入する。専用の Home Manager モ�
 ## ホストごとに確認する設定
 
 - **macOS**: `hostPlatform` と Emacs の `/opt/homebrew` パスは Apple Silicon 前提。内蔵キーボードの LocationID と、Wi-Fi / Thunderbolt Ethernet のネットワークサービス名を確認する。
-- **Linux**: NVIDIA の版・ハッシュ、CUDA の配置、コンパイラの互換性を確認する。[GPU・CUDA の手順](linux-gpu.md)を参照。
+- **Linux**: GPU 連携は有効なので、NVIDIA の版・ハッシュをホストに合わせる。VirtualBox は[セットアップ手順](setup.md#3-virtualbox)を参照。CUDA の導入・パス設定は後日追加予定。[GPU・CUDA の方針](linux-gpu.md)を参照。
 - **手動設定**: アカウントへのログイン、プライバシー権限、SSH 接続先、アプリのデータは各ホストで用意する。
 
 macOS の内蔵キーボードでは Caps Lock / 左 Control を交換し、ログイン時に `hidutil` で再適用する。外部キーボードには適用しない。Control+Space と F11 の OS 側割り当ては無効化している。
