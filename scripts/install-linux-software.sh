@@ -9,16 +9,13 @@ set -euo pipefail
 
 DRY_RUN=0
 WITH_NPM_TOOLS=1
-WITH_VIRTUALBOX=1
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/install-linux-software.sh [--dry-run] [--no-npm-tools] [--no-virtualbox]
+Usage: scripts/install-linux-software.sh [--dry-run] [--no-npm-tools]
 
 Installs host software with the native package manager instead of Home Manager.
 Supported package managers: dnf, apt-get.
-VirtualBox is included on x86_64: RPM Fusion on Fedora, distro packages on apt.
-Missing apt repositories are configured automatically on Ubuntu and Debian 12/13.
 USAGE
 }
 
@@ -26,7 +23,6 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run) DRY_RUN=1 ;;
     --no-npm-tools) WITH_NPM_TOOLS=0 ;;
-    --no-virtualbox) WITH_VIRTUALBOX=0 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -45,84 +41,7 @@ run() {
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-prepare_virtualbox_apt_repository() {
-  local candidate
-  candidate=$(LC_ALL=C apt-cache policy virtualbox | awk '/Candidate:/ {print $2}')
-  if [ -n "$candidate" ] && [ "$candidate" != '(none)' ]; then
-    return 0
-  fi
-
-  local ID='' VERSION_CODENAME=''
-  # shellcheck source=/dev/null
-  . /etc/os-release
-  case "$ID" in
-    ubuntu)
-      run sudo apt-get install -y software-properties-common
-      run sudo add-apt-repository --yes --no-update universe
-      run sudo add-apt-repository --yes --no-update multiverse
-      ;;
-    debian)
-      local keyring
-      case "$VERSION_CODENAME" in
-        bookworm) keyring=/etc/apt/trusted.gpg.d/fasttrack-archive-keyring.gpg ;;
-        trixie) keyring=/usr/share/keyrings/fasttrack-archive-keyring.gpg ;;
-        *) echo "VirtualBox repository setup supports Debian 12/13; configure a repository or use --no-virtualbox." >&2; return 1 ;;
-      esac
-      run sudo apt-get install -y ca-certificates fasttrack-archive-keyring
-      # Keep our entries in one file; pass its contents as data, including in dry runs.
-      run sudo sh -c 'printf "%s\n" "$1" > "$2"' sh "Types: deb
-URIs: https://deb.debian.org/debian
-Suites: ${VERSION_CODENAME}-backports
-Components: main contrib
-Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
-
-Types: deb
-URIs: https://fasttrack.debian.net/debian-fasttrack
-Suites: ${VERSION_CODENAME}-fasttrack ${VERSION_CODENAME}-backports-staging
-Components: main contrib
-Signed-By: ${keyring}" /etc/apt/sources.list.d/nix-config-virtualbox.sources
-      ;;
-    *) echo "No VirtualBox apt candidate for ${ID}; configure a repository or use --no-virtualbox." >&2; return 1 ;;
-  esac
-  run sudo apt-get update
-}
-
-install_virtualbox() {
-  [ "$WITH_VIRTUALBOX" -eq 1 ] || return 0
-  if [ "$(uname -m)" != x86_64 ]; then
-    echo "Skipping VirtualBox: this installer supports x86_64 hosts only." >&2
-    return 0
-  fi
-
-  local kernel
-  kernel=$(uname -r)
-  case "$1" in
-    dnf)
-      local fedora
-      fedora=$(rpm -E '%{?fedora}')
-      case "$fedora" in
-        ''|*[!0-9]*) echo "Skipping VirtualBox: the dnf path requires Fedora." >&2; return 0 ;;
-      esac
-      if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
-        run sudo dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${fedora}.noarch.rpm"
-      fi
-      run sudo dnf install -y VirtualBox akmod-VirtualBox "kernel-devel-${kernel}"
-      run sudo akmods --force --kernels "$kernel" --akmod VirtualBox
-      run sudo systemctl enable --now vboxdrv.service
-      ;;
-    apt-get)
-      prepare_virtualbox_apt_repository
-      run sudo apt-get install -y build-essential "linux-headers-${kernel}" virtualbox virtualbox-dkms virtualbox-qt
-      run sudo modprobe vboxdrv
-      ;;
-  esac
-  run sudo usermod -aG vboxusers "${SUDO_USER:-$(id -un)}"
-  echo "VirtualBox: log out and back in to activate vboxusers membership."
-}
-
 install_dnf() {
-  install_virtualbox dnf
-
   local packages=(
     # basic CLI / shell
     ripgrep fd-find fzf jq bat eza coreutils ncurses git git-filter-repo gh
@@ -185,7 +104,6 @@ install_apt() {
   )
 
   run sudo apt-get update
-  install_virtualbox apt-get
   run sudo apt-get install -y "${packages[@]}"
 
   cat <<'NOTE'
