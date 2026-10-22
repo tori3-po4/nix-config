@@ -4,12 +4,35 @@
 
 本体の導入先は[管理対象](configuration.md#管理対象)を参照。ここでは初回起動・操作・アプリ固有の設定を扱う。
 
+- [Podman（macOS）](#podmanmacos)
 - [Emacs](#emacs)
 - [Lean 4 / Emacs](#lean-4--emacs)
 - [VS Code の設定・拡張管理](#vs-code-の設定拡張管理)
 - [Alacritty・tmux・Git](#alacrittytmuxgit)
 - [Pi](#pi)
 - [Kiwix と Wiki データ](#kiwix-と-wiki-データ)
+
+## Podman（macOS）
+
+[Podman 公式](https://podman.io/docs/installation)は macOS でインストーラーを推奨し、Homebrew 経由は非推奨としている。公式 GitHub Releases の pkg は macOS 標準の `installer -pkg … -target /` で自動導入できる。ここでは Podman エンジンと CLI を導入し、Podman Desktop は含めない。
+
+[`darwin/podman.nix`](../darwin/podman.nix) で **6.1.4 / Apple Silicon** の URL と SHA-256 を固定する。Nix のビルドでは取得とハッシュ検証を行い、`sudo darwin-rebuild switch` の Homebrew 処理後に root で [`install-podman-macos.sh`](../scripts/install-podman-macos.sh) を実行する。署名と公証を検証してから pkg を導入し、インストール記録と `/opt/podman/bin/podman --version` で成功を確認する。同じ版が導入済みなら再インストールしない。Nix のビルドだけではホストへインストールしない。
+
+公式 pkg の配置先は `/opt/podman`。nix-darwin 側でも `/opt/podman/bin` を PATH に追加する。Homebrew 版が残っている場合は停止するため、競合する導入元を解消してから再適用する。`home.packages` 等へ Nix 版 Podman を重複して追加しない。
+
+初回適用後、新しいログインシェルで **sudo を付けずに** 実行する。既存の VM がある場合は `podman machine list` で確認し、`init` は省略する。
+
+```bash
+exec zsh -l
+podman --version
+podman machine init
+podman machine start
+podman info
+```
+
+VM はユーザごとの可変データなので、root の activation では作成・起動しない。VM イメージの取得には別途ネットワーク接続が必要。公式 pkg は `podman-mac-helper` もセットアップする。Docker Desktop も使用する環境では、Docker 互換クライアントの接続先を確認する。この構成では `docker` の alias や `DOCKER_HOST` は設定しない。
+
+更新は[Podman の更新手順](maintenance.md#podman-の更新macos)を参照。
 
 ## Emacs
 

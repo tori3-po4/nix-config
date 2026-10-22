@@ -20,6 +20,7 @@
 | Prism Launcher / Moonlight | Nix | この構成では導入しない |
 | Codex | Homebrew Cask | 別途導入 |
 | Pi | Nix / Home Manager | シェルスクリプト（npm） |
+| Podman | 公式 pkg（Nix で取得・固定、switch 時に installer で導入） | この構成では導入しない |
 | VirtualBox | Homebrew Cask | シェルスクリプト（Fedora は RPM Fusion、apt は配布パッケージ） |
 | CUDA 本体・PATH・環境変数 | この構成では導入しない | 後日、専用スクリプトで導入予定 |
 | SSH agent の接続先 | `~/.bitwarden-ssh-agent.sock` | `~/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock` |
@@ -36,6 +37,7 @@ Linux の Tailscale と GNOME の AppIndicator 拡張は OS 側で別途導入�
 | ユーザ名・ホスト名・アーキテクチャ | [`private/user.nix.example`](../private/user.nix.example) をコピーして `private/user.nix` を作成 |
 | 共通パッケージ・LSP・formatter、macOS の `.app` 配置 | [`home/default.nix`](../home/default.nix) |
 | macOS の GUI アプリ・Homebrew formula / tap | [`darwin/homebrew.nix`](../darwin/homebrew.nix) |
+| macOS の Podman の版・SHA-256・導入処理 | [`darwin/podman.nix`](../darwin/podman.nix)、[`scripts/install-podman-macos.sh`](../scripts/install-podman-macos.sh) |
 | macOS の Nix・zsh・Emacs デーモン | [`darwin/default.nix`](../darwin/default.nix) |
 | macOS の外観・キーボード・DNS | [`darwin/defaults.nix`](../darwin/defaults.nix)、[`darwin/symbolic-hotkeys.nix`](../darwin/symbolic-hotkeys.nix) |
 | macOS の SSH agent | [`darwin/bitwarden.nix`](../darwin/bitwarden.nix) |

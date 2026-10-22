@@ -61,6 +61,8 @@ exec zsh -l
 
 初回起動方法は [nix-darwin の導入手順](https://github.com/nix-darwin/nix-darwin#step-2-installing-nix-darwin)を参照。既存 dotfile と競合する場合、Home Manager は `.hmbak` に退避する。同名のバックアップがある場合は内容を確認し、別名へ移してから再実行する。
 
+Podman はこの switch で公式 GitHub Releases の pkg から自動導入する。初回の VM 作成・起動は通常ユーザで行う。[Podman の導入と使い方](applications.md#podmanmacos)を参照。
+
 ## Linux
 
 systemd を使い、`nix` / `nix-daemon` を標準リポジトリまたは EPEL から導入できる Fedora / Rocky Linux / AlmaLinux 等を対象とする。アーキテクチャは `x86_64` / `aarch64`。Home Manager はユーザ環境とユーザ単位の Flatpak を管理し、OS パッケージ・SELinux・ファイアウォール等は OS 側で管理する。

@@ -6,6 +6,7 @@
 - [依存関係の更新](#依存関係の更新)
 - [ロールバック](#ロールバック)
 - [Homebrew・Flatpak の更新と削除](#homebrewflatpak-の更新と削除)
+- [Podman の更新（macOS）](#podman-の更新macos)
 - [世代と Nix store の清掃](#世代と-nix-store-の清掃)
 - [トラブルシュート](#トラブルシュート)
 
@@ -72,6 +73,8 @@ home-manager generations
 
 Homebrew / Flatpak のアプリ、Emacs が取得するパッケージ・Tree-sitter 文法、elan のツールチェーンは、Nix のロールバックだけでは元に戻らない。GC で削除済みの世代も利用できない。
 
+Podman の pkg は activation 時に指定版を導入するため、旧世代へ戻すと古い版の再インストールを試みる。VM・イメージ・コンテナのデータは巻き戻らない。ダウングレード前に互換性を確認する。Podman 導入前の世代へ戻しても自動削除はしない。
+
 ## Homebrew・Flatpak の更新と削除
 
 | 対象 | 更新タイミング | 宣言から外れたアプリ |
@@ -82,6 +85,20 @@ Homebrew / Flatpak のアプリ、Emacs が取得するパッケージ・Tree-si
 Homebrew の追加先は [`darwin/homebrew.nix`](../darwin/homebrew.nix)、Flatpak は [`linux/flatpak.nix`](../linux/flatpak.nix)。一時的に `brew install --cask <name>` で試したものも、継続利用するなら宣言へ追加する。
 
 システム単位の Flatpak はこの構成の管理対象外。Firefox のプロファイルはアプリ自身が管理し、専用の Flatpak override は宣言していない。
+
+## Podman の更新（macOS）
+
+Podman は `flake.lock` や Homebrew の更新には追随しない。[公式リリース](https://github.com/podman-container-tools/podman/releases)の対象タグから `podman-installer-macos-arm64.pkg` と `shasums` を確認し、[`darwin/podman.nix`](../darwin/podman.nix) の `version` と `hash` を同時に更新する。実ファイルのハッシュを取得する例:
+
+```bash
+# <version> は採用するリリース番号へ置き換える
+nix store prefetch-file --json \
+  'https://github.com/podman-container-tools/podman/releases/download/v<version>/podman-installer-macos-arm64.pkg'
+```
+
+出力の `hash`（SRI 形式）を採用し、配布元の `shasums` と照合する。`nix hash convert --hash-algo sha256 --to sri <SHA-256の16進表記>` で変換できる。ビルドを確認後、通常ユーザで実行中の Podman VM を停止してから switch する。新しい CLI での VM 更新・再作成の要否はリリースノートに従う。
+
+`darwin/podman.nix` の import を外しても、pkg のファイルや VM は自動削除しない。アンインストールは[上流の案内](https://github.com/podman-container-tools/podman/blob/main/contrib/pkginstaller/README.md#uninstalling)を確認して別途行う。
 
 ## 世代と Nix store の清掃
 

@@ -7,6 +7,7 @@
 {
   imports = [
     ./homebrew.nix
+    ./podman.nix
     ./defaults.nix
     ./symbolic-hotkeys.nix
     ./bitwarden.nix
