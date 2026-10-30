@@ -135,8 +135,8 @@
   "git.openRepositoryInParentFolders": "never",
   "editor.fontSize": 12,
   "editor.folding": false,
+  "editor.mouseWheelZoom": true,
   "diffEditor.maxComputationTime": 0,
-  "claudeCode.preferredLocation": "panel",
   "[python]": {
     "diffEditor.ignoreTrimWhitespace": false,
     "editor.defaultColorDecorators": "never",
