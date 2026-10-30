@@ -67,7 +67,6 @@ in
 
       # ===== エディタ/シェル支援 =====
       neovim
-      vscode
       tmux
       direnv
 

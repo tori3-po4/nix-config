@@ -59,6 +59,7 @@
       "zotero"
       "wireshark-app"
       "latexit"
+      "visual-studio-code"
       "codex"
       "chatgpt"
       "bitwarden"
