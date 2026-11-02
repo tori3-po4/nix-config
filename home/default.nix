@@ -36,7 +36,8 @@ in
 
   config.home.sessionPath = [
     "$HOME/.local/bin"
-  ] ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+  ]
+  ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
     "$HOME/.local/share/npm-global/bin"
   ];
 
@@ -59,6 +60,7 @@ in
       bat
       eza
       coreutils
+      tree
 
       # ===== Git周辺 =====
       git
