@@ -10,7 +10,7 @@ option_as_alt = "Both"
 
 [font]
 normal = { family = "HackGen Console NF", style = "Regular" }
-size = 16.0
+size = 20.0
 # adjust-cell-height = 20% の近似。Alacritty は物理ピクセル指定なので、
 # Retina (2x) の 16pt を基準とする。DPI・文字サイズ変更時は要調整。
 offset = { x = 0, y = 8 }
