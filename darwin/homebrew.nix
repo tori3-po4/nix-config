@@ -66,6 +66,7 @@
       "docker-desktop"
       "unsloth"
       "virtualbox"
+      "r-app"
       "utm"
     ];
 
