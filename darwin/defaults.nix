@@ -62,7 +62,7 @@ in
 
     NSGlobalDomain = {
       AppleEnableSwipeNavigateWithScrolls = false;
-      AppleInterfaceStyle = "";
+      AppleInterfaceStyle = null;
       AppleInterfaceStyleSwitchesAutomatically = false;
       AppleShowAllExtensions = true;
       AppleSpacesSwitchOnActivate = true;
