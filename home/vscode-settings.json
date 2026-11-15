@@ -151,7 +151,7 @@
   "workbench.secondarySideBar.defaultVisibility": "hidden",
   "window.zoomLevel": 0,
   "chat.disableAIFeatures": true,
-  "editor.wordWrap": "on",
+  "editor.wordWrap": "off",
   "telemetry.telemetryLevel": "off",
   "update.mode": "none",
   "update.showReleaseNotes": false,
