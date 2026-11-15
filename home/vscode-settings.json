@@ -143,7 +143,7 @@
     "editor.formatOnType": true,
     "editor.wordBasedSuggestions": "off"
   },
-  "workbench.colorTheme": "Github Light",
+  "workbench.colorTheme": "GitHub Light",
   "workbench.browser.showInTitleBar": false,
   "workbench.sideBar.location": "right",
   "workbench.activityBar.location": "default",
