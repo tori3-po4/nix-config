@@ -67,6 +67,7 @@
       "unsloth"
       "virtualbox"
       "r-app"
+      "rstudio"
       "utm"
     ];
 
