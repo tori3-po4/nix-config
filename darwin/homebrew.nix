@@ -45,7 +45,6 @@
       "google-japanese-ime"
       "jetbrains-toolbox"
       "logi-options+"
-      "minecraft"
       "multipass"
       "pearcleaner"
       "skim"
