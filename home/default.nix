@@ -153,9 +153,6 @@ in
       shfmt
     ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
-      prismlauncher
-      moonlight-qt
-
       # ===== コンテナ =====
       docker-client
       docker-compose
