@@ -47,7 +47,6 @@
       "logi-options+"
       "multipass"
       "pearcleaner"
-      "skim"
       "slack"
       "tailscale-app"
       #{
@@ -57,7 +56,6 @@
       "thunderbird"
       "zotero"
       "wireshark-app"
-      "latexit"
       "visual-studio-code"
       "codex"
       "chatgpt"
