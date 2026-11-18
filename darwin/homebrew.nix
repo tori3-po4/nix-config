@@ -59,6 +59,8 @@
       "visual-studio-code"
       "codex"
       "chatgpt"
+      "claude"
+      "claude-code"
       "bitwarden"
       "docker-desktop"
       "unsloth"
