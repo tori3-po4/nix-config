@@ -37,6 +37,9 @@
          source "$EAT_SHELL_INTEGRATION_DIR/zsh"
       fi
 
+      # opam (存在すれば読み込み)
+      [[ ! -r "$HOME/.opam/opam-init/init.zsh" ]] || \
+        source "$HOME/.opam/opam-init/init.zsh" > /dev/null 2> /dev/null
 
       '';
   };

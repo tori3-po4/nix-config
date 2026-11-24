@@ -85,6 +85,7 @@ in
       uv
       pixi
       sbcl # SLIME から使う Common Lisp 実装
+      opam # opam init --no-setup --enable-shell-hookで初期化する
 
       # ===== ビルドツール =====
       automake
