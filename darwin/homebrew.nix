@@ -68,6 +68,7 @@
       "r-app"
       "rstudio"
       "utm"
+      "brave-browser"
     ];
 
   };
